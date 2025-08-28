@@ -5,9 +5,15 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host",
+    "backend": "nodemon",
+    "android:run": "npx cap run android",
+    "android:open": "npx cap open android",
     "build": "tsc -b && vite build",
+    "build:android": "npm run build && npx cap sync",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "full:open": "concurrently \"npm run android:open\" \"npm run backend\" ",
+    "full:run": "concurrently \"npm run android:run\" \"npm run backend\" "
   },
   "dependencies": {
     "@capacitor/android": "^7.4.3",
@@ -33,10 +39,13 @@
     "@types/react": "^19.1.10",
     "@types/react-dom": "^19.1.7",
     "@vitejs/plugin-react": "^5.0.0",
+    "concurrently": "^9.2.1",
     "eslint": "^9.33.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
     "globals": "^16.3.0",
+    "nodemon": "^3.1.10",
+    "ts-node": "^10.9.2",
     "typescript": "~5.8.3",
     "typescript-eslint": "^8.39.1",
     "vite": "^7.1.2"
