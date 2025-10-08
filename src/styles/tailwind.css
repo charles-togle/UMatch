@@ -1,1 +1,7 @@
 @import "tailwindcss";
+
+@theme {
+  --color-toolbar-bg: #E2E8F0;
+  --color-amber-400: #FFB900;
+  --color-inactive-button: #314158
+}
