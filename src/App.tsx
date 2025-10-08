@@ -25,88 +25,22 @@ import '@ionic/react/css/flex-utils.css'
 import '@ionic/react/css/display.css'
 import '@/styles/tailwind.css'
 
+import ProtectedRoute from './components/ProtectedRoute'
+import UserRoutes from './routes/UserRoutes'
 setupIonicReact()
-
-const DashboardPage: React.FC = () => (
-  <IonPage>
-    <IonHeader>
-      <IonToolbar>
-        <IonTitle>Dashboard</IonTitle>
-      </IonToolbar>
-    </IonHeader>
-    <IonContent className='ion-padding'>
-      <h2>Welcome to the Dashboard!</h2>
-    </IonContent>
-    <IonToolbar slot='bottom'>
-      <IonButton expand='block' routerLink='/dashboard'>
-        Dashboard
-      </IonButton>
-      <IonButton expand='block' routerLink='/profile'>
-        Profile
-      </IonButton>
-      <IonButton expand='block' routerLink='/settings'>
-        Settings
-      </IonButton>
-    </IonToolbar>
-  </IonPage>
-)
-
-const ProfilePage: React.FC = () => (
-  <IonPage>
-    <IonHeader>
-      <IonToolbar>
-        <IonTitle>Profile</IonTitle>
-      </IonToolbar>
-    </IonHeader>
-    <IonContent className='ion-padding'>
-      <h2>Your Profile</h2>
-    </IonContent>
-    <IonToolbar slot='bottom'>
-      <IonButton expand='block' routerLink='/dashboard'>
-        Dashboard
-      </IonButton>
-      <IonButton expand='block' routerLink='/profile'>
-        Profile
-      </IonButton>
-      <IonButton expand='block' routerLink='/settings'>
-        Settings
-      </IonButton>
-    </IonToolbar>
-  </IonPage>
-)
-
-const SettingsPage: React.FC = () => (
-  <IonPage>
-    <IonHeader>
-      <IonToolbar>
-        <IonTitle>Settings</IonTitle>
-      </IonToolbar>
-    </IonHeader>
-    <IonContent className='ion-padding'>
-      <h2>Settings</h2>
-    </IonContent>
-    <IonToolbar slot='bottom'>
-      <IonButton expand='block' routerLink='/dashboard'>
-        Dashboard
-      </IonButton>
-      <IonButton expand='block' routerLink='/profile'>
-        Profile
-      </IonButton>
-      <IonButton expand='block' routerLink='/settings'>
-        Settings
-      </IonButton>
-    </IonToolbar>
-  </IonPage>
-)
 
 const App: React.FC = () => (
   <IonApp>
     <IonReactRouter>
       <IonRouterOutlet>
-        <Route path='/dashboard' component={DashboardPage} exact />
-        <Route path='/profile' component={ProfilePage} exact />
-        <Route path='/settings' component={SettingsPage} exact />
-        <Redirect exact from='/' to='/dashboard' />
+        <Route
+          path='/user/*'
+          render={() => (
+            <ProtectedRoute allowedRoles={['user']}>
+              <UserRoutes />
+            </ProtectedRoute>
+          )}
+        />
       </IonRouterOutlet>
     </IonReactRouter>
   </IonApp>
