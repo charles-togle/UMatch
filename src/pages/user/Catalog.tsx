@@ -45,6 +45,7 @@ const CatalogHeader = memo(
           showClearButton='focus'
           debounce={1000}
           onIonInput={event => setSearchInput(event.detail.value!)}
+          
           style={
             {
               ['--border-radius']: '0.5rem'
@@ -91,7 +92,7 @@ export default function Catalog () {
   const [searchInput, setSearchInput] = useState<string>('')
   const [posts, setPosts] = useState<number[]>([1, 2, 3, 4, 5])
   const [hasMore, setHasMore] = useState<boolean>(true)
-  const [isLoading, setIsLoading] = useState<boolean>(false) 
+  const [isLoading, setIsLoading] = useState<boolean>(false)
 
   // Pull to refresh handler
   const handleRefresh = useCallback((event: CustomEvent) => {

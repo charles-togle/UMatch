@@ -17,7 +17,12 @@ export default function Header ({ children }: { children: React.ReactNode }) {
       <IonToolbar style={toolbarStyle}>
         <IonButtons slot='start'>
           <IonButton>
-            <IonIcon icon={ohsoIcon} slot='icon-only' className='text-white' />
+            <IonIcon
+              icon={ohsoIcon}
+              slot='icon-only'
+              size='large'
+              className='text-white'
+            />
           </IonButton>
         </IonButtons>
         {children}
