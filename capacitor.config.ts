@@ -1,9 +1,10 @@
-import type { CapacitorConfig } from '@capacitor/cli';
+import type { CapacitorConfig } from '@capacitor/cli'
 
 const config: CapacitorConfig = {
   appId: 'com.softeng.pbl.app',
   appName: 'project-pbl-softeng',
-  webDir: 'dist'
-};
+  webDir: 'dist',
+  backgroundColor: '#FFFFFF'
+}
 
-export default config;
+export default config

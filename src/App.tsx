@@ -1,16 +1,7 @@
 import React from 'react'
-import {
-  IonApp,
-  IonRouterOutlet,
-  IonPage,
-  IonHeader,
-  IonToolbar,
-  IonTitle,
-  IonContent,
-  IonButton
-} from '@ionic/react'
+import { IonApp, IonRouterOutlet } from '@ionic/react'
 import { IonReactRouter } from '@ionic/react-router'
-import { Route, Redirect } from 'react-router-dom'
+import { Route } from 'react-router-dom'
 import { setupIonicReact } from '@ionic/react'
 
 import '@ionic/react/css/core.css'
@@ -34,7 +25,8 @@ const App: React.FC = () => (
     <IonReactRouter>
       <IonRouterOutlet>
         <Route
-          path='/user/*'
+          // path='/user/*'
+          path='/*'
           render={() => (
             <ProtectedRoute allowedRoles={['user']}>
               <UserRoutes />
