@@ -1,4 +1,5 @@
-import React from 'react'
+import React, { lazy, memo } from 'react'
+const LazyImage = lazy(() => import('@/components/shared/LazyImage'))
 import {
   IonCard,
   IonCardContent,
@@ -25,22 +26,27 @@ export type CatalogPostProps = {
   lastSeen?: string
   chips?: Chip[]
   extraCountLabel?: string
+  imageUrl?: string
+  className?: string
 }
 
 const CatalogPost: React.FC<CatalogPostProps> = ({
   username = 'Profile Picture and Username',
   itemName = 'Item Name',
-  description = 'Descriptionnnnnnnnnnnnnnnnnnnnnnnnn nnnnnnnnnnnnnnnnnnnnnnn nnn nnnnnnnnnn nnnn nnnnnnnnnnnnnnnnnn',
+  description = 'Some really really really really long description that should be truncated.',
   lastSeen = 'MM/DD/YYYY    00:00 AM/PM',
   chips = [
     { label: 'Chip label', icon: personCircle },
-    { label: 'Chip label', icon: personCircle },
     { label: 'Chip label', icon: personCircle }
   ],
-  extraCountLabel = '5+'
+  extraCountLabel = '5+',
+  imageUrl,
+  className = ''
 }) => {
   return (
-    <IonCard className='rounded-2xl shadow-md border border-gray-200 font-roboto overflow-hidden'>
+    <IonCard
+      className={`rounded-2xl shadow-md border border-gray-200 font-roboto overflow-hidden ${className}`}
+    >
       {/* Header with avatar + username + kebab menu */}
       <IonItem lines='none' className='py-2 -mx-2'>
         <IonAvatar slot='start'>
@@ -63,7 +69,17 @@ const CatalogPost: React.FC<CatalogPostProps> = ({
       <IonCardContent className='p-3'>
         <div className='text-xl font-bold mb-1 text-gray-900'>{itemName}</div>
         <p className='text-gray-700 mb-3 leading-snug'>{description}</p>
-        <div className='h-56 bg-gray-50 border border-gray-200 rounded-xl' />
+        <React.Suspense
+          fallback={
+            <div className='h-56 bg-gray-50 border border-gray-200 rounded-xl animate-pulse' />
+          }
+        >
+          <LazyImage
+            src={imageUrl}
+            alt={itemName}
+            className='h-56 rounded-xl'
+          />
+        </React.Suspense>
 
         <div className='flex items-center gap-2 mt-3 text-xs text-gray-500'>
           <IonText>
@@ -76,12 +92,12 @@ const CatalogPost: React.FC<CatalogPostProps> = ({
           {chips.map((c, i) => (
             <IonChip
               key={i}
-              className='bg-blue-900 text-white font-roboto flex items-center'
+              className='bg-blue-900 text-white font-roboto px-2 '
               outline={false}
               color='primary'
             >
               {c.icon && <IonIcon icon={c.icon} className='mr-1' />}{' '}
-              <IonLabel>{c.label}</IonLabel>
+              <div className='text-xs'>{c.label}</div>
             </IonChip>
           ))}
           <IonText className='font-semibold ml-1'>{extraCountLabel}</IonText>
@@ -91,4 +107,4 @@ const CatalogPost: React.FC<CatalogPostProps> = ({
   )
 }
 
-export default CatalogPost
+export default memo(CatalogPost)

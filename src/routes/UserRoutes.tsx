@@ -1,21 +1,24 @@
-import Catalog from '@/pages/user/Catalog'
 import Toolbar from '@/components/shared/Toolbar'
-import FAQs from '@/pages/user/FAQs'
-import Settings from '@/pages/shared/Settings'
-import History from '@/pages/user/History'
-
 import { Route } from 'react-router-dom'
 import { home, settings, time, helpCircle } from 'ionicons/icons'
 import { IonRouterOutlet, IonTabs } from '@ionic/react'
+import { lazy, Suspense } from 'react'
+
+const Catalog = lazy(() => import('@/pages/user/Catalog'))
+const FAQs = lazy(() => import('@/pages/user/FAQs'))
+const Settings = lazy(() => import('@/pages/shared/Settings'))
+const History = lazy(() => import('@/pages/user/History'))
 
 export default function UserRoutes () {
   return (
     <IonTabs>
       <IonRouterOutlet>
-        <Route path='/user/home' render={() => <Catalog />} />
-        <Route path='/user/faqs' render={() => <FAQs />} />
-        <Route path='/user/settings' render={() => <Settings />} />
-        <Route path='/user/history' render={() => <History />} />
+        <Suspense fallback={<div />}>
+          <Route path='/user/home' render={() => <Catalog />} />
+          <Route path='/user/faqs' render={() => <FAQs />} />
+          <Route path='/user/settings' render={() => <Settings />} />
+          <Route path='/user/history' render={() => <History />} />
+        </Suspense>
       </IonRouterOutlet>
       <Toolbar
         toolbarItems={[

@@ -1,4 +1,11 @@
-import { IonTabBar, IonTabButton, IonIcon, IonLabel } from '@ionic/react'
+import { useMemo, useState } from 'react'
+import {
+  IonTabBar,
+  IonTabButton,
+  IonIcon,
+  IonLabel,
+  IonLoading
+} from '@ionic/react'
 import { useLocation } from 'react-router-dom'
 
 interface ToolbarItem {
@@ -9,48 +16,78 @@ interface ToolbarItem {
 }
 
 type ToolbarProps = {
-  toolbarItems: Array<ToolbarItem>
+  toolbarItems: ToolbarItem[]
 }
 
 export default function Toolbar ({ toolbarItems }: ToolbarProps) {
   const location = useLocation()
-  return (
-    <IonTabBar slot='bottom' className='app-toolbar'>
-      {toolbarItems.map((toolbarItem, idx) => {
-        const path = toolbarItem.route
-        const matched =
-          location.pathname === path ||
-          location.pathname.startsWith(path + '/') ||
-          location.pathname.startsWith(path)
-        const isActive = !!toolbarItem.active || matched
+  const [loading, setLoading] = useState(false)
 
-        return (
-          <IonTabButton
-            key={toolbarItem.route ?? idx}
-            tab={toolbarItem.text}
-            href={toolbarItem.route}
-            style={{
-              backgroundColor: isActive ? 'white' : 'var(--color-toolbar-bg)'
-            }}
-          >
-            <IonIcon
-              icon={toolbarItem.icon}
+  // Lazy chunk preloads for each tab
+  const routePreloads = useMemo(
+    () => ({
+      '/user/home': () => import('@/pages/user/Catalog'),
+      '/user/faqs': () => import('@/pages/user/FAQs'),
+      '/user/settings': () => import('@/pages/shared/Settings'),
+      '/user/history': () => import('@/pages/user/History')
+    }),
+    []
+  )
+
+  const handlePreload = (route: string) => {
+    const preload = (routePreloads as Record<string, () => Promise<any>>)[route]
+    if (!preload) return
+    setLoading(true)
+
+    preload()
+      .catch(() => {})
+      .finally(() => {
+        // Delay helps ensure the tab transition finishes first
+        setTimeout(() => setLoading(false), 150)
+      })
+  }
+
+  return (
+    <>
+      <IonTabBar slot='bottom' className='app-toolbar'>
+        {toolbarItems.map((item, idx) => {
+          const path = item.route
+          const matched =
+            location.pathname === path ||
+            location.pathname.startsWith(path + '/') ||
+            location.pathname.startsWith(path)
+          const isActive = !!item.active || matched
+
+          return (
+            <IonTabButton
+              key={item.route ?? `tab-${idx}`}
+              tab={item.route ?? `tab-${idx}`}
+              href={item.route}
+              onClick={() => handlePreload(item.route)}
               style={{
-                color: isActive
-                  ? 'var(--color-amber-400)'
-                  : 'var(--color-inactive-button)'
-              }}
-            />
-            <IonLabel
-              style={{
-                color: 'var(--color-inactive-button)'
+                backgroundColor: isActive ? 'white' : 'var(--color-toolbar-bg)'
               }}
             >
-              {toolbarItem.text}
-            </IonLabel>
-          </IonTabButton>
-        )
-      })}
-    </IonTabBar>
+              <IonIcon
+                icon={item.icon}
+                style={{
+                  color: isActive
+                    ? 'var(--color-amber-400)'
+                    : 'var(--color-inactive-button)'
+                }}
+              />
+              <IonLabel
+                style={{
+                  color: 'var(--color-inactive-button)'
+                }}
+              >
+                {item.text}
+              </IonLabel>
+            </IonTabButton>
+          )
+        })}
+      </IonTabBar>
+      {loading && <IonLoading isOpen message='Loading...' spinner='crescent' />}
+    </>
   )
 }

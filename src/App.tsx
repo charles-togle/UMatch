@@ -1,8 +1,5 @@
 import React from 'react'
-import {
-  IonApp,
-  IonRouterOutlet,
-} from '@ionic/react'
+import { IonApp, IonRouterOutlet } from '@ionic/react'
 import { IonReactRouter } from '@ionic/react-router'
 import { Route } from 'react-router-dom'
 import { setupIonicReact } from '@ionic/react'
@@ -28,7 +25,8 @@ const App: React.FC = () => (
     <IonReactRouter>
       <IonRouterOutlet>
         <Route
-          path='/user/*'
+          // path='/user/*'
+          path='/*'
           render={() => (
             <ProtectedRoute allowedRoles={['user']}>
               <UserRoutes />
