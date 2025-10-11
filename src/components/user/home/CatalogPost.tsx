@@ -45,7 +45,7 @@ const CatalogPost: React.FC<CatalogPostProps> = ({
 }) => {
   return (
     <IonCard
-      className={`rounded-2xl shadow-md border border-gray-200 font-roboto overflow-hidden ${className}`}
+      className={`rounded-2xl shadow-md border border-gray-200 font-default-font overflow-hidden ${className}`}
     >
       {/* Header with avatar + username + kebab menu */}
       <IonItem lines='none' className='py-2 -mx-2'>
@@ -56,7 +56,9 @@ const CatalogPost: React.FC<CatalogPostProps> = ({
           />
         </IonAvatar>
         <IonLabel>
-          <div className='font-semibold text-umak-blue'>{username}</div>
+          <div className='font-semibold text-umak-blue'>
+            <p>{username}</p>
+          </div>
         </IonLabel>
         <IonButtons slot='end'>
           <IonButton fill='clear' color='medium' aria-label='More options'>
@@ -92,7 +94,7 @@ const CatalogPost: React.FC<CatalogPostProps> = ({
           {chips.map((c, i) => (
             <IonChip
               key={i}
-              className='bg-blue-900 text-white font-roboto px-2 '
+              className='bg-blue-900 text-white font-default-font px-2 '
               outline={false}
               color='primary'
             >
