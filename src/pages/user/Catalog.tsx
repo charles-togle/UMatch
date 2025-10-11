@@ -12,7 +12,7 @@ import {
   IonLoading
 } from '@ionic/react'
 import { notifications, personCircle } from 'ionicons/icons'
-import { useCallback, useState, useRef, memo } from 'react'
+import { useCallback, useState, useRef, memo, useEffect } from 'react'
 import Header from '@/components/shared/Header'
 import CatalogPost from '@/components/user/home/CatalogPost'
 import { Keyboard } from '@capacitor/keyboard'
@@ -27,7 +27,7 @@ const CatalogHeader = memo(
     setSearchInput: (value: string) => void
   }) => {
     const searchRef = useRef<HTMLIonSearchbarElement>(null)
-    const [unreadCount] = useState<number>(3) // example unread badge number
+    const [unreadCount] = useState<number>(3)
 
     const handleFocus = async () => {
       console.log('Focused and keyboard shown')
@@ -45,7 +45,6 @@ const CatalogHeader = memo(
           showClearButton='focus'
           debounce={1000}
           onIonInput={event => setSearchInput(event.detail.value!)}
-          
           style={
             {
               ['--border-radius']: '0.5rem'
@@ -93,6 +92,18 @@ export default function Catalog () {
   const [posts, setPosts] = useState<number[]>([1, 2, 3, 4, 5])
   const [hasMore, setHasMore] = useState<boolean>(true)
   const [isLoading, setIsLoading] = useState<boolean>(false)
+  const contentRef = useRef<HTMLIonContentElement | null>(null)
+
+  useEffect(() => {
+    // parameter intentionally unused; prefix with underscore to satisfy linters
+    const handler = (_ev?: Event) => {
+      contentRef.current?.scrollToTop?.(300)
+    }
+
+    window.addEventListener('app:scrollToTop', handler as EventListener)
+    return () =>
+      window.removeEventListener('app:scrollToTop', handler as EventListener)
+  }, [])
 
   // Pull to refresh handler
   const handleRefresh = useCallback((event: CustomEvent) => {
@@ -108,7 +119,6 @@ export default function Catalog () {
     const target = event.target as HTMLIonInfiniteScrollElement | null
     if (!target) return
 
-    // Simulate API call delay
     setTimeout(() => {
       const newItems = Array.from({ length: 5 }, (_, i) => posts.length + i + 1)
       setPosts(prev => [...prev, ...newItems])
@@ -125,7 +135,7 @@ export default function Catalog () {
         searchInput={searchInput}
         setSearchInput={setSearchInput}
       />
-      <IonContent className='ion-padding mb-16'>
+      <IonContent ref={contentRef} className='ion-padding mb-16'>
         {/* Pull to refresh */}
         <div className='pb-6'>
           <IonRefresher slot='fixed' onIonRefresh={handleRefresh}>
