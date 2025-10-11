@@ -11,19 +11,27 @@ const toolbarStyle = {
   ['--background']: 'var(--color-umak-blue, #1D2981)'
 } as React.CSSProperties
 
-export default function Header ({ children }: { children: React.ReactNode }) {
+export default function Header ({
+  children,
+  logoShown
+}: {
+  children: React.ReactNode
+  logoShown: boolean
+}) {
   return (
-    <IonHeader>
+    <IonHeader className='ion-no-border'>
       <IonToolbar style={toolbarStyle}>
         <IonButtons slot='start'>
-          <IonButton>
-            <IonIcon
-              icon={ohsoIcon}
-              slot='icon-only'
-              size='large'
-              className='text-white'
-            />
-          </IonButton>
+          {logoShown && (
+            <IonButton>
+              <IonIcon
+                icon={ohsoIcon}
+                slot='icon-only'
+                size='large'
+                className='text-white'
+              />
+            </IonButton>
+          )}
         </IonButtons>
         {children}
       </IonToolbar>

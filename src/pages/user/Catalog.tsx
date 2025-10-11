@@ -1,3 +1,8 @@
+import { notifications, personCircle } from 'ionicons/icons'
+import { useCallback, useState, useEffect, useRef, memo } from 'react'
+import Header from '@/components/shared/Header'
+import CatalogPost from '@/components/user/home/CatalogPost'
+import { usePreloadNavigation } from '@/hooks/usePreloadNavigation'
 import {
   IonContent,
   IonRefresher,
@@ -11,11 +16,6 @@ import {
   IonBadge,
   IonLoading
 } from '@ionic/react'
-import { notifications, personCircle } from 'ionicons/icons'
-import { useCallback, useState, useRef, memo, useEffect } from 'react'
-import Header from '@/components/shared/Header'
-import CatalogPost from '@/components/user/home/CatalogPost'
-import { Keyboard } from '@capacitor/keyboard'
 
 // CatalogHeader Component
 const CatalogHeader = memo(
@@ -28,15 +28,15 @@ const CatalogHeader = memo(
   }) => {
     const searchRef = useRef<HTMLIonSearchbarElement>(null)
     const [unreadCount] = useState<number>(3)
+    const { navigateWithPreload } = usePreloadNavigation()
 
     const handleFocus = async () => {
-      console.log('Focused and keyboard shown')
       await searchRef.current?.setFocus()
-      Keyboard.show()
+      navigateWithPreload('/user/search')
     }
 
     return (
-      <Header>
+      <Header logoShown={true}>
         <IonSearchbar
           ref={searchRef}
           onFocus={handleFocus}
@@ -91,11 +91,10 @@ export default function Catalog () {
   const [searchInput, setSearchInput] = useState<string>('')
   const [posts, setPosts] = useState<number[]>([1, 2, 3, 4, 5])
   const [hasMore, setHasMore] = useState<boolean>(true)
-  const [isLoading, setIsLoading] = useState<boolean>(false)
+  const [isRefreshingContent, setRefreshingContent] = useState<boolean>(false)
   const contentRef = useRef<HTMLIonContentElement | null>(null)
 
   useEffect(() => {
-    // parameter intentionally unused; prefix with underscore to satisfy linters
     const handler = (_ev?: Event) => {
       contentRef.current?.scrollToTop?.(300)
     }
@@ -107,11 +106,11 @@ export default function Catalog () {
 
   // Pull to refresh handler
   const handleRefresh = useCallback((event: CustomEvent) => {
-    setIsLoading(true) // start loader
+    setRefreshingContent(true) // start loader
     setTimeout(() => {
       //fetch new random posts
       event.detail.complete()
-      setIsLoading(false) // hide loader after reload
+      setRefreshingContent(false) // hide loader after reload
     }, 1000)
   }, [])
 
@@ -169,7 +168,7 @@ export default function Catalog () {
         </div>
 
         {/* ✅ Show IonLoading while refreshing */}
-        {isLoading && (
+        {isRefreshingContent && (
           <IonLoading
             isOpen
             message='Refreshing content...'
