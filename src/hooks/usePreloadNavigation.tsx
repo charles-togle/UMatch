@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react'
-import { useHistory } from 'react-router-dom'
+import { useIonRouter } from '@ionic/react'
 import { Preferences } from '@capacitor/preferences'
 import { routePreloads } from '@/configs/routePreloads'
 
@@ -30,22 +30,21 @@ async function isRoutePreloaded (route: string): Promise<boolean> {
 }
 
 export function usePreloadNavigation () {
-  const history = useHistory()
+  const router = useIonRouter()
   const [loading, setLoading] = useState(false)
 
   const navigateWithPreload = useCallback(
     async (route: string) => {
       const preload = routePreloads[route]
 
-      // navigate directly if no preload mapping
       if (!preload) {
-        history.push(route)
+        router.push(route, 'none', 'replace') // no animation
         return
       }
 
       const alreadyMarked = await isRoutePreloaded(route)
       if (alreadyMarked) {
-        history.push(route)
+        router.push(route, 'none', 'replace')
         return
       }
 
@@ -58,13 +57,13 @@ export function usePreloadNavigation () {
         await moduleCache.get(route)
         await markRoutePreloaded(route)
       } catch {
-        // ignore preload errors, still navigate
+        // ignore preload errors
       } finally {
-        history.push(route)
+        router.push(route, 'none', 'replace') // no animation
         setTimeout(() => setLoading(false), 150)
       }
     },
-    [history]
+    [router]
   )
 
   return { navigateWithPreload, loading }

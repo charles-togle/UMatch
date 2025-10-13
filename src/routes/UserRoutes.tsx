@@ -13,7 +13,7 @@ const History = lazy(() => import('@/pages/user/History'))
 export default function UserRoutes () {
   return (
     <IonTabs>
-      <IonRouterOutlet>
+      <IonRouterOutlet animated={false}>
         <Suspense fallback={<div />}>
           <div className='h-full bg-white'>
             <div className='md:w-3/4 lg:w-1/3 xl:w-1/3 h-full md:mx-auto lg:mx-auto'>
