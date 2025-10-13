@@ -16,79 +16,68 @@ import {
   IonBadge,
   IonLoading
 } from '@ionic/react'
+import { Keyboard } from '@capacitor/keyboard'
 
 // CatalogHeader Component
-const CatalogHeader = memo(
-  ({
-    searchInput,
-    setSearchInput
-  }: {
-    searchInput: string
-    setSearchInput: (value: string) => void
-  }) => {
-    const searchRef = useRef<HTMLIonSearchbarElement>(null)
-    const [unreadCount] = useState<number>(3)
-    const { navigateWithPreload } = usePreloadNavigation()
+const CatalogHeader = memo(() => {
+  const searchRef = useRef<HTMLIonSearchbarElement>(null)
+  const [unreadCount] = useState<number>(3)
+  const { navigateWithPreload } = usePreloadNavigation()
 
-    const handleFocus = async () => {
-      await searchRef.current?.setFocus()
-      navigateWithPreload('/user/search')
-    }
-
-    return (
-      <Header logoShown={true}>
-        <IonSearchbar
-          ref={searchRef}
-          onFocus={handleFocus}
-          placeholder='Search'
-          value={searchInput}
-          showClearButton='focus'
-          debounce={1000}
-          onIonInput={event => setSearchInput(event.detail.value!)}
-          style={
-            {
-              ['--border-radius']: '0.5rem'
-            } as React.CSSProperties
-          }
-        />
-
-        {/* Notification Icon with Badge */}
-        <IonButtons slot='end'>
-          <IonButton className='relative'>
-            <IonIcon
-              icon={notifications}
-              slot='icon-only'
-              className='text-white text-2xl'
-            />
-            {unreadCount > 0 && (
-              <IonBadge
-                color='danger'
-                className='absolute -top-1 -right-1 text-[10px] px-1.5 py-0.5 rounded-full'
-              >
-                {unreadCount}
-              </IonBadge>
-            )}
-          </IonButton>
-        </IonButtons>
-
-        {/* Profile Icon */}
-        <IonButtons slot='end'>
-          <IonButton>
-            <IonIcon
-              icon={personCircle}
-              slot='icon-only'
-              className='text-white text-2xl'
-            />
-          </IonButton>
-        </IonButtons>
-      </Header>
-    )
+  const handleClick = () => {
+    Keyboard.hide()
+    navigateWithPreload('/user/search')
   }
-)
+
+  return (
+    <Header logoShown={true}>
+      <IonSearchbar
+        ref={searchRef}
+        onClick={handleClick}
+        placeholder='Search'
+        showClearButton='never'
+        style={
+          {
+            ['--border-radius']: '0.5rem'
+          } as React.CSSProperties
+        }
+      />
+
+      {/* Notification Icon with Badge */}
+      <IonButtons slot='end'>
+        <IonButton className='relative'>
+          <IonIcon
+            icon={notifications}
+            slot='icon-only'
+            className='text-white text-2xl'
+          />
+          {unreadCount > 0 && (
+            <IonBadge
+              color='danger'
+              className='absolute -top-1 -right-1 text-[10px] px-1.5 py-0.5 rounded-full'
+            >
+              {unreadCount}
+            </IonBadge>
+          )}
+        </IonButton>
+      </IonButtons>
+
+      {/* Profile Icon */}
+      <IonButtons slot='end'>
+        <IonButton>
+          <IonIcon
+            icon={personCircle}
+            slot='icon-only'
+            className='text-white text-2xl'
+          />
+        </IonButton>
+      </IonButtons>
+    </Header>
+  )
+})
 
 // Main Catalog Component
 export default function Catalog () {
-  const [searchInput, setSearchInput] = useState<string>('')
   const [posts, setPosts] = useState<number[]>([1, 2, 3, 4, 5])
   const [hasMore, setHasMore] = useState<boolean>(true)
   const [isRefreshingContent, setRefreshingContent] = useState<boolean>(false)
@@ -130,10 +119,7 @@ export default function Catalog () {
   }
   return (
     <>
-      <CatalogHeader
-        searchInput={searchInput}
-        setSearchInput={setSearchInput}
-      />
+      <CatalogHeader />
       <IonContent ref={contentRef} className='ion-padding mb-16'>
         {/* Pull to refresh */}
         <div className='pb-6'>
