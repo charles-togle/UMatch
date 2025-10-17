@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/cli'
 
 const config: CapacitorConfig = {
-  appId: 'com.softeng.pbl.app',
-  appName: 'project-pbl-softeng',
+  appId: 'com.umatch.app',
+  appName: 'UMatch',
   webDir: 'dist',
   backgroundColor: '#FFFFFF'
 }
