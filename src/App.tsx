@@ -1,8 +1,9 @@
 import React from 'react'
 import { IonApp, IonRouterOutlet } from '@ionic/react'
 import { IonReactRouter } from '@ionic/react-router'
-import { Route } from 'react-router-dom'
+import { Route, Redirect } from 'react-router-dom'
 import { setupIonicReact } from '@ionic/react'
+import { GoogleOAuthProvider } from '@react-oauth/google'
 
 import '@ionic/react/css/core.css'
 import '@ionic/react/css/normalize.css'
@@ -17,24 +18,36 @@ import '@ionic/react/css/display.css'
 import '@/styles/tailwind.css'
 import ProtectedRoute from './components/ProtectedRoute'
 import UserRoutes from './routes/UserRoutes'
+import Auth from './pages/shared/Auth'
+import StartupLoading from './pages/shared/StartupLoading'
 setupIonicReact()
 
-const App: React.FC = () => (
-  <IonApp>
-    <IonReactRouter>
-      <IonRouterOutlet>
-        <Route
-          // path='/user/*'
-          path='/*'
-          render={() => (
-            <ProtectedRoute allowedRoles={['user']}>
-              <UserRoutes />
-            </ProtectedRoute>
-          )}
-        />
-      </IonRouterOutlet>
-    </IonReactRouter>
-  </IonApp>
-)
+const App: React.FC = () => {
+  return (
+    <GoogleOAuthProvider
+      clientId={
+        import.meta.env.VITE_GOOGLE_CLIENT_ID || 'YOUR_GOOGLE_CLIENT_ID_HERE'
+      }
+    >
+      <IonApp>
+        <IonReactRouter>
+          <IonRouterOutlet>
+            <Route exact path='/' render={() => <Redirect to='/preload' />} />
+            <Route path='/preload' render={() => <StartupLoading />} />
+            <Route path='/auth' render={() => <Auth />} />
+            <Route
+              path='/user/*'
+              render={() => (
+                <ProtectedRoute allowedRoles={['user']}>
+                  <UserRoutes />
+                </ProtectedRoute>
+              )}
+            />
+          </IonRouterOutlet>
+        </IonReactRouter>
+      </IonApp>
+    </GoogleOAuthProvider>
+  )
+}
 
 export default App

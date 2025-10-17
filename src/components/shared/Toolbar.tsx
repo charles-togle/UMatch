@@ -28,8 +28,6 @@ export default function Toolbar ({ toolbarItems }: ToolbarProps) {
   const noToolbarRoutes = ['/user/search'] //add any routes you want to hide the toolbar
   const isNoToolbar = noToolbarRoutes.includes(location.pathname)
 
-  console.log(location.pathname)
-  console.log(isNoToolbar)
   // ------------------ NAVIGATION HANDLER ------------------
   const handleClick = useCallback(
     (route: string) => {
