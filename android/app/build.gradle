@@ -8,7 +8,7 @@ android {
     namespace "com.softeng.pbl.app"
     compileSdk rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.softeng.pbl.app"
+        applicationId "com.umatch.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
