@@ -23,7 +23,6 @@ import '@/styles/tailwind.css'
 
 setupIonicReact()
 
-
 const App: React.FC = () => {
   const googleWebClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID_WEB
 

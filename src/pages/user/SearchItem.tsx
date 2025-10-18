@@ -3,7 +3,7 @@ import SearchHistory from '@/components/user/search-item/SearchHistory'
 import Header from '@/components/shared/Header'
 import { usePreloadNavigation } from '@/hooks/usePreloadNavigation'
 import AdvancedSearch from '@/components/user/search-item/AdvancedSearch'
-import { IonSearchbar, IonContent, IonButton, IonLoading } from '@ionic/react'
+import { IonSearchbar, IonContent, IonButton } from '@ionic/react'
 import { Keyboard } from '@capacitor/keyboard'
 export default function SearchItem () {
   const [searchHistory, setSearchHistory] = useState<string[]>([
@@ -13,7 +13,7 @@ export default function SearchItem () {
     'Red bleachers',
     'Item'
   ])
-  const { loading, navigateWithPreload } = usePreloadNavigation()
+  const { navigateWithPreload } = usePreloadNavigation()
   const [searchValue, setSearchValue] = useState('')
   const searchRef = useRef<HTMLIonSearchbarElement | null>(null)
 
@@ -30,8 +30,6 @@ export default function SearchItem () {
   const handleCancel = useCallback(() => {
     setSearchValue('')
     if (!searchRef.current) return
-    const input = searchRef.current.querySelector('input')
-    input?.blur()
     Keyboard.hide()
     navigateWithPreload('/user/home')
   }, [navigateWithPreload])
@@ -83,8 +81,6 @@ export default function SearchItem () {
         setSearchHistory={setSearchHistory}
       />
       <AdvancedSearch />
-
-      {loading && <IonLoading isOpen message='Loading...' spinner='crescent' />}
     </IonContent>
   )
 }
