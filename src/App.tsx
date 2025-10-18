@@ -4,7 +4,6 @@ import { IonReactRouter } from '@ionic/react-router'
 import { Route, Redirect } from 'react-router-dom'
 import { setupIonicReact } from '@ionic/react'
 import { GoogleOAuthProvider } from '@react-oauth/google'
-import { Capacitor } from '@capacitor/core'
 import ProtectedRoute from './components/ProtectedRoute'
 import UserRoutes from './routes/UserRoutes'
 import Auth from './pages/shared/Auth'
@@ -25,14 +24,11 @@ import '@/styles/tailwind.css'
 setupIonicReact()
 
 const App: React.FC = () => {
-  const usingWeb = Capacitor.getPlatform() === 'web'
+  const googleWebClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID_WEB
+
   return (
     <GoogleOAuthProvider
-      clientId={
-        usingWeb
-          ? import.meta.env.VITE_GOOGLE_CLIENT_ID
-          : import.meta.env.VITE_GOOGLE_CLIENT_ID_MOBILE
-      }
+      clientId={googleWebClientId || 'YOUR_GOOGLE_CLIENT_ID_HERE'}
     >
       <IonApp>
         <IonReactRouter>

@@ -8,28 +8,22 @@ export function usePreloadNavigation () {
 
   const navigateWithPreload = useCallback(
     async (route: string) => {
-      console.log(moduleCache)
       const preload = routePreloads[route]
-
-      // No configured preload: navigate immediately
       if (!preload) {
-        router.push(route, 'none') // no animation
+        router.push(route, 'none')
         return
       }
-
-      // Ensure there is a single in-flight preload promise per route
       if (!moduleCache.has(route)) {
         moduleCache.set(route, preload())
       }
-
       setLoading(true)
       try {
         await moduleCache.get(route)
       } catch {
-        // ignore preload errors
+        setLoading(false)
       } finally {
-        router.push(route, 'none') // no animation
-        setTimeout(() => setLoading(false), 150)
+        router.push(route, 'none')
+        setLoading(false)
       }
     },
     [router]
