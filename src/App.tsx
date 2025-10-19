@@ -20,11 +20,12 @@ import '@ionic/react/css/text-transformation.css'
 import '@ionic/react/css/flex-utils.css'
 import '@ionic/react/css/display.css'
 import '@/styles/tailwind.css'
+import HomeSkeleton from './components/user/skeletons/HomeSkeleton'
 
 setupIonicReact()
 
 const App: React.FC = () => {
-  const googleWebClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID_WEB
+  const googleWebClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
 
   return (
     <GoogleOAuthProvider
@@ -33,6 +34,7 @@ const App: React.FC = () => {
       <IonApp>
         <IonReactRouter>
           <IonRouterOutlet>
+            <Route path='/test' render={() => <HomeSkeleton />} />
             <Route exact path='/' render={() => <Redirect to='/preload' />} />
             <Route path='/preload' render={() => <StartupLoading />} />
             <Route path='/auth' render={() => <Auth />} />

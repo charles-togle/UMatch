@@ -1,10 +1,10 @@
 import { useCallback, useState, useRef, useMemo } from 'react'
 import SearchHistory from '@/components/user/search-item/SearchHistory'
 import Header from '@/components/shared/Header'
-import { usePreloadNavigation } from '@/hooks/usePreloadNavigation'
 import AdvancedSearch from '@/components/user/search-item/AdvancedSearch'
 import { IonSearchbar, IonContent, IonButton } from '@ionic/react'
 import { Keyboard } from '@capacitor/keyboard'
+import { useNavigation } from '@/hooks/useNavigation'
 export default function SearchItem () {
   const [searchHistory, setSearchHistory] = useState<string[]>([
     'HPSB',
@@ -13,9 +13,9 @@ export default function SearchItem () {
     'Red bleachers',
     'Item'
   ])
-  const { navigateWithPreload } = usePreloadNavigation()
   const [searchValue, setSearchValue] = useState('')
   const searchRef = useRef<HTMLIonSearchbarElement | null>(null)
+  const { navigate } = useNavigation()
 
   // 🔍 Filter logic
   const filteredHistory = useMemo(() => {
@@ -31,8 +31,8 @@ export default function SearchItem () {
     setSearchValue('')
     if (!searchRef.current) return
     Keyboard.hide()
-    navigateWithPreload('/user/home')
-  }, [navigateWithPreload])
+    navigate('/user/home', 'auth')
+  }, [navigate])
 
   const handleSearchbarFocus = useCallback(() => {
     if (!searchRef.current) return

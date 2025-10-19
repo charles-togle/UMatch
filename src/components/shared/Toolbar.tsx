@@ -1,13 +1,7 @@
 import { useCallback } from 'react'
 import { useLocation } from 'react-router-dom'
-import { usePreloadNavigation } from '@/hooks/usePreloadNavigation'
-import {
-  IonTabBar,
-  IonTabButton,
-  IonIcon,
-  IonLabel,
-  IonLoading
-} from '@ionic/react'
+import { useNavigation } from '@/hooks/useNavigation'
+import { IonTabBar, IonTabButton, IonIcon, IonLabel } from '@ionic/react'
 
 interface ToolbarItem {
   icon: any
@@ -22,10 +16,9 @@ type ToolbarProps = {
 
 export default function Toolbar ({ toolbarItems }: ToolbarProps) {
   const location = useLocation()
-  const { navigateWithPreload, loading } = usePreloadNavigation()
-
+  const { navigate } = useNavigation()
   // ------------------ HIDE TOOLBAR ON CERTAIN ROUTES ------------------
-  const noToolbarRoutes = ['/user/search'] //add any routes you want to hide the toolbar
+  const noToolbarRoutes = ['/user/search', '/user/new-post'] //add any routes you want to hide the toolbar
   const isNoToolbar = noToolbarRoutes.includes(location.pathname)
 
   // ------------------ NAVIGATION HANDLER ------------------
@@ -37,10 +30,9 @@ export default function Toolbar ({ toolbarItems }: ToolbarProps) {
         )
         return
       }
-
-      navigateWithPreload(route)
+      navigate(route)
     },
-    [location.pathname, navigateWithPreload]
+    [location.pathname, navigate]
   )
 
   // ------------------ CONDITIONAL RENDER ------------------
@@ -62,8 +54,8 @@ export default function Toolbar ({ toolbarItems }: ToolbarProps) {
             <IonTabButton
               key={item.route ?? `tab-${idx}`}
               tab={item.route ?? `tab-${idx}`}
-              href={item.route}
               onClick={() => handleClick(item.route)}
+              href={item.route}
               style={{
                 backgroundColor: isActive ? 'white' : 'var(--color-toolbar-bg)'
               }}
@@ -87,8 +79,6 @@ export default function Toolbar ({ toolbarItems }: ToolbarProps) {
           )
         })}
       </IonTabBar>
-
-      {loading && <IonLoading isOpen message='Loading...' spinner='crescent' />}
     </>
   )
 }
