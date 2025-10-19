@@ -51,31 +51,33 @@ export default function SearchItem () {
 
   return (
     <IonContent>
-      <Header logoShown={false}>
-        <div className='flex items-center bg-[#1e2b87]'>
-          <IonSearchbar
-            ref={searchRef}
-            placeholder='Search'
-            value={searchValue}
-            onIonInput={handleInput}
-            onIonFocus={handleSearchbarFocus}
-            style={
-              {
-                ['--border-radius']: '0.5rem'
-              } as React.CSSProperties
-            }
-          />
-          <IonButton
-            fill='clear'
-            color='light'
-            className='ml-2 text-sm font-medium'
-            onClick={handleCancel}
-          >
-            CANCEL
-          </IonButton>
-        </div>
-      </Header>
-
+      <div className='fixed top-0 w-full z-999'>
+        <Header logoShown={false}>
+          <div className='flex items-center bg-[#1e2b87]'>
+            <IonSearchbar
+              ref={searchRef}
+              placeholder='Search'
+              value={searchValue}
+              onIonInput={handleInput}
+              onIonFocus={handleSearchbarFocus}
+              style={
+                {
+                  ['--border-radius']: '0.5rem'
+                } as React.CSSProperties
+              }
+            />
+            <IonButton
+              fill='clear'
+              color='light'
+              className='ml-2 text-sm font-medium'
+              onClick={handleCancel}
+            >
+              CANCEL
+            </IonButton>
+          </div>
+        </Header>
+      </div>
+      <div className='mt-14' />
       <SearchHistory
         searchHistory={filteredHistory}
         setSearchHistory={setSearchHistory}

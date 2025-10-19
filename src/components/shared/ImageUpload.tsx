@@ -7,13 +7,15 @@ interface ImageUploadSectionProps {
   image: File | null
   onImageChange: (file: File | null) => void
   className?: string
+  isRequired?: boolean
 }
 
 const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
   label = 'Reverse Image Search',
   image,
   onImageChange,
-  className = ''
+  className = '',
+  isRequired = false
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -29,8 +31,14 @@ const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
 
   return (
     <div className={`mb-6 ${className}`}>
-      <p className='font-default-font text-2xl font-bold mb-2'>{label}</p>
-
+      <p className='font-default-font text-xl mb-2 text-slate-900 font-extrabold flex items-center'>
+        {label}
+        {isRequired && (
+          <span className='text-umak-red font-default-font text-sm font-normal ml-3'>
+            (required)
+          </span>
+        )}
+      </p>
       <label
         className={`flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg h-32 cursor-pointer transition relative hover:bg-gray-50`}
       >
