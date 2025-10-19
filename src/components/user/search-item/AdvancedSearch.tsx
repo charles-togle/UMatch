@@ -6,13 +6,15 @@ import {
   IonModal,
   IonDatetime,
   IonDatetimeButton,
-  IonIcon
+  IonIcon,
+  IonButtons
 } from '@ionic/react'
 import { locationsData } from '@/configs/locationsData'
 import type { BuildingData, FloorData } from '@/configs/locationsData'
 import { searchOutline } from 'ionicons/icons'
 import CustomRadioGroup from '@/components/shared/CustomRadioGroup'
 import ImageUpload from '@/components/shared/ImageUpload'
+import './styles/advancedSearch.css'
 
 interface ItemStatusSelectorProps {
   value: 'lost' | 'found'
@@ -52,9 +54,18 @@ const LastSeenModal: React.FC<LastSeenModalProps> = ({
   date,
   handleDateChange
 }) => {
-  const modalRef = useRef<HTMLIonModalElement>(null)
-
-  const handleCloseModal = () => {
+  const datetime = useRef<null | HTMLIonDatetimeElement>(null)
+  const modalRef = useRef<null | HTMLIonModalElement>(null)
+  const reset = () => {
+    datetime.current?.reset()
+    modalRef.current?.dismiss()
+  }
+  const cancel = () => {
+    datetime.current?.cancel()
+    modalRef.current?.dismiss()
+  }
+  const confirm = () => {
+    datetime.current?.confirm()
     modalRef.current?.dismiss()
   }
 
@@ -65,12 +76,13 @@ const LastSeenModal: React.FC<LastSeenModalProps> = ({
         {/* Date & Time Picker */}
         <div className='flex flex-row justify-start space-x-5 items-center'>
           <IonDatetimeButton datetime='datetime' />
-          <IonModal keepContentsMounted={true}>
+          <IonModal keepContentsMounted={true} ref={modalRef}>
             <IonDatetime
               id='datetime'
               presentation='date-time'
               value={date}
               onIonChange={handleDateChange}
+              ref={datetime}
               formatOptions={{
                 date: {
                   month: 'short',
@@ -82,8 +94,19 @@ const LastSeenModal: React.FC<LastSeenModalProps> = ({
                   minute: '2-digit'
                 }
               }}
-            />
-            <IonButton onClick={handleCloseModal}>Enter</IonButton>
+            >
+              <IonButtons slot='buttons'>
+                <IonButton color='danger' onClick={reset}>
+                  Reset
+                </IonButton>
+                <IonButton color='primary' onClick={cancel}>
+                  Never mind
+                </IonButton>
+                <IonButton color='primary' onClick={confirm}>
+                  All Set
+                </IonButton>
+              </IonButtons>
+            </IonDatetime>
           </IonModal>
         </div>
       </div>

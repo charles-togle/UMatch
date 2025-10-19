@@ -1,8 +1,14 @@
-import { notifications, personCircle } from 'ionicons/icons'
-import { useCallback, useState, useEffect, useRef, memo } from 'react'
+import { notifications, personCircle, add } from 'ionicons/icons'
+import {
+  useCallback,
+  useState,
+  useEffect,
+  useRef,
+  memo,
+  type MouseEventHandler
+} from 'react'
 import Header from '@/components/shared/Header'
 import CatalogPost from '@/components/user/home/CatalogPost'
-import { usePreloadNavigation } from '@/hooks/usePreloadNavigation'
 import {
   IonContent,
   IonRefresher,
@@ -14,74 +20,74 @@ import {
   IonInfiniteScroll,
   IonInfiniteScrollContent,
   IonBadge,
-  IonLoading
+  IonLoading,
+  IonFab,
+  IonFabButton
 } from '@ionic/react'
 import { Keyboard } from '@capacitor/keyboard'
+import { useNavigation } from '@/hooks/useNavigation'
 
 // CatalogHeader Component
-const CatalogHeader = memo(() => {
-  const searchRef = useRef<HTMLIonSearchbarElement>(null)
-  const [unreadCount] = useState<number>(3)
-  const { navigateWithPreload } = usePreloadNavigation()
+const CatalogHeader = memo(
+  ({ handleClick }: { handleClick: MouseEventHandler }) => {
+    const searchRef = useRef<HTMLIonSearchbarElement>(null)
+    const [unreadCount] = useState<number>(3)
 
-  const handleClick = () => {
-    Keyboard.hide()
-    navigateWithPreload('/user/search')
+    return (
+      <Header logoShown={true}>
+        <IonSearchbar
+          ref={searchRef}
+          onClick={handleClick}
+          placeholder='Search'
+          showClearButton='never'
+          style={
+            {
+              ['--border-radius']: '0.5rem'
+            } as React.CSSProperties
+          }
+        />
+
+        {/* Notification Icon with Badge */}
+        <IonButtons slot='end'>
+          <IonButton className='relative'>
+            <IonIcon
+              icon={notifications}
+              slot='icon-only'
+              className='text-white text-2xl'
+            />
+            {unreadCount > 0 && (
+              <IonBadge
+                color='danger'
+                className='absolute -top-1 -right-1 text-[10px] px-1.5 py-0.5 rounded-full'
+              >
+                {unreadCount}
+              </IonBadge>
+            )}
+          </IonButton>
+        </IonButtons>
+
+        {/* Profile Icon */}
+        <IonButtons slot='end'>
+          <IonButton>
+            <IonIcon
+              icon={personCircle}
+              slot='icon-only'
+              className='text-white text-2xl'
+            />
+          </IonButton>
+        </IonButtons>
+      </Header>
+    )
   }
-
-  return (
-    <Header logoShown={true}>
-      <IonSearchbar
-        ref={searchRef}
-        onClick={handleClick}
-        placeholder='Search'
-        showClearButton='never'
-        style={
-          {
-            ['--border-radius']: '0.5rem'
-          } as React.CSSProperties
-        }
-      />
-
-      {/* Notification Icon with Badge */}
-      <IonButtons slot='end'>
-        <IonButton className='relative'>
-          <IonIcon
-            icon={notifications}
-            slot='icon-only'
-            className='text-white text-2xl'
-          />
-          {unreadCount > 0 && (
-            <IonBadge
-              color='danger'
-              className='absolute -top-1 -right-1 text-[10px] px-1.5 py-0.5 rounded-full'
-            >
-              {unreadCount}
-            </IonBadge>
-          )}
-        </IonButton>
-      </IonButtons>
-
-      {/* Profile Icon */}
-      <IonButtons slot='end'>
-        <IonButton>
-          <IonIcon
-            icon={personCircle}
-            slot='icon-only'
-            className='text-white text-2xl'
-          />
-        </IonButton>
-      </IonButtons>
-    </Header>
-  )
-})
+)
 
 // Main Catalog Component
-export default function Catalog () {
+export default function Home () {
   const [posts, setPosts] = useState<number[]>([1, 2, 3, 4, 5])
   const [hasMore, setHasMore] = useState<boolean>(true)
   const [isRefreshingContent, setRefreshingContent] = useState<boolean>(false)
   const contentRef = useRef<HTMLIonContentElement | null>(null)
+  const { navigate } = useNavigation()
 
   useEffect(() => {
     const handler = (_ev?: Event) => {
@@ -117,9 +123,18 @@ export default function Catalog () {
       target.complete()
     }, 1000)
   }
+
+  const handleSearchBarClick = () => {
+    Keyboard.hide()
+    navigate('/user/search')
+  }
+
+  const handleAddPost = () => {
+    navigate('/user/new-post')
+  }
   return (
     <>
-      <CatalogHeader />
+      <CatalogHeader handleClick={handleSearchBarClick} />
       <IonContent ref={contentRef} className='ion-padding mb-16'>
         {/* Pull to refresh */}
         <div className='pb-6'>
@@ -152,6 +167,22 @@ export default function Catalog () {
             </IonInfiniteScroll>
           )}
         </div>
+
+        <IonFab
+          slot='fixed'
+          vertical='bottom'
+          horizontal='end'
+          className='mb-17 mr-2'
+        >
+          <IonFabButton
+            style={{
+              '--background': 'var(--color-umak-blue)'
+            }}
+            onClick={handleAddPost}
+          >
+            <IonIcon icon={add}></IonIcon>
+          </IonFabButton>
+        </IonFab>
 
         {/* ✅ Show IonLoading while refreshing */}
         {isRefreshingContent && (

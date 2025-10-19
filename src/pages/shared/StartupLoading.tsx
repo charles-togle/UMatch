@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useIonRouter } from '@ionic/react'
 import { routePreloads, moduleCache } from '@/configs/routePreloads'
 import { Preferences } from '@capacitor/preferences'
+import { useNavigation } from '@/hooks/useNavigation'
 
 type Props = {
   authCheck?: () => Promise<boolean>
@@ -27,11 +27,11 @@ export default function StartupLoading ({
   authedRoute = '/user/home',
   unauthedRoute = '/auth'
 }: Props) {
-  const router = useIonRouter()
   const [done, setDone] = useState(0)
   const routes = useMemo(() => Object.keys(routePreloads), [])
   const total = routes.length
   const cancelled = useRef(false)
+  const { navigate } = useNavigation()
 
   useEffect(() => {
     cancelled.current = false
@@ -84,7 +84,7 @@ export default function StartupLoading ({
         loggedIn = await authCheck()
       } catch {}
       if (cancelled.current) return
-      router.push(loggedIn ? authedRoute : unauthedRoute, 'none')
+      navigate(loggedIn ? authedRoute : unauthedRoute, 'preload')
     })()
 
     return () => {
@@ -94,10 +94,10 @@ export default function StartupLoading ({
     authCheck,
     concurrency,
     timeoutMs,
-    router,
     routes,
     authedRoute,
-    unauthedRoute
+    unauthedRoute,
+    navigate
   ])
 
   const pct = total ? Math.round((done / total) * 100) : 0
