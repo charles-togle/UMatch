@@ -10,6 +10,7 @@ interface CustomRadioGroupProps {
   onChange: (value: string) => void
   className?: string
   direction?: 'horizontal' | 'vertical'
+  isRequired?: boolean
 }
 
 export default function CustomRadioGroup ({
@@ -18,25 +19,28 @@ export default function CustomRadioGroup ({
   options,
   onChange,
   direction = 'horizontal',
-  className = ''
+  className = '',
+  isRequired = false
 }: CustomRadioGroupProps) {
   return (
     <div className={`mb-4 ${className}`}>
-      <p className='font-default-font text-2xl font-semibold mb-2 text-black'>
+      <p className='font-default-font text-xl mb-2 text-slate-900 font-extrabold flex items-center'>
         {label}
+        {isRequired && (
+          <span className='text-umak-red font-default-font text-sm font-normal ml-3'>
+            (required)
+          </span>
+        )}
       </p>
       <div
         className={`flex ${
           direction === 'horizontal'
-            ? 'flex-row justify-between'
+            ? 'flex-col space-y-2 sm:flex-row sm:justify-between sm:gap-2 sm:space-y-0'
             : 'flex-col space-y-2'
         }`}
       >
         {options.map(opt => (
-          <label
-            key={opt.value}
-            className='flex justify-center cursor-pointer select-none'
-          >
+          <label key={opt.value} className='flex cursor-pointer select-none'>
             <input
               type='radio'
               className='appearance-none w-4 h-4 border border-gray-400 rounded-full checked:border-[5px] checked:border-[#1e2b87] transition-all'
