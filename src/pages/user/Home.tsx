@@ -1,4 +1,4 @@
-import { notifications, personCircle, add } from 'ionicons/icons'
+import { notifications, personCircle, add, navigate } from 'ionicons/icons'
 import {
   useCallback,
   useState,
