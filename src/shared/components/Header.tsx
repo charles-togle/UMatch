@@ -1,0 +1,40 @@
+import ohsoIcon from '@/shared/assets/umak-ohso.png'
+import {
+  IonHeader,
+  IonToolbar,
+  IonIcon,
+  IonButtons,
+  IonButton
+} from '@ionic/react'
+
+const toolbarStyle = {
+  ['--background']: 'var(--color-umak-blue, #1D2981)'
+} as React.CSSProperties
+
+export default function Header ({
+  children,
+  logoShown
+}: {
+  children: React.ReactNode
+  logoShown: boolean
+}) {
+  return (
+    <IonHeader className='ion-no-border'>
+      <IonToolbar style={toolbarStyle}>
+        <IonButtons slot='start'>
+          {logoShown && (
+            <IonButton>
+              <IonIcon
+                icon={ohsoIcon}
+                slot='icon-only'
+                size='large'
+                className='text-white'
+              />
+            </IonButton>
+          )}
+        </IonButtons>
+        {children}
+      </IonToolbar>
+    </IonHeader>
+  )
+}
