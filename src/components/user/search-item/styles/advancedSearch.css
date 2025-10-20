@@ -5,7 +5,3 @@ ion-datetime.md::part(calendar-day active) {
 ion-datetime::part(wheel-item active) {
   color: var(--color-umak-blue) !important;
 }
-
-ion-datetime.md::part(){
-  color: red !important;
-}

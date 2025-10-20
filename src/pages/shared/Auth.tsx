@@ -56,8 +56,12 @@ const Auth: React.FC = () => {
       navigate('/user/home', 'auth')
     } catch (error) {
       console.error('Social login failed:', error)
-      setToastMessage('Google sign-in failed.')
+      setToastMessage(
+        `Sign-in failed. Please try again. ${error} ${JSON.stringify(error)}`
+      )
       setShowToast(true)
+    } finally {
+      SocialLogin.logout({ provider: 'google' })
     }
   }, [navigate])
 
@@ -69,17 +73,18 @@ const Auth: React.FC = () => {
         throw new Error('No credential received')
       const token = credentialResponse.credential
       jwtDecode(token) // optional: keep decode for future use
-      googleLogout()
       navigate('/user/home', 'auth')
     } catch (error) {
       console.error('Google sign-in error:', error)
-      setToastMessage('Sign-in failed. Please try again.')
+      setToastMessage(
+        `Sign-in failed. Please try again. ${JSON.stringify(error)}`
+      )
       setShowToast(true)
     }
   }
 
   const handleGoogleError = () => {
-    setToastMessage('Sign-in failed. Please try again.')
+    setToastMessage('Google sign-in was unsuccessful. Please try again.')
     setShowToast(true)
   }
 

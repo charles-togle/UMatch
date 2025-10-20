@@ -1,4 +1,4 @@
-import { notifications, personCircle, add } from 'ionicons/icons'
+import { notifications, personCircle, add, navigate } from 'ionicons/icons'
 import {
   useCallback,
   useState,
@@ -32,6 +32,7 @@ const CatalogHeader = memo(
   ({ handleClick }: { handleClick: MouseEventHandler }) => {
     const searchRef = useRef<HTMLIonSearchbarElement>(null)
     const [unreadCount] = useState<number>(3)
+    const { navigate } = useNavigation()
 
     return (
       <Header logoShown={true}>
@@ -49,7 +50,10 @@ const CatalogHeader = memo(
 
         {/* Notification Icon with Badge */}
         <IonButtons slot='end'>
-          <IonButton className='relative'>
+          <IonButton
+            className='relative'
+            onClick={() => navigate('/user/notifications')}
+          >
             <IonIcon
               icon={notifications}
               slot='icon-only'

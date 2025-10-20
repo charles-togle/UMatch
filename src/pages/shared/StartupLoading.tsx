@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { routePreloads, moduleCache } from '@/configs/routePreloads'
+import { routePreloads } from '@/configs/routePreloads'
 import { Preferences } from '@capacitor/preferences'
 import { useNavigation } from '@/hooks/useNavigation'
 
@@ -47,11 +47,7 @@ export default function StartupLoading ({
           const route = routes[idx]
 
           try {
-            // Store in cache with route as key
-            if (!moduleCache.has(route)) {
-              moduleCache.set(route, routePreloads[route]())
-            }
-            await moduleCache.get(route)
+            await routePreloads[route]()
           } catch {
             // ignore errors
           } finally {
