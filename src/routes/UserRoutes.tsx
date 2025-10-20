@@ -10,6 +10,7 @@ import Settings from '@/pages/shared/Settings'
 import History from '@/pages/user/History'
 import NewPost from '@/pages/user/NewPost'
 import SearchItem from '@/pages/user/SearchItem'
+import Notifications from '@/pages/user/Notifications'
 
 const HistoryFallback = () => <div className='p-4'>Loading History…</div>
 const NewPostFallback = () => <div className='p-4'>Preparing form…</div>
@@ -64,6 +65,14 @@ export default function UserRoutes () {
           render={() => (
             <Suspense fallback={<DefaultFallback />}>
               <Settings />
+            </Suspense>
+          )}
+        />
+        <Route
+          path='/user/notifications'
+          render={() => (
+            <Suspense fallback={<DefaultFallback />}>
+              <Notifications />
             </Suspense>
           )}
         />
