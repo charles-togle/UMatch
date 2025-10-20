@@ -12,10 +12,10 @@ import NotificationItem from '@/components/user/notifications/NotificationItem'
 import type { NotificationData, ActionItem } from '@/types/notifications'
 import {
   personCircle,
-  ellipsisHorizontal,
   trashOutline,
   checkmarkOutline,
-  notifications
+  notifications,
+  ellipsisVertical
 } from 'ionicons/icons'
 
 // Extend to include id & read status for local state
@@ -113,7 +113,7 @@ export default function Notifications () {
             }
           >
             <IonIcon
-              icon={ellipsisHorizontal}
+              icon={ellipsisVertical}
               slot='icon-only'
               className='text-slate-700'
             />

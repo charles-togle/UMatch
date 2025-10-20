@@ -61,6 +61,7 @@ const Auth: React.FC = () => {
       )
       setShowToast(true)
     } finally {
+      //FOR TESTING ONLY: logout immediately after login
       SocialLogin.logout({ provider: 'google' })
     }
   }, [navigate])
@@ -80,6 +81,9 @@ const Auth: React.FC = () => {
         `Sign-in failed. Please try again. ${JSON.stringify(error)}`
       )
       setShowToast(true)
+    } finally {
+      //FOR TESTING ONLY: logout immediately after login
+      googleLogout()
     }
   }
 
