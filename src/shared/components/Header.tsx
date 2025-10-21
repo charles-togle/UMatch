@@ -1,4 +1,4 @@
-import ohsoIcon from '@/shared/assets/umak-ohso.png'
+import ohsoIcon from '@/shared/assets/umak-ohso.svg'
 import {
   IonHeader,
   IonToolbar,
