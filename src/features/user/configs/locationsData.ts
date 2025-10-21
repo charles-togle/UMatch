@@ -1,36 +1,36 @@
-interface FloorData {
+interface Level2 {
   name: string
-  subPlaces: string[]
+  level3: string[]
 }
 
-interface BuildingData {
+interface Level1 {
   name: string
-  floors: FloorData[]
+  level2: Level2[]
 }
 
-export const locationsData: BuildingData[] = [
+export const locationsData: Level1[] = [
   {
     name: 'HPSB',
-    floors: [
+    level2: [
       {
         name: '1',
-        subPlaces: ['Lobby', 'Parking Area']
+        level3: ['Lobby', 'Parking Area']
       },
       {
         name: '2',
-        subPlaces: ['Parking Area']
+        level3: ['Parking Area']
       },
       {
         name: '3',
-        subPlaces: ['Parking Area']
+        level3: ['Parking Area']
       },
       {
         name: '4',
-        subPlaces: ['Parking Area', 'Bridgeway']
+        level3: ['Parking Area', 'Bridgeway']
       },
       {
         name: '5',
-        subPlaces: [
+        level3: [
           'Room 501',
           'Room 502',
           'Room 503',
@@ -50,7 +50,7 @@ export const locationsData: BuildingData[] = [
       },
       {
         name: '6',
-        subPlaces: [
+        level3: [
           'Room 601',
           'Room 602',
           'Room 603',
@@ -70,7 +70,7 @@ export const locationsData: BuildingData[] = [
       },
       {
         name: '7',
-        subPlaces: [
+        level3: [
           'Room 701',
           'Room 702',
           'Room 703',
@@ -90,7 +90,7 @@ export const locationsData: BuildingData[] = [
       },
       {
         name: '8',
-        subPlaces: [
+        level3: [
           'Room 801',
           'Room 802',
           'Room 803',
@@ -110,7 +110,7 @@ export const locationsData: BuildingData[] = [
       },
       {
         name: '9',
-        subPlaces: [
+        level3: [
           'Room 901',
           'Room 902',
           'Room 903',
@@ -130,7 +130,7 @@ export const locationsData: BuildingData[] = [
       },
       {
         name: '10',
-        subPlaces: [
+        level3: [
           'Room 1001',
           'Room 1002',
           'Room 1003',
@@ -150,7 +150,7 @@ export const locationsData: BuildingData[] = [
       },
       {
         name: '11',
-        subPlaces: [
+        level3: [
           'Gym Area',
           'Gym Female CR',
           'Gym Male CR',
@@ -165,7 +165,7 @@ export const locationsData: BuildingData[] = [
       },
       {
         name: '12',
-        subPlaces: [
+        level3: [
           'Volleyball Court',
           'Basketball Court',
           'Volleyball Court Female CR',
@@ -178,71 +178,71 @@ export const locationsData: BuildingData[] = [
   },
   {
     name: 'Academic Building 1',
-    floors: Array.from({ length: 3 }, (_, i) => ({
+    level2: Array.from({ length: 3 }, (_, i) => ({
       name: `${i + 1}`,
-      subPlaces: ['Not Applicable']
+      level3: ['Not Applicable']
     }))
   },
   {
     name: 'Academic Building 2',
-    floors: Array.from({ length: 3 }, (_, i) => ({
+    level2: Array.from({ length: 3 }, (_, i) => ({
       name: `${i + 1}`,
-      subPlaces: ['Not Applicable']
+      level3: ['Not Applicable']
     }))
   },
   {
     name: 'Academic Building 3',
-    floors: Array.from({ length: 3 }, (_, i) => ({
+    level2: Array.from({ length: 3 }, (_, i) => ({
       name: `${i + 1}`,
-      subPlaces: ['Not Applicable']
+      level3: ['Not Applicable']
     }))
   },
   {
     name: 'Admin Building',
-    floors: [
-      { name: 'Basement', subPlaces: ['Not Applicable'] },
+    level2: [
+      { name: 'Basement', level3: ['Not Applicable'] },
       ...Array.from({ length: 5 }, (_, i) => ({
         name: `${i + 1}`,
-        subPlaces: ['Not Applicable']
+        level3: ['Not Applicable']
       }))
     ]
   },
   {
     name: 'Oval Guard side Bleachers',
-    floors: [
+    level2: [
       {
         name: 'Stadium Area',
-        subPlaces: ['Red Bleachers', 'Green Bleachers', 'Blue Bleachers']
+        level3: ['Red Bleachers', 'Green Bleachers', 'Blue Bleachers']
       }
     ]
   },
   {
     name: 'Oval Fort side Bleachers',
-    floors: [
+    level2: [
       {
         name: 'Stadium Area',
-        subPlaces: ['Red Bleachers', 'Green Bleachers', 'Blue Bleachers']
+        level3: ['Red Bleachers', 'Green Bleachers', 'Blue Bleachers']
       }
     ]
   },
   {
     name: 'Oval JP Rizal side Bleachers',
-    floors: [
+    level2: [
       {
         name: 'Stadium Area',
-        subPlaces: ['Red Bleachers', 'Green Bleachers', 'Blue Bleachers']
+        level3: ['Red Bleachers', 'Green Bleachers', 'Blue Bleachers']
       }
     ]
   },
   {
     name: 'Oval Right side Bleachers',
-    floors: [
+    level2: [
       {
         name: 'Stadium Area',
-        subPlaces: ['Red Bleachers', 'Green Bleachers', 'Blue Bleachers']
+        level3: ['Red Bleachers', 'Green Bleachers', 'Blue Bleachers']
       }
     ]
   }
 ]
 
-export type { BuildingData, FloorData }
+export type { Level1, Level2 }

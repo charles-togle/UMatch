@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { IonContent, IonIcon, IonButton } from '@ionic/react'
+import { IonContent, IonIcon, IonButton, IonSpinner } from '@ionic/react'
 import ImageUpload from '@/shared/components/ImageUpload'
 import LocationDetailsSelector from '@/features/user/components/search-item/LocationDetailsSelector'
 import LastSeenModal from '@/features/user/components/search-item/LastSeenModal'
@@ -8,6 +8,8 @@ import Header from '@/shared/components/Header'
 import { create } from 'ionicons/icons'
 import { useNavigation } from '@/shared/hooks/useNavigation'
 import { IonToast } from '@ionic/react'
+import { useUser, type User } from '@/features/auth/contexts/UserContext'
+import { postServices } from '../services/postServices'
 
 /** ---------- Helpers ---------- */
 const toISODate = (date: string, time: string, meridian: 'AM' | 'PM') => {
@@ -37,7 +39,7 @@ export default function NewPost () {
   const [anonymous, setAnonymous] = useState<'no' | 'yes'>('no')
   const [title, setTitle] = useState('')
   const [desc, setDesc] = useState('')
-  const [status, setStatus] = useState<'lost' | 'found'>('lost')
+  const [type, setType] = useState<'lost' | 'found'>('lost')
   const [date, setDate] = useState(
     ph.toLocaleDateString('en-US', {
       month: '2-digit',
@@ -49,11 +51,14 @@ export default function NewPost () {
   const [meridian, setMeridian] = useState(meridianInit as 'AM' | 'PM')
   const [image, setImage] = useState<File | null>(null)
   const [details, setDetails] = useState({
-    building: '',
-    floor: '',
-    place: ''
+    level1: '',
+    level2: '',
+    level3: ''
   })
+  const [loading, setLoading] = useState(false)
   const { navigate } = useNavigation()
+  const { getUser } = useUser()
+  const { createPost } = postServices
 
   const handleDateChange = (e: CustomEvent) => {
     const iso = e.detail.value as string
@@ -78,7 +83,15 @@ export default function NewPost () {
     navigate('/user/home')
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    setLoading(true)
+    let currentUser: User | null = null
+    try {
+      currentUser = await getUser()
+    } catch (error) {
+      console.error('Error fetching user:', error)
+      return
+    }
     // Trim text inputs
     const titleTrimmed = title.trim()
     const descTrimmed = desc.trim()
@@ -88,10 +101,10 @@ export default function NewPost () {
       !titleTrimmed ||
       !descTrimmed ||
       !image ||
-      !details.building.trim() ||
-      !details.floor.trim() ||
-      !details.place.trim() ||
-      !status ||
+      !details.level1.trim() ||
+      !details.level2.trim() ||
+      !details.level3.trim() ||
+      !type ||
       !date ||
       !time ||
       !meridian
@@ -102,22 +115,25 @@ export default function NewPost () {
     }
 
     const payload = {
-      anonymous,
+      anonymous: anonymous === 'yes',
       item: {
         title: titleTrimmed,
         desc: descTrimmed,
-        status
+        type
       },
       lastSeenISO: toISODate(date, time, meridian),
       details: {
-        building: details.building.trim(),
-        floor: details.floor.trim(),
-        place: details.place.trim()
+        level1: details.level1.trim(),
+        level2: details.level2.trim(),
+        level3: details.level3.trim()
       },
-      imageName: image.name
+      imageName: image.name,
+      image: image
     }
 
     console.log('Submitting New Post:', payload)
+    createPost(currentUser.user_id, payload)
+    setLoading(false)
     // TODO: send to API
   }
 
@@ -142,8 +158,9 @@ export default function NewPost () {
                   '--box-shadow': 'none'
                 }}
                 onClick={handleSubmit}
+                disabled={loading}
               >
-                Submit
+                {loading ? <IonSpinner name='crescent' /> : 'Submit'}
               </IonButton>
             </div>
           </div>
@@ -232,8 +249,8 @@ export default function NewPost () {
             </div>
             <div className='pr-5'>
               <ItemStatusSelector
-                value={status}
-                onChange={value => setStatus(value as 'lost' | 'found')}
+                value={type}
+                onChange={value => setType(value as 'lost' | 'found')}
                 isRequired={true}
               />
             </div>
@@ -258,8 +275,9 @@ export default function NewPost () {
                 style={{ '--background': 'var(--color-umak-blue)' }}
                 expand='full'
                 onClick={handleSubmit}
+                disabled={loading}
               >
-                Submit
+                {loading ? <IonSpinner name='crescent' /> : 'Submit'}
               </IonButton>
             </div>
           </div>

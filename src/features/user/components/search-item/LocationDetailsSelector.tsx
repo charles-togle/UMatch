@@ -1,15 +1,12 @@
 import React, { useMemo } from 'react'
 import { IonSelect, IonSelectOption } from '@ionic/react'
 import { locationsData } from '@/features/user/configs/locationsData'
-import type {
-  BuildingData,
-  FloorData
-} from '@/features/user/configs/locationsData'
+import type { Level1, Level2 } from '@/features/user/configs/locationsData'
 
 interface LocationDetails {
-  building: string
-  floor: string
-  place: string
+  level1: string
+  level2: string
+  level3: string
 }
 
 interface LocationDetailsSelectorProps {
@@ -26,27 +23,27 @@ const LocationDetailsSelector: React.FC<LocationDetailsSelectorProps> = ({
   isRequired = false
 }) => {
   // ------------------ DYNAMIC OPTIONS ------------------
-  const buildingOptions: string[] = locationsData.map(
-    (b: BuildingData) => b.name
+  const level1Options: string[] = locationsData.map(
+    (level1: Level1) => level1.name
   )
 
-  const floorOptions: string[] = useMemo(() => {
-    const building: BuildingData | undefined = locationsData.find(
-      (b: BuildingData) => b.name === details.building
+  const level2Options: string[] = useMemo(() => {
+    const level1: Level1 | undefined = locationsData.find(
+      (l1: Level1) => l1.name === details.level1
     )
-    return building ? building.floors.map((f: FloorData) => f.name) : []
-  }, [details.building])
+    return level1 ? level1.level2.map((level2: Level2) => level2.name) : []
+  }, [details.level1])
 
-  const placeOptions: string[] = useMemo(() => {
-    const building: BuildingData | undefined = locationsData.find(
-      (b: BuildingData) => b.name === details.building
+  const level3Options: string[] = useMemo(() => {
+    const level1: Level1 | undefined = locationsData.find(
+      (l1: Level1) => l1.name === details.level1
     )
-    const floor: FloorData | undefined = building?.floors.find(
-      (f: FloorData) => f.name === details.floor
+    const level2: Level2 | undefined = level1?.level2.find(
+      (l2: Level2) => l2.name === details.level2
     )
-    const subPlaces: string[] = floor ? floor.subPlaces : []
-    return subPlaces.length ? subPlaces : ['Not Applicable']
-  }, [details.building, details.floor])
+    const level3: string[] = level2 ? level2.level3 : []
+    return level3.length ? level3 : ['Not Applicable']
+  }, [details.level1, details.level2])
 
   // ------------------ UI ------------------
   return (
@@ -62,17 +59,17 @@ const LocationDetailsSelector: React.FC<LocationDetailsSelectorProps> = ({
       {/* Building / Area */}
       <IonSelect
         placeholder='Building/Area'
-        value={details.building}
+        value={details.level1}
         onIonChange={e =>
           setDetails(prev => ({
             ...prev,
-            building: e.detail.value,
-            floor: '',
-            place: ''
+            level1: e.detail.value,
+            level2: '',
+            level3: ''
           }))
         }
       >
-        {buildingOptions.map((b: string) => (
+        {level1Options.map((b: string) => (
           <IonSelectOption key={b} value={b}>
             {b}
           </IonSelectOption>
@@ -82,17 +79,17 @@ const LocationDetailsSelector: React.FC<LocationDetailsSelectorProps> = ({
       {/* Floor / Side */}
       <IonSelect
         placeholder='Floor/Side'
-        disabled={!details.building}
-        value={details.floor}
+        disabled={!details.level1}
+        value={details.level2}
         onIonChange={e =>
           setDetails(prev => ({
             ...prev,
-            floor: e.detail.value,
-            place: ''
+            level2: e.detail.value,
+            level3: ''
           }))
         }
       >
-        {floorOptions.map((f: string) => (
+        {level2Options.map((f: string) => (
           <IonSelectOption key={f} value={f}>
             {f}
           </IonSelectOption>
@@ -102,16 +99,16 @@ const LocationDetailsSelector: React.FC<LocationDetailsSelectorProps> = ({
       {/* Place / Room */}
       <IonSelect
         placeholder='Room/Place'
-        disabled={!details.floor}
-        value={details.place}
+        disabled={!details.level2}
+        value={details.level3}
         onIonChange={e =>
           setDetails(prev => ({
             ...prev,
-            place: e.detail.value
+            level3: e.detail.value
           }))
         }
       >
-        {placeOptions.map((p: string) => (
+        {level3Options.map((p: string) => (
           <IonSelectOption key={p} value={p}>
             {p}
           </IonSelectOption>

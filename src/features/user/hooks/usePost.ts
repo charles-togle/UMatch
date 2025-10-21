@@ -1,12 +1,12 @@
 import { useCallback } from 'react'
 import { useUser } from '@/features/auth/contexts/UserContext'
-import { postServices } from '@/features/auth/services/postServices'
+import { postServices } from '@/features/user/services/postServices'
 import type {
   CreatePostInput,
   UpdatePostInput,
   PostStatus,
   PostCategory
-} from '@/features/auth/services/postServices'
+} from '@/features/user/services/postServices'
 
 /**
  * Custom hook for post operations with automatic user authentication
