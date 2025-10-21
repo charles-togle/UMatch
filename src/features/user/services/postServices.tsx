@@ -114,12 +114,12 @@ export const postServices = {
       }
 
       const level2 = postData.details.level2?.trim()
-      if (level2) {
+      if (level2 && level2 !== 'Not Applicable') {
         locationPath.push({ name: level2, type: 'level2' })
       }
 
       const level3 = postData.details.level3?.trim()
-      if (level3) {
+      if (level3 && level3 !== 'Not Applicable') {
         // Use 'Room' for all room types
         locationPath.push({ name: level3, type: 'level3' })
       }

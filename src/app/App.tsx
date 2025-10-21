@@ -28,6 +28,8 @@ setupIonicReact()
 const App: React.FC = () => {
   const googleWebClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
 
+  console.log('Client ID value:', googleWebClientId)
+
   return (
     <GoogleOAuthProvider
       clientId={googleWebClientId || 'YOUR_GOOGLE_CLIENT_ID_HERE'}

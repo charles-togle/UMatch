@@ -36,6 +36,7 @@ export default function NewPost () {
   // state
   const [errorMessage, setErrorMessage] = useState('') // for error message
   const [showToast, setShowToast] = useState(false)
+  const [toastColor, setToastColor] = useState<'danger' | 'success'>('danger')
   const [anonymous, setAnonymous] = useState<'no' | 'yes'>('no')
   const [title, setTitle] = useState('')
   const [desc, setDesc] = useState('')
@@ -90,6 +91,10 @@ export default function NewPost () {
       currentUser = await getUser()
     } catch (error) {
       console.error('Error fetching user:', error)
+      setLoading(false)
+      setErrorMessage('Failed to authenticate user')
+      setToastColor('danger')
+      setShowToast(true)
       return
     }
     // Trim text inputs
@@ -110,7 +115,9 @@ export default function NewPost () {
       !meridian
     ) {
       setErrorMessage('Please fill in all required fields.')
+      setToastColor('danger')
       setShowToast(true)
+      setLoading(false)
       return
     }
 
@@ -132,9 +139,35 @@ export default function NewPost () {
     }
 
     console.log('Submitting New Post:', payload)
-    createPost(currentUser.user_id, payload)
-    setLoading(false)
-    // TODO: send to API
+
+    try {
+      const result = await createPost(currentUser.user_id, payload)
+
+      if (result.error) {
+        setErrorMessage(result.error)
+        setToastColor('danger')
+        setShowToast(true)
+        setLoading(false)
+        return
+      }
+
+      // Success
+      setErrorMessage('Post created successfully!')
+      setToastColor('success')
+      setShowToast(true)
+      setLoading(false)
+
+      // Navigate after a brief delay to show the toast
+      setTimeout(() => {
+        navigate('/user/home')
+      }, 1000)
+    } catch (error) {
+      console.error('Error creating post:', error)
+      setErrorMessage('Failed to create post')
+      setToastColor('danger')
+      setShowToast(true)
+      setLoading(false)
+    }
   }
 
   return (
@@ -288,7 +321,7 @@ export default function NewPost () {
         onDidDismiss={() => setShowToast(false)}
         message={errorMessage}
         duration={2000}
-        color='danger'
+        color={toastColor}
         position='bottom'
       />
     </IonContent>
