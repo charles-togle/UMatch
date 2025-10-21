@@ -29,7 +29,6 @@ import Header from '@/shared/components/Header'
 import { getCachedImage, cachedFileExists } from '@/shared/utils/fileUtils'
 import { listPublicPosts } from '@/features/user/data/posts'
 import type { PublicPost } from '@/features/user/types/post'
-import HomeSkeleton from '../components/skeletons/HomeSkeleton'
 
 // CatalogHeader Component
 const CatalogHeader = memo(
@@ -117,7 +116,7 @@ const CatalogHeader = memo(
 // Main Catalog Component
 export default function Home () {
   const [posts, setPosts] = useState<PublicPost[]>([])
-  const [hasMore, _setHasMore] = useState<boolean>(true)
+  const [hasMore, setHasMore] = useState<boolean>(true)
   const [isRefreshingContent, setRefreshingContent] = useState<boolean>(false)
   const contentRef = useRef<HTMLIonContentElement | null>(null)
   const [loading, setLoading] = useState<boolean>(false)
@@ -174,9 +173,6 @@ export default function Home () {
 
   const handleAddPost = () => {
     navigate('/user/new-post')
-  }
-  if (loading) {
-    return <HomeSkeleton />
   }
   return (
     <>
