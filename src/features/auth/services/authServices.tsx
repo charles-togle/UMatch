@@ -58,16 +58,12 @@ export const authServices = {
       }
 
       // Download and save profile picture if available
-      let localProfilePicturePath: string | null = null
       if (profile?.profile_picture_url) {
-        const savedFileName = await saveCachedImage(
+        await saveCachedImage(
           profile.profile_picture_url,
           'profilePicture',
           'cache/images'
         )
-        if (savedFileName) {
-          localProfilePicturePath = `cache/images/${savedFileName}`
-        }
       }
 
       const newUserRow = {

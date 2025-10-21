@@ -163,7 +163,7 @@ export const postServices = {
    * @param postId - The ID of the post to retrieve
    * @returns The post or error
    */
-  getPost: async (postId: string): Promise<PostResponse> => {
+  getPost: async (_postId: string): Promise<PostResponse> => {
     // TODO: Implement
     throw new Error('Not implemented')
   },
@@ -173,7 +173,7 @@ export const postServices = {
    * @param filters - Optional filters for posts (type, category, userId)
    * @returns Array of posts or error
    */
-  getPosts: async (filters?: {
+  getPosts: async (_filters?: {
     type?: PostType
     category?: PostCategory
     userId?: string
@@ -189,7 +189,7 @@ export const postServices = {
    * @param updateData - The post data to update (must include post_id)
    * @returns The updated post or error
    */
-  updatePost: async (updateData: UpdatePostInput): Promise<PostResponse> => {
+  updatePost: async (_updateData: UpdatePostInput): Promise<PostResponse> => {
     // TODO: Implement
     throw new Error('Not implemented')
   },
@@ -200,7 +200,7 @@ export const postServices = {
    * @returns Success type or error
    */
   deletePost: async (
-    postId: string
+    _postId: string
   ): Promise<{ success: boolean; error: string | null }> => {
     // TODO: Implement
     throw new Error('Not implemented')
@@ -211,7 +211,7 @@ export const postServices = {
    * @param userId - The ID of the user
    * @returns Array of user's posts or error
    */
-  getUserPosts: async (userId: string): Promise<PostsResponse> => {
+  getUserPosts: async (_userId: string): Promise<PostsResponse> => {
     // TODO: Implement
     throw new Error('Not implemented')
   },
@@ -223,8 +223,8 @@ export const postServices = {
    * @returns Array of matching posts or error
    */
   searchPosts: async (
-    searchTerm: string,
-    filters?: {
+    _searchTerm: string,
+    _filters?: {
       type?: PostType
       category?: PostCategory
       limit?: number

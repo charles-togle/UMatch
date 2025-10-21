@@ -4,7 +4,7 @@ import { postServices } from '@/features/user/services/postServices'
 import type {
   CreatePostInput,
   UpdatePostInput,
-  PostStatus,
+  PostType,
   PostCategory
 } from '@/features/user/services/postServices'
 
@@ -135,7 +135,7 @@ export function usePost () {
    */
   const getPosts = useCallback(
     async (filters?: {
-      status?: PostStatus
+      status?: PostType
       category?: PostCategory
       userId?: string
       limit?: number
@@ -157,7 +157,7 @@ export function usePost () {
     async (
       searchTerm: string,
       filters?: {
-        status?: PostStatus
+        status?: PostType
         category?: PostCategory
         limit?: number
       }

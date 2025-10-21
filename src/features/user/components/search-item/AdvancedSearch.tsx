@@ -47,9 +47,9 @@ export default function AdvancedSearch () {
   const [time, setTime] = useState(`${hours}:${minutes}`)
   const [meridian, setMeridian] = useState(meridianVal as 'AM' | 'PM')
   const [details, setDetails] = useState({
-    building: '',
-    floor: '',
-    place: ''
+    level1: '',
+    level2: '',
+    level3: ''
   })
 
   const [image, setImage] = useState<File | null>(null)
