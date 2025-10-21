@@ -5,8 +5,7 @@ import {
   IonImg,
   IonText,
   IonIcon,
-  useIonViewDidEnter,
-  useIonViewDidLeave
+  IonSpinner
 } from '@ionic/react'
 import { GoogleLogin, googleLogout } from '@react-oauth/google'
 import type { CredentialResponse } from '@react-oauth/google'
@@ -19,14 +18,44 @@ import AdminBuilding from '@/shared/assets/umak-admin-building.jpg'
 import UmakSeal from '@/shared/assets/umak-seal.png'
 import OhsoLogo from '@/shared/assets/umak-ohso.png'
 import '@/features/auth/styles/auth.css'
+import { authServices } from '../services/authServices'
+import type { GoogleLoginResponse } from '@capgo/capacitor-social-login'
+import { useUser } from '@/features/auth/contexts/UserContext'
+import { supabase } from '@/shared/lib/supabase'
+type GoogleResponseOnline = Awaited<ReturnType<typeof SocialLogin.login>>
+
+interface GoogleJwtPayload {
+  iss: string
+  nbf: number
+  aud: string
+  sub: string
+  email: string
+  email_verified: boolean
+  name: string
+  picture: string
+  given_name: string
+  family_name: string
+  iat: number
+  exp: number
+  jti?: string
+}
+const toSentenceCaseFull = (str: string) => {
+  return str
+    .toLowerCase()
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ')
+}
 
 const Auth: React.FC = () => {
   const [showToast, setShowToast] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
   const { navigate } = useNavigation()
   const isWeb = Capacitor.getPlatform() === 'web'
+  const [googleLoading, setGoogleLoading] = useState(false)
+  const [socialLoginLoading, setSocialLoginLoading] = useState(false)
+  const { clearUser, refreshUser } = useUser()
 
-  //preloads images
   useEffect(() => {
     const images = [AdminBuilding, UmakSeal, OhsoLogo]
     images.forEach(src => {
@@ -35,25 +64,48 @@ const Auth: React.FC = () => {
     })
   }, [])
 
-  useIonViewDidLeave(() => {
-    console.log('Ionic says: left the page')
-  })
-
-  useIonViewDidEnter(() => {
-    console.log('Ionic says: entered the page')
-  })
+  useEffect(() => {
+    const logout = async () => {
+      SocialLogin.logout({ provider: 'google' })
+      googleLogout()
+      clearUser()
+      supabase.auth.signOut()
+    }
+    logout()
+  }, [])
 
   const handleSocialLogin = useCallback(async () => {
     try {
-      const googleMobileClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
+      const googleWebClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID ?? ''
       await SocialLogin.initialize({
-        google: { webClientId: googleMobileClientId || '', mode: 'online' }
+        google: { webClientId: googleWebClientId, mode: 'online' }
       })
-      await SocialLogin.login({
+      setSocialLoginLoading(true)
+      const res: GoogleResponseOnline = await SocialLogin.login({
         provider: 'google',
         options: { scopes: ['profile', 'email'] }
       })
-      navigate('/user/home', 'auth')
+      if (res.provider === 'google') {
+        const result = res.result as GoogleLoginResponse
+        if ('profile' in result && 'idToken' in result) {
+          const { name, email, imageUrl } = result.profile
+
+          const { user, error } = await authServices.GetOrRegisterAccount({
+            googleIdToken: result.idToken || '',
+            email: email || '',
+            user_name: toSentenceCaseFull(name || 'New User'),
+            profile_picture_url: imageUrl || '',
+            user_type: 'User'
+          })
+          if (error || !user) {
+            console.log(error)
+            throw new Error(error || 'Authentication failed')
+          }
+          await refreshUser(user?.user_id || '')
+          navigate('/user/home', 'auth')
+          setSocialLoginLoading(false)
+        }
+      }
     } catch (error) {
       console.error('Social login failed:', error)
       setToastMessage(
@@ -61,8 +113,7 @@ const Auth: React.FC = () => {
       )
       setShowToast(true)
     } finally {
-      //FOR TESTING ONLY: logout immediately after login
-      SocialLogin.logout({ provider: 'google' })
+      setSocialLoginLoading(false)
     }
   }, [navigate])
 
@@ -72,9 +123,24 @@ const Auth: React.FC = () => {
     try {
       if (!credentialResponse.credential)
         throw new Error('No credential received')
+      setGoogleLoading(true)
       const token = credentialResponse.credential
-      jwtDecode(token) // optional: keep decode for future use
+      const googleResponse = jwtDecode<GoogleJwtPayload>(token)
+      const { user, error } = await authServices.GetOrRegisterAccount({
+        googleIdToken: token,
+        email: googleResponse.email,
+        user_name: toSentenceCaseFull(googleResponse.name),
+        profile_picture_url: googleResponse.picture,
+        user_type: 'User'
+      })
+      await refreshUser(user?.user_id || '')
       navigate('/user/home', 'auth')
+      setGoogleLoading(false)
+
+      if (error || !user) {
+        console.log(error)
+        throw new Error(error || 'Authentication failed')
+      }
     } catch (error) {
       console.error('Google sign-in error:', error)
       setToastMessage(
@@ -82,21 +148,16 @@ const Auth: React.FC = () => {
       )
       setShowToast(true)
     } finally {
-      //FOR TESTING ONLY: logout immediately after login
-      googleLogout()
+      setGoogleLoading(false)
     }
   }
-
   const handleGoogleError = () => {
     setToastMessage('Google sign-in was unsuccessful. Please try again.')
     setShowToast(true)
   }
-
   return (
     <IonPage>
-      {/* 1) PARENT CONTAINER (no padding) */}
       <div className='flex flex-col h-screen w-full relative overflow-hidden'>
-        {/* 2) CHILD #1 — TOP (50% height) : background image with gradient */}
         <div className='relative h-2/3 overflow-hidden'>
           <img
             src={AdminBuilding}
@@ -105,12 +166,11 @@ const Auth: React.FC = () => {
           />
           <div className='absolute inset-0 bg-gradient-to-b from-umak-blue/90 to-black/60' />
         </div>
-
-        {/* 2) CHILD #2 — BOTTOM (50% height) : content container */}
+        {/*  CHILD #2 — BOTTOM (50% height) : content container */}
         <div className='h-1/2 bottom-0 bg-white absolute w-full rounded-tr-4xl rounded-tl-4xl bg-gradient-to-b from-white/90 to-umak-blue/15'>
-          {/* 4) FLEX + JUSTIFY-EVENLY for three sections */}
+          {/*  FLEX + JUSTIFY-EVENLY for three sections */}
           <div className='h-full flex flex-col justify-evenly mx-10'>
-            {/* 3a) PICTURES CONTAINER */}
+            {/* PICTURES CONTAINER */}
             <div className='flex items-center justify-center gap-6'>
               <div className='flex justify-center items-center'>
                 <IonImg
@@ -127,7 +187,7 @@ const Auth: React.FC = () => {
                 />
               </div>
             </div>
-            {/* 3b) TEXT CONTAINER */}
+            {/* TEXT CONTAINER */}
             <div className='text-center'>
               <p className='font-default-default text-5xl font-bold tracking-tight text-umak-blue'>
                 UMatch
@@ -141,11 +201,16 @@ const Auth: React.FC = () => {
               </IonText>
             </div>
 
-            {/* 3c) BUTTONS CONTAINER */}
+            {/* BUTTONS CONTAINER */}
             <div className='w-full flex justify-center'>
               {isWeb ? (
                 <div className='w-full flex justify-center'>
-                  <div className='w-full google-login-button'>
+                  <div className='w-full google-login-button relative'>
+                    {googleLoading && (
+                      <div className='absolute inset-0 flex items-center justify-center bg-white/80 z-10'>
+                        <IonSpinner name='crescent' color='primary' />
+                      </div>
+                    )}
                     <GoogleLogin
                       onSuccess={handleGoogleSuccess}
                       onError={handleGoogleError}
@@ -161,11 +226,18 @@ const Auth: React.FC = () => {
                 <button
                   className='w-full flex justify-center items-center bg-umak-blue! text-white font-default-font! p-4! rounded-lg!'
                   onClick={handleSocialLogin}
+                  disabled={socialLoginLoading}
                 >
-                  <p className='mr-3 font-default-font!'>
-                    SIGN IN WITH UMAK EMAIL
-                  </p>
-                  <IonIcon icon={arrowForward} slot='end' />
+                  {socialLoginLoading ? (
+                    <IonSpinner name='crescent' />
+                  ) : (
+                    <>
+                      <p className='mr-3 font-default-font!'>
+                        SIGN IN WITH UMAK EMAIL
+                      </p>
+                      <IonIcon icon={arrowForward} slot='end' />
+                    </>
+                  )}
                 </button>
               )}
             </div>
@@ -176,7 +248,7 @@ const Auth: React.FC = () => {
           isOpen={showToast}
           onDidDismiss={() => setShowToast(false)}
           message={toastMessage}
-          duration={2500}
+          duration={2000}
           position='top'
           color='danger'
         />

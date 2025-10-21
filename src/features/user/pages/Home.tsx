@@ -7,7 +7,6 @@ import {
   memo,
   type MouseEventHandler
 } from 'react'
-import Header from '@/shared/components/Header'
 import CatalogPost from '@/features/user/components/home/CatalogPost'
 import {
   IonContent,
@@ -26,6 +25,8 @@ import {
 } from '@ionic/react'
 import { Keyboard } from '@capacitor/keyboard'
 import { useNavigation } from '@/shared/hooks/useNavigation'
+import Header from '@/shared/components/Header'
+import { getCachedImage, cachedFileExists } from '@/shared/utils/fileUtils'
 
 // CatalogHeader Component
 const CatalogHeader = memo(
@@ -33,9 +34,26 @@ const CatalogHeader = memo(
     const searchRef = useRef<HTMLIonSearchbarElement>(null)
     const [unreadCount] = useState<number>(3)
     const { navigate } = useNavigation()
+    const [profilePicUrl, setProfilePicUrl] = useState<string | null>(null)
     const handleNotificationClick = useCallback(() => {
       navigate('/user/notifications')
     }, [navigate])
+    const profilePicRef = useRef<string | null>(null)
+    useEffect(() => {
+      const getProfilePicture = async () => {
+        if (profilePicRef.current) return
+        const exists = await cachedFileExists(
+          'profilePicture.jpg',
+          'cache/images'
+        )
+        if (exists) {
+          const url = await getCachedImage('profilePicture.jpg', 'cache/images')
+          profilePicRef.current = url
+          setProfilePicUrl(url)
+        }
+      }
+      getProfilePicture()
+    }, [])
 
     return (
       <Header logoShown={true}>
@@ -73,11 +91,19 @@ const CatalogHeader = memo(
         {/* Profile Icon */}
         <IonButtons slot='end'>
           <IonButton>
-            <IonIcon
-              icon={personCircle}
-              slot='icon-only'
-              className='text-white text-2xl'
-            />
+            {profilePicUrl ? (
+              <img
+                src={profilePicUrl}
+                alt='Profile'
+                className='w-8 h-8 rounded-full object-cover'
+              />
+            ) : (
+              <IonIcon
+                icon={personCircle}
+                slot='icon-only'
+                className='text-white text-2xl'
+              />
+            )}
           </IonButton>
         </IonButtons>
       </Header>

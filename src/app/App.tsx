@@ -4,6 +4,7 @@ import { IonReactRouter } from '@ionic/react-router'
 import { Route, Redirect } from 'react-router-dom'
 import { setupIonicReact } from '@ionic/react'
 import { GoogleOAuthProvider } from '@react-oauth/google'
+import { UserProvider } from '@/features/auth/contexts/UserContext'
 import ProtectedRoute from '@/shared/components/ProtectedRoute'
 import UserRoutes from './routes/UserRoutes'
 import Auth from '@/features/auth/pages/Auth'
@@ -31,24 +32,26 @@ const App: React.FC = () => {
     <GoogleOAuthProvider
       clientId={googleWebClientId || 'YOUR_GOOGLE_CLIENT_ID_HERE'}
     >
-      <IonApp>
-        <IonReactRouter>
-          <IonRouterOutlet>
-            <Route path='/test' render={() => <HomeSkeleton />} />
-            <Route exact path='/' render={() => <Redirect to='/preload' />} />
-            <Route path='/preload' render={() => <StartupLoading />} />
-            <Route path='/auth' render={() => <Auth />} />
-            <Route
-              path='/user/*'
-              render={() => (
-                <ProtectedRoute allowedRoles={['user']}>
-                  <UserRoutes />
-                </ProtectedRoute>
-              )}
-            />
-          </IonRouterOutlet>
-        </IonReactRouter>
-      </IonApp>
+      <UserProvider>
+        <IonApp>
+          <IonReactRouter>
+            <IonRouterOutlet>
+              <Route path='/test' render={() => <HomeSkeleton />} />
+              <Route exact path='/' render={() => <Redirect to='/preload' />} />
+              <Route path='/preload' render={() => <StartupLoading />} />
+              <Route path='/auth' render={() => <Auth />} />
+              <Route
+                path='/user/*'
+                render={() => (
+                  <ProtectedRoute allowedRoles={['user']}>
+                    <UserRoutes />
+                  </ProtectedRoute>
+                )}
+              />
+            </IonRouterOutlet>
+          </IonReactRouter>
+        </IonApp>
+      </UserProvider>
     </GoogleOAuthProvider>
   )
 }

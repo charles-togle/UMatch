@@ -1,7 +1,10 @@
 import React, { useMemo } from 'react'
 import { IonSelect, IonSelectOption } from '@ionic/react'
 import { locationsData } from '@/features/user/configs/locationsData'
-import type { BuildingData, FloorData } from '@/features/user/configs/locationsData'
+import type {
+  BuildingData,
+  FloorData
+} from '@/features/user/configs/locationsData'
 
 interface LocationDetails {
   building: string
@@ -98,7 +101,7 @@ const LocationDetailsSelector: React.FC<LocationDetailsSelectorProps> = ({
 
       {/* Place / Room */}
       <IonSelect
-        placeholder='Place/Room'
+        placeholder='Room/Place'
         disabled={!details.floor}
         value={details.place}
         onIonChange={e =>
