@@ -23,7 +23,7 @@ import '@ionic/react/css/flex-utils.css'
 import '@ionic/react/css/display.css'
 import '@/app/styles/tailwind.css'
 
-setupIonicReact()
+setupIonicReact({ mode: 'md' })
 
 const App: React.FC = () => {
   const googleWebClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID

@@ -1,4 +1,5 @@
-package com.softeng.pbl.app;
+package com.umatch.app;
+
 import ee.forgr.capacitor.social.login.GoogleProvider;
 import ee.forgr.capacitor.social.login.SocialLoginPlugin;
 import ee.forgr.capacitor.social.login.ModifiedMainActivityForSocialLoginPlugin;

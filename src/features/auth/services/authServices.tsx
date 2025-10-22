@@ -3,6 +3,7 @@ import { SocialLogin } from '@capgo/capacitor-social-login'
 import { supabase } from '@/shared/lib/supabase'
 import type { User, UserType } from '@/features/auth/contexts/UserContext'
 import { saveCachedImage } from '@/shared/utils/fileUtils'
+import { makeThumb } from '@/shared/utils/imageUtils'
 
 export interface GoogleProfile {
   googleIdToken: string
@@ -51,22 +52,48 @@ export const authServices = {
         }
       }
 
+      // Optional: update role metadata
       if (profile?.user_type && profile.user_type !== 'User') {
         await supabase.auth.updateUser({
           data: { app_metadata: { role: profile.user_type } }
         })
       }
 
-      // Download and save profile picture if available
-      let localProfilePicturePath: string | null = null
+      let uploadedProfileUrl: string | null = null
       if (profile?.profile_picture_url) {
-        const savedFileName = await saveCachedImage(
-          profile.profile_picture_url,
-          'profilePicture',
-          'cache/images'
-        )
-        if (savedFileName) {
-          localProfilePicturePath = `cache/images/${savedFileName}`
+        try {
+          const userId = supabaseUser.id
+          const res = await fetch(profile.profile_picture_url)
+          const srcBlob = await res.blob()
+
+          const basePath = `users/${userId}/${Date.now()}`
+          const file = new File([srcBlob], 'profile', {
+            type: srcBlob.type || 'image/jpeg'
+          })
+          const thumbBlob = await makeThumb(file)
+
+          const bucket = supabase.storage.from('profilePictures')
+          const thumbPath = `${basePath}_thumb.webp`
+          const { error: upErr } = await bucket.upload(thumbPath, thumbBlob, {
+            contentType: 'image/webp',
+            upsert: true
+          })
+          if (upErr) throw upErr
+          const { data: pub } = bucket.getPublicUrl(thumbPath)
+          uploadedProfileUrl = pub.publicUrl || null
+
+          if (uploadedProfileUrl) {
+            await saveCachedImage(
+              uploadedProfileUrl,
+              'profilePicture',
+              'cache/images'
+            )
+          }
+        } catch (e) {
+          console.warn(
+            '[authServices] Failed to mirror Google profile image:',
+            e
+          )
         }
       }
 
@@ -75,10 +102,7 @@ export const authServices = {
         user_name:
           profile?.user_name ?? supabaseUser.user_metadata?.name ?? 'New User',
         email: authoritativeEmail,
-        profile_picture_url:
-          profile?.profile_picture_url ??
-          supabaseUser.user_metadata?.avatar_url ??
-          null,
+        profile_picture_url: uploadedProfileUrl,
         user_type: profile?.user_type ?? 'User',
         last_login: new Date().toISOString()
       }

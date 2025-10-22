@@ -53,3 +53,4 @@ capacitor-build.log
 # Carthage and Carthage-built binaries
 Carthage
 *.xcframework.zip
+/src/prompts

@@ -6,6 +6,7 @@ import {
   IonButtons,
   IonButton
 } from '@ionic/react'
+import './styles/lastSeenModal.css'
 
 interface LastSeenModalProps {
   date?: string

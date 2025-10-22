@@ -36,8 +36,10 @@ export interface CreatePostInput {
     desc: string
     type: PostType
   }
+  // Required: selected category from UI
+  category: PostCategory
   lastSeenISO: string
-  details: {
+  locationDetails: {
     level1: string
     level2: string
     level3: string
@@ -64,10 +66,10 @@ interface PostResponse {
   error: string | null
 }
 
-interface PostsResponse {
-  posts: Post[] | null
-  error: string | null
-}
+// interface PostsResponse {
+//   posts: Post[] | null
+//   error: string | null
+// }
 
 export const postServices = {
   /**
@@ -90,7 +92,6 @@ export const postServices = {
       const basePath = `posts/${userId}/${Date.now()}`
       const displayPath = `${basePath}.webp`
 
-      console.log(displayBlob.size, displayBlob.type)
       const displayUrl = await uploadAndGetPublicUrl(
         displayPath,
         displayBlob,
@@ -108,17 +109,17 @@ export const postServices = {
         type: 'level1' | 'level2' | 'level3'
       }> = []
 
-      const level1 = postData.details.level1?.trim()
+      const level1 = postData.locationDetails.level1?.trim()
       if (level1) {
         locationPath.push({ name: level1, type: 'level1' })
       }
 
-      const level2 = postData.details.level2?.trim()
+      const level2 = postData.locationDetails.level2?.trim()
       if (level2 && level2 !== 'Not Applicable') {
         locationPath.push({ name: level2, type: 'level2' })
       }
 
-      const level3 = postData.details.level3?.trim()
+      const level3 = postData.locationDetails.level3?.trim()
       if (level3 && level3 !== 'Not Applicable') {
         // Use 'Room' for all room types
         locationPath.push({ name: level3, type: 'level3' })
@@ -139,7 +140,7 @@ export const postServices = {
           p_last_seen_minutes: lastSeenMinutes,
           p_location_path: locationPath,
           p_item_status: 'unclaimed',
-          p_category: null, // TODO: Add category if needed
+          p_category: postData.category,
           p_post_status: 'pending',
           p_is_anonymous: postData.anonymous
         }
@@ -156,65 +157,65 @@ export const postServices = {
       console.error('[postServices] Exception creating post:', error)
       return { post: null, error: 'Failed to create post' }
     }
-  },
+  }
 
   /**
    * Get a single post by ID
    * @param postId - The ID of the post to retrieve
    * @returns The post or error
    */
-  getPost: async (postId: string): Promise<PostResponse> => {
-    // TODO: Implement
-    throw new Error('Not implemented')
-  },
+  // getPost: async (postId: string): Promise<PostResponse> => {
+  //   // TODO: Implement
+  //   throw new Error('Not implemented')
+  // },
 
   /**
    * Get all posts with optional filters
    * @param filters - Optional filters for posts (type, category, userId)
    * @returns Array of posts or error
    */
-  getPosts: async (filters?: {
-    type?: PostType
-    category?: PostCategory
-    userId?: string
-    limit?: number
-    offset?: number
-  }): Promise<PostsResponse> => {
-    // TODO: Implement
-    throw new Error('Not implemented')
-  },
+  // getPosts: async (filters?: {
+  //   type?: PostType
+  //   category?: PostCategory
+  //   userId?: string
+  //   limit?: number
+  //   offset?: number
+  // }): Promise<PostsResponse> => {
+  //   // TODO: Implement
+  //   throw new Error('Not implemented')
+  // },
 
   /**
    * Update an existing post
    * @param updateData - The post data to update (must include post_id)
    * @returns The updated post or error
    */
-  updatePost: async (updateData: UpdatePostInput): Promise<PostResponse> => {
-    // TODO: Implement
-    throw new Error('Not implemented')
-  },
+  // updatePost: async (updateData: UpdatePostInput): Promise<PostResponse> => {
+  //   // TODO: Implement
+  //   throw new Error('Not implemented')
+  // },
 
   /**
    * Delete a post by ID
    * @param postId - The ID of the post to delete
    * @returns Success type or error
    */
-  deletePost: async (
-    postId: string
-  ): Promise<{ success: boolean; error: string | null }> => {
-    // TODO: Implement
-    throw new Error('Not implemented')
-  },
+  // deletePost: async (
+  //   postId: string
+  // ): Promise<{ success: boolean; error: string | null }> => {
+  //   // TODO: Implement
+  //   throw new Error('Not implemented')
+  // },
 
   /**
    * Get posts by user ID
    * @param userId - The ID of the user
    * @returns Array of user's posts or error
    */
-  getUserPosts: async (userId: string): Promise<PostsResponse> => {
-    // TODO: Implement
-    throw new Error('Not implemented')
-  },
+  // getUserPosts: async (userId: string): Promise<PostsResponse> => {
+  //   // TODO: Implement
+  //   throw new Error('Not implemented')
+  // },
 
   /**
    * Search posts by item name or description
@@ -222,15 +223,15 @@ export const postServices = {
    * @param filters - Optional additional filters
    * @returns Array of matching posts or error
    */
-  searchPosts: async (
-    searchTerm: string,
-    filters?: {
-      type?: PostType
-      category?: PostCategory
-      limit?: number
-    }
-  ): Promise<PostsResponse> => {
-    // TODO: Implement
-    throw new Error('Not implemented')
-  }
+  // searchPosts: async (
+  //   searchTerm: string,
+  //   filters?: {
+  //     type?: PostType
+  //     category?: PostCategory
+  //     limit?: number
+  //   }
+  // ): Promise<PostsResponse> => {
+  //   // TODO: Implement
+  //   throw new Error('Not implemented')
+  // }
 }

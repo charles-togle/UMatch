@@ -36,6 +36,13 @@ export async function makeDisplay (file: File) {
   return displayBlob
 }
 
+export async function makeThumb (file: File) {
+  const bmp = await loadBitmap(file)
+  const thumbCanvas = drawToCanvas(bmp, 400) // long edge 400px
+  const thumbBlob = await canvasToBlobWebP(thumbCanvas, 0.8)
+  return thumbBlob
+}
+
 export async function makeDisplayAndThumb (file: File) {
   const bmp = await loadBitmap(file)
 

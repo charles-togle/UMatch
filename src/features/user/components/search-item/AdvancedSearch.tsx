@@ -1,11 +1,10 @@
 import { useState } from 'react'
 import { IonButton, IonIcon } from '@ionic/react'
 import { searchOutline } from 'ionicons/icons'
-import ItemStatusSelector from './ItemStatusSelector'
-import LastSeenModal from './LastSeenModal'
-import LocationDetailsSelector from './LocationDetailsSelector'
+import ItemStatusSelector from '../shared/ItemStatusSelector'
+import LastSeenModal from '../shared/LastSeenModal'
+import LocationDetailsSelector from '../shared/LocationDetailsSelector'
 import ImageUpload from '@/shared/components/ImageUpload'
-import './styles/advancedSearch.css'
 
 const toISODate = (date: string, time: string, meridian: 'AM' | 'PM') => {
   const [month, day, year] = date.split('/')
@@ -46,10 +45,10 @@ export default function AdvancedSearch () {
   const [status, setStatus] = useState<'lost' | 'found'>('lost')
   const [time, setTime] = useState(`${hours}:${minutes}`)
   const [meridian, setMeridian] = useState(meridianVal as 'AM' | 'PM')
-  const [details, setDetails] = useState({
-    building: '',
-    floor: '',
-    place: ''
+  const [locationDetails, setLocationDetails] = useState({
+    level1: '',
+    level2: '',
+    level3: ''
   })
 
   const [image, setImage] = useState<File | null>(null)
@@ -84,7 +83,7 @@ export default function AdvancedSearch () {
     const searchResult = {
       status,
       lastSeen: { date, time, meridian },
-      details,
+      locationDetails,
       image: image ? image.name : null
     }
     setResult(searchResult)
@@ -114,7 +113,10 @@ export default function AdvancedSearch () {
           date={toISODate(date, time, meridian)}
           handleDateChange={handleDateChange}
         />
-        <LocationDetailsSelector details={details} setDetails={setDetails} />
+        <LocationDetailsSelector
+          locationDetails={locationDetails}
+          setLocationDetails={setLocationDetails}
+        />
 
         {/* IMAGE UPLOAD */}
         <ImageUpload

@@ -53,7 +53,6 @@ export async function saveCachedImage (
   folder: string = 'cache/images'
 ): Promise<string | null> {
   try {
-    console.log(`Downloading image from: ${imageUrl}`)
     const response = await fetch(imageUrl)
     if (!response.ok) {
       console.error('Failed to fetch image:', response.statusText)
@@ -118,7 +117,6 @@ export async function saveCachedImage (
       directory: Directory.Data
     })
 
-    console.log(`Image saved as ${fullFileName} in ${folder}`)
     return fullFileName
   } catch (error) {
     console.error('Error saving cached image:', error)

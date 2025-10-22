@@ -116,7 +116,7 @@ const CatalogPost: React.FC<CatalogPostProps> = ({
             return (
               <IonChip
                 key={i}
-                className='bg-blue-900 text-white font-default-font px-2 '
+                className='bg-blue-900 text-white font-default-font px-6 '
                 outline={false}
                 color='primary'
               >

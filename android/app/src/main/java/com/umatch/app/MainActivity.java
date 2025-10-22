@@ -9,8 +9,6 @@ import android.content.Intent;
 import android.util.Log;
 import com.getcapacitor.BridgeActivity;
 
-import com.getcapacitor.BridgeActivity;
-
 // ModifiedMainActivityForSocialLoginPlugin is VERY VERY important !!!!!!
 public class MainActivity extends BridgeActivity implements ModifiedMainActivityForSocialLoginPlugin {
 
@@ -37,3 +35,4 @@ public class MainActivity extends BridgeActivity implements ModifiedMainActivity
       @Override
       public void IHaveModifiedTheMainActivityForTheUseWithSocialLoginPlugin() {}
 }
+

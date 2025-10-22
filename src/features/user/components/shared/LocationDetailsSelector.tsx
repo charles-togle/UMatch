@@ -10,15 +10,15 @@ interface LocationDetails {
 }
 
 interface LocationDetailsSelectorProps {
-  details: LocationDetails
-  setDetails: React.Dispatch<React.SetStateAction<LocationDetails>>
+  locationDetails: LocationDetails
+  setLocationDetails: React.Dispatch<React.SetStateAction<LocationDetails>>
   className?: string
   isRequired?: boolean
 }
 
 const LocationDetailsSelector: React.FC<LocationDetailsSelectorProps> = ({
-  details,
-  setDetails,
+  locationDetails,
+  setLocationDetails,
   className = '',
   isRequired = false
 }) => {
@@ -29,21 +29,21 @@ const LocationDetailsSelector: React.FC<LocationDetailsSelectorProps> = ({
 
   const level2Options: string[] = useMemo(() => {
     const level1: Level1 | undefined = locationsData.find(
-      (l1: Level1) => l1.name === details.level1
+      (l1: Level1) => l1.name === locationDetails.level1
     )
     return level1 ? level1.level2.map((level2: Level2) => level2.name) : []
-  }, [details.level1])
+  }, [locationDetails.level1])
 
   const level3Options: string[] = useMemo(() => {
     const level1: Level1 | undefined = locationsData.find(
-      (l1: Level1) => l1.name === details.level1
+      (l1: Level1) => l1.name === locationDetails.level1
     )
     const level2: Level2 | undefined = level1?.level2.find(
-      (l2: Level2) => l2.name === details.level2
+      (l2: Level2) => l2.name === locationDetails.level2
     )
     const level3: string[] = level2 ? level2.level3 : []
     return level3.length ? level3 : ['Not Applicable']
-  }, [details.level1, details.level2])
+  }, [locationDetails.level1, locationDetails.level2])
 
   // ------------------ UI ------------------
   return (
@@ -51,7 +51,7 @@ const LocationDetailsSelector: React.FC<LocationDetailsSelectorProps> = ({
       <p className='font-default-font text-xl mb-2 text-slate-900 font-extrabold flex items-center'>
         Details
         {isRequired && (
-          <span className='text-umak-red font-default-font text-sm font-normal ml-3'>
+          <span className='text-umak-red font-default-font text-sm font-normal ml-2'>
             (required)
           </span>
         )}
@@ -59,9 +59,9 @@ const LocationDetailsSelector: React.FC<LocationDetailsSelectorProps> = ({
       {/* Building / Area */}
       <IonSelect
         placeholder='Building/Area'
-        value={details.level1}
+        value={locationDetails.level1}
         onIonChange={e =>
-          setDetails(prev => ({
+          setLocationDetails(prev => ({
             ...prev,
             level1: e.detail.value,
             level2: '',
@@ -79,10 +79,10 @@ const LocationDetailsSelector: React.FC<LocationDetailsSelectorProps> = ({
       {/* Floor / Side */}
       <IonSelect
         placeholder='Floor/Side'
-        disabled={!details.level1}
-        value={details.level2}
+        disabled={!locationDetails.level1}
+        value={locationDetails.level2}
         onIonChange={e =>
-          setDetails(prev => ({
+          setLocationDetails(prev => ({
             ...prev,
             level2: e.detail.value,
             level3: ''
@@ -99,10 +99,10 @@ const LocationDetailsSelector: React.FC<LocationDetailsSelectorProps> = ({
       {/* Place / Room */}
       <IonSelect
         placeholder='Room/Place'
-        disabled={!details.level2}
-        value={details.level3}
+        disabled={!locationDetails.level2}
+        value={locationDetails.level3}
         onIonChange={e =>
-          setDetails(prev => ({
+          setLocationDetails(prev => ({
             ...prev,
             level3: e.detail.value
           }))

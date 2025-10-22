@@ -1,15 +1,17 @@
 import { useState } from 'react'
 import { IonContent, IonIcon, IonButton, IonSpinner } from '@ionic/react'
 import ImageUpload from '@/shared/components/ImageUpload'
-import LocationDetailsSelector from '@/features/user/components/search-item/LocationDetailsSelector'
-import LastSeenModal from '@/features/user/components/search-item/LastSeenModal'
-import ItemStatusSelector from '@/features/user/components/search-item/ItemStatusSelector'
+import LocationDetailsSelector from '@/features/user/components/shared/LocationDetailsSelector'
+import LastSeenModal from '@/features/user/components/shared/LastSeenModal'
+import ItemStatusSelector from '@/features/user/components/shared/ItemStatusSelector'
 import Header from '@/shared/components/Header'
 import { create } from 'ionicons/icons'
 import { useNavigation } from '@/shared/hooks/useNavigation'
 import { IonToast } from '@ionic/react'
 import { useUser, type User } from '@/features/auth/contexts/UserContext'
 import { postServices } from '../services/postServices'
+import CategorySelection from '@/features/user/components/shared/CategorySelection'
+import CategorySelectionTrigger from '@/features/user/components/shared/CategorySelectionTrigger'
 
 /** ---------- Helpers ---------- */
 const toISODate = (date: string, time: string, meridian: 'AM' | 'PM') => {
@@ -51,7 +53,9 @@ export default function NewPost () {
   const [time, setTime] = useState(`${hh}:${mm}`)
   const [meridian, setMeridian] = useState(meridianInit as 'AM' | 'PM')
   const [image, setImage] = useState<File | null>(null)
-  const [details, setDetails] = useState({
+  const [category, setCategory] = useState<string | null>(null)
+  const [showCategorySheet, setShowCategorySheet] = useState(false)
+  const [locationDetails, setLocationDetails] = useState({
     level1: '',
     level2: '',
     level3: ''
@@ -106,9 +110,10 @@ export default function NewPost () {
       !titleTrimmed ||
       !descTrimmed ||
       !image ||
-      !details.level1.trim() ||
-      !details.level2.trim() ||
-      !details.level3.trim() ||
+      !category ||
+      !locationDetails.level1.trim() ||
+      !locationDetails.level2.trim() ||
+      !locationDetails.level3.trim() ||
       !type ||
       !date ||
       !time ||
@@ -128,11 +133,12 @@ export default function NewPost () {
         desc: descTrimmed,
         type
       },
+      category: category as any,
       lastSeenISO: toISODate(date, time, meridian),
-      details: {
-        level1: details.level1.trim(),
-        level2: details.level2.trim(),
-        level3: details.level3.trim()
+      locationDetails: {
+        level1: locationDetails.level1.trim(),
+        level2: locationDetails.level2.trim(),
+        level3: locationDetails.level3.trim()
       },
       imageName: image.name,
       image: image
@@ -141,6 +147,9 @@ export default function NewPost () {
     console.log('Submitting New Post:', payload)
 
     try {
+      if (!currentUser) {
+        throw new Error('No Error is logged in')
+      }
       const result = await createPost(currentUser.user_id, payload)
 
       if (result.error) {
@@ -246,7 +255,7 @@ export default function NewPost () {
             <div className='mb-4'>
               <p className='font-default-font text-xl mb-2 text-slate-900 font-extrabold flex items-center'>
                 Item Name/Title
-                <span className='text-umak-red font-default-font text-sm font-normal ml-3'>
+                <span className='text-umak-red font-default-font text-sm font-normal ml-2'>
                   (required)
                 </span>
               </p>
@@ -292,9 +301,24 @@ export default function NewPost () {
               date={toISODate(date, time, meridian)}
               isRequired={true}
             />
+            <div className='mb-4'>
+              <p className='font-default-font text-xl mb-2 text-slate-900 font-extrabold flex items-center'>
+                Category
+                <span className='text-umak-red font-default-font text-sm font-normal ml-2'>
+                  (required)
+                </span>
+              </p>
+              <div>
+                <CategorySelectionTrigger
+                  category={category}
+                  onOpenSelector={() => setShowCategorySheet(true)}
+                  onClear={() => setCategory(null)}
+                />
+              </div>
+            </div>
             <LocationDetailsSelector
-              details={details}
-              setDetails={setDetails}
+              locationDetails={locationDetails}
+              setLocationDetails={setLocationDetails}
               isRequired={true}
             />
             <ImageUpload
@@ -323,6 +347,15 @@ export default function NewPost () {
         duration={2000}
         color={toastColor}
         position='bottom'
+      />
+      <CategorySelection
+        isOpen={showCategorySheet}
+        selected={category}
+        onClose={() => setShowCategorySheet(false)}
+        onSelect={c => {
+          setCategory(c)
+          setShowCategorySheet(false)
+        }}
       />
     </IonContent>
   )
