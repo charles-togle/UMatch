@@ -21,7 +21,6 @@ import '@/features/auth/styles/auth.css'
 import { authServices } from '../services/authServices'
 import type { GoogleLoginResponse } from '@capgo/capacitor-social-login'
 import { useUser } from '@/features/auth/contexts/UserContext'
-import { supabase } from '@/shared/lib/supabase'
 type GoogleResponseOnline = Awaited<ReturnType<typeof SocialLogin.login>>
 
 interface GoogleJwtPayload {
@@ -54,7 +53,7 @@ const Auth: React.FC = () => {
   const isWeb = Capacitor.getPlatform() === 'web'
   const [googleLoading, setGoogleLoading] = useState(false)
   const [socialLoginLoading, setSocialLoginLoading] = useState(false)
-  const { clearUser, refreshUser } = useUser()
+  const { refreshUser, getUser, clearUser } = useUser()
 
   useEffect(() => {
     const images = [AdminBuilding, UmakSeal, OhsoLogo]
@@ -65,13 +64,23 @@ const Auth: React.FC = () => {
   }, [])
 
   useEffect(() => {
-    const logout = async () => {
-      SocialLogin.logout({ provider: 'google' })
-      googleLogout()
-      clearUser()
-      supabase.auth.signOut()
+    const checkUser = async () => {
+      try {
+        const currentUser = await getUser()
+        if (currentUser) {
+          refreshUser(currentUser.user_id)
+          navigate('/user/home')
+        } else {
+          SocialLogin.logout({ provider: 'google' })
+          googleLogout()
+          clearUser()
+        }
+      } catch (error) {
+        console.error(error)
+      }
     }
-    logout()
+    console.log('Checking User')
+    checkUser()
   }, [])
 
   const handleSocialLogin = useCallback(async () => {
@@ -148,6 +157,7 @@ const Auth: React.FC = () => {
       )
       setShowToast(true)
     } finally {
+      googleLogout()
       setGoogleLoading(false)
     }
   }

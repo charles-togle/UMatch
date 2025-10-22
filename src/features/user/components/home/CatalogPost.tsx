@@ -21,17 +21,20 @@ export type Chip = {
 
 export type CatalogPostProps = {
   username?: string
+  user_profile_picture_url?: string | null
   itemName?: string
   description?: string
   lastSeen?: string
   chips?: Chip[]
-  extraCountLabel?: string
+  extraCountLabel?: string | null
   imageUrl?: string
+  locationLastSeenAt?: string
   className?: string
 }
 
 const CatalogPost: React.FC<CatalogPostProps> = ({
   username = 'Profile Picture and Username',
+  user_profile_picture_url = null,
   itemName = 'Item Name',
   description = 'Some really really really really long description that should be truncated.',
   lastSeen = 'MM/DD/YYYY    00:00 AM/PM',
@@ -39,9 +42,10 @@ const CatalogPost: React.FC<CatalogPostProps> = ({
     { label: 'Chip label', icon: personCircle },
     { label: 'Chip label', icon: personCircle }
   ],
-  extraCountLabel = '5+',
+  extraCountLabel = null,
   imageUrl,
-  className = ''
+  className = '',
+  locationLastSeenAt = 'Location where item was last seen'
 }) => {
   return (
     <IonCard
@@ -50,13 +54,21 @@ const CatalogPost: React.FC<CatalogPostProps> = ({
       {/* Header with avatar + username + kebab menu */}
       <IonItem lines='none' className='py-2 -mx-2'>
         <IonAvatar slot='start'>
-          <IonIcon
-            icon={personCircle}
-            className='w-full h-full text-gray-400'
-          />
+          {user_profile_picture_url ? (
+            <img
+              src={user_profile_picture_url}
+              alt={username}
+              className='w-full h-full object-cover'
+            />
+          ) : (
+            <IonIcon
+              icon={personCircle}
+              className='w-full h-full text-gray-400'
+            />
+          )}
         </IonAvatar>
         <IonLabel>
-          <div className='font-semibold text-umak-blue'>
+          <div className='font-semibold text-umak-blue pl-3'>
             <p>{username}</p>
           </div>
         </IonLabel>
@@ -68,9 +80,11 @@ const CatalogPost: React.FC<CatalogPostProps> = ({
       </IonItem>
       <div className='h-px bg-black mx-3'></div>
 
-      <IonCardContent className='p-3'>
-        <div className='text-xl font-bold mb-1 text-gray-900'>{itemName}</div>
-        <p className='text-gray-700 mb-3 leading-snug'>{description}</p>
+      <IonCardContent className='-mt-2'>
+        <div className='text-xl font-bold text-gray-900'>{itemName}</div>
+        <p className='text-gray-700 pb-2 leading-snug line-clamp-2'>
+          {description}
+        </p>
         <React.Suspense
           fallback={
             <div className='h-56 bg-gray-50 border border-gray-200 rounded-xl animate-pulse' />
@@ -90,18 +104,27 @@ const CatalogPost: React.FC<CatalogPostProps> = ({
           <IonText>{lastSeen}</IonText>
         </div>
 
+        <div className='flex items-center gap-2 mt-3 text-xs text-gray-500'>
+          <IonText>
+            <strong>Location:</strong>
+          </IonText>
+          <IonText>{locationLastSeenAt}</IonText>
+        </div>
         <div className='flex flex-wrap items-center gap-2 mt-3'>
-          {chips.map((c, i) => (
-            <IonChip
-              key={i}
-              className='bg-blue-900 text-white font-default-font px-2 '
-              outline={false}
-              color='primary'
-            >
-              {c.icon && <IonIcon icon={c.icon} className='mr-1' />}{' '}
-              <div className='text-xs'>{c.label}</div>
-            </IonChip>
-          ))}
+          {chips.map((c, i) => {
+            if (!c.label || !c.label.trim()) return null
+            return (
+              <IonChip
+                key={i}
+                className='bg-blue-900 text-white font-default-font px-6 '
+                outline={false}
+                color='primary'
+              >
+                {c.icon && <IonIcon icon={c.icon} className='mr-1' />}{' '}
+                <div className='text-xs'>{c.label}</div>
+              </IonChip>
+            )
+          })}
           <IonText className='font-semibold ml-1'>{extraCountLabel}</IonText>
         </div>
       </IonCardContent>

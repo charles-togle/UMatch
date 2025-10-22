@@ -27,6 +27,8 @@ import { Keyboard } from '@capacitor/keyboard'
 import { useNavigation } from '@/shared/hooks/useNavigation'
 import Header from '@/shared/components/Header'
 import { getCachedImage, cachedFileExists } from '@/shared/utils/fileUtils'
+import { listPublicPosts } from '@/features/user/data/posts'
+import type { PublicPost } from '@/features/user/types/post'
 
 // CatalogHeader Component
 const CatalogHeader = memo(
@@ -43,11 +45,14 @@ const CatalogHeader = memo(
       const getProfilePicture = async () => {
         if (profilePicRef.current) return
         const exists = await cachedFileExists(
-          'profilePicture.jpg',
+          'profilePicture.webp',
           'cache/images'
         )
         if (exists) {
-          const url = await getCachedImage('profilePicture.jpg', 'cache/images')
+          const url = await getCachedImage(
+            'profilePicture.webp',
+            'cache/images'
+          )
           profilePicRef.current = url
           setProfilePicUrl(url)
         }
@@ -113,11 +118,32 @@ const CatalogHeader = memo(
 
 // Main Catalog Component
 export default function Home () {
-  const [posts, setPosts] = useState<number[]>([1, 2, 3, 4, 5])
+  const [posts, setPosts] = useState<PublicPost[]>([])
   const [hasMore, setHasMore] = useState<boolean>(true)
   const [isRefreshingContent, setRefreshingContent] = useState<boolean>(false)
   const contentRef = useRef<HTMLIonContentElement | null>(null)
+  const [loading, setLoading] = useState<boolean>(false)
   const { navigate } = useNavigation()
+
+  const fetchPosts = async () => {
+    try {
+      const posts = await listPublicPosts()
+      setPosts(posts)
+      //TO DO HAVE LOGIC FOR POSTS
+      setHasMore(false) //
+    } catch (error) {
+      console.error('Error fetching posts:', error)
+    } finally {
+    }
+  }
+  useEffect(() => {
+    const fetchPostForTheFirstTime = async () => {
+      setLoading(true)
+      await fetchPosts()
+      setLoading(false)
+    }
+    fetchPostForTheFirstTime()
+  }, [])
 
   useEffect(() => {
     const handler = (_ev?: Event) => {
@@ -131,7 +157,8 @@ export default function Home () {
 
   // Pull to refresh handler
   const handleRefresh = useCallback((event: CustomEvent) => {
-    setRefreshingContent(true) // start loader
+    setRefreshingContent(true)
+    fetchPosts()
     setTimeout(() => {
       //fetch new random posts
       event.detail.complete()
@@ -142,14 +169,7 @@ export default function Home () {
   const loadMorePosts = async (event: CustomEvent<void>) => {
     const target = event.target as HTMLIonInfiniteScrollElement | null
     if (!target) return
-
     setTimeout(() => {
-      const newItems = Array.from({ length: 5 }, (_, i) => posts.length + i + 1)
-      setPosts(prev => [...prev, ...newItems])
-      if (posts.length + newItems.length >= 20) {
-        setHasMore(false)
-      }
-
       target.complete()
     }, 1000)
   }
@@ -162,6 +182,7 @@ export default function Home () {
   const handleAddPost = () => {
     navigate('/user/new-post')
   }
+
   return (
     <>
       <CatalogHeader handleClick={handleSearchBarClick} />
@@ -171,20 +192,46 @@ export default function Home () {
           <IonRefresher slot='fixed' onIonRefresh={handleRefresh}>
             <IonRefresherContent />
           </IonRefresher>
-
           {/* Dynamic CatalogPosts */}
-          <div className='flex flex-col gap-4'>
-            {posts.map((id, idx) => (
-              <CatalogPost
-                key={id}
-                itemName={`Item Name ${id}`}
-                description={`This is a test description for catalog post ${id}.`}
-                lastSeen='10/09/2025 02:00 PM'
-                className={!hasMore && idx === posts.length - 1 ? 'mb-10' : ''}
-              />
-            ))}
-          </div>
-
+          {loading ? (
+            <div className='flex flex-col gap-4 animate-pulse'>
+              {[...Array(2)].map((_, index) => (
+                <CatalogPost
+                  description='...'
+                  itemName='...'
+                  chips={[{ label: '.......' }, { label: '........' }]}
+                  extraCountLabel='+000'
+                  lastSeen='...'
+                  key={index}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className='flex flex-col gap-4'>
+              {posts.map((post, idx) => (
+                <CatalogPost
+                  key={post.post_id}
+                  itemName={post.itemname}
+                  description={`This is a test description for catalog post ${post.post_id}.`}
+                  lastSeen={post.last_seen_at || ''}
+                  chips={[
+                    { label: post.category || '' },
+                    { label: 'sample' },
+                    { label: 'test' }
+                  ]}
+                  imageUrl={post.item_image_url || ''}
+                  locationLastSeenAt={post.last_seen_location || ''}
+                  user_profile_picture_url={
+                    post.is_anonymous ? null : post.profilepicture_url
+                  }
+                  username={post.is_anonymous ? 'Anonymous' : post.username}
+                  className={
+                    !hasMore && idx === posts.length - 1 ? 'mb-10' : ''
+                  }
+                />
+              ))}
+            </div>
+          )}
           {/* Infinite Scroll */}
           {hasMore && (
             <IonInfiniteScroll threshold='100px' onIonInfinite={loadMorePosts}>

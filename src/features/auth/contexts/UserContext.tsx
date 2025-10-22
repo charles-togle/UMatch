@@ -18,7 +18,7 @@ export interface User {
 interface UserContextType {
   user: User | null
   loading: boolean
-  getUser: () => Promise<User>
+  getUser: () => Promise<User | null>
   setUser: (user: User | null) => void
   refreshUser: (userId: string) => Promise<void>
   updateUser: (updates: Partial<User>) => Promise<void>
@@ -53,7 +53,7 @@ export function UserProvider ({ children }: { children: ReactNode }) {
     setUserState(newUser)
   }, [])
 
-  const getUser = useCallback(async (): Promise<User> => {
+  const getUser = useCallback(async (): Promise<User | null> => {
     // If user already exists in context, return it
     if (user) {
       return user
@@ -64,7 +64,7 @@ export function UserProvider ({ children }: { children: ReactNode }) {
       const { data: authData, error: authError } = await supabase.auth.getUser()
 
       if (authError || !authData.user) {
-        throw new Error('No user is currently logged in')
+        return null
       }
 
       // Fetch user data from user_table
@@ -123,6 +123,7 @@ export function UserProvider ({ children }: { children: ReactNode }) {
 
   const clearUser = useCallback(() => {
     setUserState(null)
+    supabase.auth.signOut()
   }, [])
 
   return (

@@ -1,13 +1,17 @@
 import { useState } from 'react'
-import { IonContent, IonIcon, IonButton } from '@ionic/react'
+import { IonContent, IonIcon, IonButton, IonSpinner } from '@ionic/react'
 import ImageUpload from '@/shared/components/ImageUpload'
-import LocationDetailsSelector from '@/features/user/components/search-item/LocationDetailsSelector'
-import LastSeenModal from '@/features/user/components/search-item/LastSeenModal'
-import ItemStatusSelector from '@/features/user/components/search-item/ItemStatusSelector'
+import LocationDetailsSelector from '@/features/user/components/shared/LocationDetailsSelector'
+import LastSeenModal from '@/features/user/components/shared/LastSeenModal'
+import ItemStatusSelector from '@/features/user/components/shared/ItemStatusSelector'
 import Header from '@/shared/components/Header'
 import { create } from 'ionicons/icons'
 import { useNavigation } from '@/shared/hooks/useNavigation'
 import { IonToast } from '@ionic/react'
+import { useUser, type User } from '@/features/auth/contexts/UserContext'
+import { postServices } from '../services/postServices'
+import CategorySelection from '@/features/user/components/shared/CategorySelection'
+import CategorySelectionTrigger from '@/features/user/components/shared/CategorySelectionTrigger'
 
 /** ---------- Helpers ---------- */
 const toISODate = (date: string, time: string, meridian: 'AM' | 'PM') => {
@@ -34,10 +38,11 @@ export default function NewPost () {
   // state
   const [errorMessage, setErrorMessage] = useState('') // for error message
   const [showToast, setShowToast] = useState(false)
+  const [toastColor, setToastColor] = useState<'danger' | 'success'>('danger')
   const [anonymous, setAnonymous] = useState<'no' | 'yes'>('no')
   const [title, setTitle] = useState('')
   const [desc, setDesc] = useState('')
-  const [status, setStatus] = useState<'lost' | 'found'>('lost')
+  const [type, setType] = useState<'lost' | 'found'>('lost')
   const [date, setDate] = useState(
     ph.toLocaleDateString('en-US', {
       month: '2-digit',
@@ -48,12 +53,17 @@ export default function NewPost () {
   const [time, setTime] = useState(`${hh}:${mm}`)
   const [meridian, setMeridian] = useState(meridianInit as 'AM' | 'PM')
   const [image, setImage] = useState<File | null>(null)
-  const [details, setDetails] = useState({
-    building: '',
-    floor: '',
-    place: ''
+  const [category, setCategory] = useState<string | null>(null)
+  const [showCategorySheet, setShowCategorySheet] = useState(false)
+  const [locationDetails, setLocationDetails] = useState({
+    level1: '',
+    level2: '',
+    level3: ''
   })
+  const [loading, setLoading] = useState(false)
   const { navigate } = useNavigation()
+  const { getUser } = useUser()
+  const { createPost } = postServices
 
   const handleDateChange = (e: CustomEvent) => {
     const iso = e.detail.value as string
@@ -78,7 +88,19 @@ export default function NewPost () {
     navigate('/user/home')
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    setLoading(true)
+    let currentUser: User | null = null
+    try {
+      currentUser = await getUser()
+    } catch (error) {
+      console.error('Error fetching user:', error)
+      setLoading(false)
+      setErrorMessage('Failed to authenticate user')
+      setToastColor('danger')
+      setShowToast(true)
+      return
+    }
     // Trim text inputs
     const titleTrimmed = title.trim()
     const descTrimmed = desc.trim()
@@ -88,37 +110,73 @@ export default function NewPost () {
       !titleTrimmed ||
       !descTrimmed ||
       !image ||
-      !details.building.trim() ||
-      !details.floor.trim() ||
-      !details.place.trim() ||
-      !status ||
+      !category ||
+      !locationDetails.level1.trim() ||
+      !locationDetails.level2.trim() ||
+      !locationDetails.level3.trim() ||
+      !type ||
       !date ||
       !time ||
       !meridian
     ) {
       setErrorMessage('Please fill in all required fields.')
+      setToastColor('danger')
       setShowToast(true)
+      setLoading(false)
       return
     }
 
     const payload = {
-      anonymous,
+      anonymous: anonymous === 'yes',
       item: {
         title: titleTrimmed,
         desc: descTrimmed,
-        status
+        type
       },
+      category: category as any,
       lastSeenISO: toISODate(date, time, meridian),
-      details: {
-        building: details.building.trim(),
-        floor: details.floor.trim(),
-        place: details.place.trim()
+      locationDetails: {
+        level1: locationDetails.level1.trim(),
+        level2: locationDetails.level2.trim(),
+        level3: locationDetails.level3.trim()
       },
-      imageName: image.name
+      imageName: image.name,
+      image: image
     }
 
     console.log('Submitting New Post:', payload)
-    // TODO: send to API
+
+    try {
+      if (!currentUser) {
+        throw new Error('No Error is logged in')
+      }
+      const result = await createPost(currentUser.user_id, payload)
+
+      if (result.error) {
+        setErrorMessage(result.error)
+        setToastColor('danger')
+        setShowToast(true)
+        setLoading(false)
+        return
+      }
+
+      // Success
+      setErrorMessage('Post created successfully!')
+      setToastColor('success')
+      setShowToast(true)
+      setLoading(false)
+
+      // Navigate after a brief delay to show the toast
+      setTimeout(() => {
+        navigate('/user/home')
+      }, 1000)
+    } catch (error) {
+      console.error('Error creating post:', error)
+      setErrorMessage('Failed to create post')
+      setToastColor('danger')
+      setShowToast(true)
+      setLoading(false)
+    }
   }
 
   return (
@@ -142,8 +200,9 @@ export default function NewPost () {
                   '--box-shadow': 'none'
                 }}
                 onClick={handleSubmit}
+                disabled={loading}
               >
-                Submit
+                {loading ? <IonSpinner name='crescent' /> : 'Submit'}
               </IonButton>
             </div>
           </div>
@@ -196,7 +255,7 @@ export default function NewPost () {
             <div className='mb-4'>
               <p className='font-default-font text-xl mb-2 text-slate-900 font-extrabold flex items-center'>
                 Item Name/Title
-                <span className='text-umak-red font-default-font text-sm font-normal ml-3'>
+                <span className='text-umak-red font-default-font text-sm font-normal ml-2'>
                   (required)
                 </span>
               </p>
@@ -232,8 +291,8 @@ export default function NewPost () {
             </div>
             <div className='pr-5'>
               <ItemStatusSelector
-                value={status}
-                onChange={value => setStatus(value as 'lost' | 'found')}
+                value={type}
+                onChange={value => setType(value as 'lost' | 'found')}
                 isRequired={true}
               />
             </div>
@@ -242,9 +301,24 @@ export default function NewPost () {
               date={toISODate(date, time, meridian)}
               isRequired={true}
             />
+            <div className='mb-4'>
+              <p className='font-default-font text-xl mb-2 text-slate-900 font-extrabold flex items-center'>
+                Category
+                <span className='text-umak-red font-default-font text-sm font-normal ml-2'>
+                  (required)
+                </span>
+              </p>
+              <div>
+                <CategorySelectionTrigger
+                  category={category}
+                  onOpenSelector={() => setShowCategorySheet(true)}
+                  onClear={() => setCategory(null)}
+                />
+              </div>
+            </div>
             <LocationDetailsSelector
-              details={details}
-              setDetails={setDetails}
+              locationDetails={locationDetails}
+              setLocationDetails={setLocationDetails}
               isRequired={true}
             />
             <ImageUpload
@@ -258,8 +332,9 @@ export default function NewPost () {
                 style={{ '--background': 'var(--color-umak-blue)' }}
                 expand='full'
                 onClick={handleSubmit}
+                disabled={loading}
               >
-                Submit
+                {loading ? <IonSpinner name='crescent' /> : 'Submit'}
               </IonButton>
             </div>
           </div>
@@ -270,8 +345,17 @@ export default function NewPost () {
         onDidDismiss={() => setShowToast(false)}
         message={errorMessage}
         duration={2000}
-        color='danger'
+        color={toastColor}
         position='bottom'
+      />
+      <CategorySelection
+        isOpen={showCategorySheet}
+        selected={category}
+        onClose={() => setShowCategorySheet(false)}
+        onSelect={c => {
+          setCategory(c)
+          setShowCategorySheet(false)
+        }}
       />
     </IonContent>
   )

@@ -1,86 +1,30 @@
 /**
  * Post Categories Configuration
- * Each category has a type and associated color for UI consistency
+ * Each category has a type and associated icon (optional)
  */
 
 export interface CategoryConfig {
   type: string
-  color: string
   icon?: string // Optional: can add ionicons icon names later
 }
 
 export const POST_CATEGORIES: CategoryConfig[] = [
-  {
-    type: 'Electronics',
-    color: '#3B82F6' // Blue
-  },
-  {
-    type: 'Accessories',
-    color: '#8B5CF6' // Purple
-  },
-  {
-    type: 'Documents',
-    color: '#10B981' // Green
-  },
-  {
-    type: 'Books & Notebooks',
-    color: '#EC4899' // Pink
-  },
-  {
-    type: 'Bags',
-    color: '#6366F1' // Indigo
-  },
-  {
-    type: 'Wallets & Cards',
-    color: '#14B8A6' // Teal
-  },
-  {
-    type: 'Keys',
-    color: '#EF4444' // Red
-  },
-  {
-    type: 'Clothing',
-    color: '#F59E0B' // Amber
-  },
-  {
-    type: 'Eyewear',
-    color: '#A855F7' // Violet
-  },
-  {
-    type: 'School Supplies',
-    color: '#84CC16' // Lime
-  },
-  {
-    type: 'Sports Equipment',
-    color: '#06B6D4' // Cyan
-  },
-  {
-    type: 'Water Bottles',
-    color: '#22C55E' // Emerald
-  },
-  {
-    type: 'Umbrellas',
-    color: '#0EA5E9' // Sky Blue
-  },
-  {
-    type: 'Medical Items',
-    color: '#F472B6' // Rose
-  },
-  {
-    type: 'Other',
-    color: '#64748B' // Slate
-  }
+  { type: 'Electronics' },
+  { type: 'Accessories' },
+  { type: 'Documents' },
+  { type: 'Books & Notebooks' },
+  { type: 'Bags' },
+  { type: 'Wallets & Cards' },
+  { type: 'Keys' },
+  { type: 'Clothing' },
+  { type: 'Eyewear' },
+  { type: 'School Supplies' },
+  { type: 'Sports Equipment' },
+  { type: 'Water Bottles' },
+  { type: 'Umbrellas' },
+  { type: 'Medical Items' },
+  { type: 'Other' }
 ]
-
-/**
- * Helper function to get category color by type
- * @param type - The category type
- * @returns The hex color code or default gray
- */
-export function getCategoryColor (type: string): string {
-  const category = POST_CATEGORIES.find(cat => cat.type === type)
-  return category?.color || '#64748B'
-}
 
 /**
  * Helper function to get all category types as string array

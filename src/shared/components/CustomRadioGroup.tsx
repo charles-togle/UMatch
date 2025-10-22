@@ -27,7 +27,7 @@ export default function CustomRadioGroup ({
       <p className='font-default-font text-xl mb-2 text-slate-900 font-extrabold flex items-center'>
         {label}
         {isRequired && (
-          <span className='text-umak-red font-default-font text-sm font-normal ml-3'>
+          <span className='text-umak-red font-default-font text-sm font-normal ml-2'>
             (required)
           </span>
         )}
