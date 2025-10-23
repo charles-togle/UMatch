@@ -33,7 +33,7 @@ export async function listOwnPosts ({
   excludeIds: string[]
   userId: string
   limit: number
-}): Promise<PublicPost[]> {
+}): Promise<{ posts: PublicPost[]; count: number | null }> {
   let query = supabase
     .from('post_public_view')
     .select(
@@ -56,6 +56,15 @@ export async function listOwnPosts ({
     `
     )
     .eq('poster_id', userId)
+
+  let { count: totalCount, error: countError } = await supabase
+    .from('post_public_view')
+    .select('*', { count: 'exact', head: true })
+
+  if (countError) {
+    console.error('Error fetching post count for user posts')
+    totalCount = 0
+  }
   if (excludeIds && excludeIds.length > 0) {
     const inList = `(${excludeIds.map(id => `${id}`).join(',')})`
     query = query.not('post_id', 'in', inList)
@@ -65,23 +74,26 @@ export async function listOwnPosts ({
 
   if (error) throw error
 
-  return (data ?? []).map((r: any) => ({
-    user_id: r.poster_id,
-    username: r.poster_name,
-    item_name: r.item_name,
-    profilepicture_url: r.profile_picture_url,
-    item_image_url: r.item_image_url,
-    item_description: r.item_description,
-    item_status: r.item_status,
-    category: r.category,
-    last_seen_at: fmtManila(r.last_seen_at),
-    last_seen_location: r.last_seen_location,
-    is_anonymous: r.is_anonymous,
-    post_id: r.post_id,
-    submission_date: r.submission_date,
-    item_type: r.item_type,
-    post_status: r.post_status
-  }))
+  return {
+    posts: (data ?? []).map((r: any) => ({
+      user_id: r.poster_id,
+      username: r.poster_name,
+      item_name: r.item_name,
+      profilepicture_url: r.profile_picture_url,
+      item_image_url: r.item_image_url,
+      item_description: r.item_description,
+      item_status: r.item_status,
+      category: r.category,
+      last_seen_at: fmtManila(r.last_seen_at),
+      last_seen_location: r.last_seen_location,
+      is_anonymous: r.is_anonymous,
+      post_id: r.post_id,
+      submission_date: r.submission_date,
+      item_type: r.item_type,
+      post_status: r.post_status
+    })),
+    count: totalCount
+  }
 }
 
 export async function listPublicPosts (

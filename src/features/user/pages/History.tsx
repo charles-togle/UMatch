@@ -134,13 +134,12 @@ export default function History () {
       const userID = user?.user_id
       if (!userID) return
 
-      // const exclude = Array.from(loadedIdsRef.current) // no longer used
-      const newPosts = await listOwnPosts({
+      const exclude = Array.from(loadedIdsRef.current)
+      const { posts: newPosts, count: totalPostsCount } = await listOwnPosts({
         userId: userID,
-        excludeIds: [],
+        excludeIds: exclude,
         limit: PAGE_SIZE
       })
-      console.log(newPosts)
 
       if (newPosts.length > 0) {
         const userOnly = newPosts.filter(p => p.user_id === userID)
@@ -153,7 +152,10 @@ export default function History () {
         await historyCacheRef.current.saveLoadedPostIds(loadedIdsRef.current)
         await historyCacheRef.current.addPostsToCache(computed)
 
-        setHasMore(userOnly.length === merged.length)
+        const hasMorePosts: boolean = merged.length !== totalPostsCount
+        setHasMore(hasMorePosts)
+
+        setHasMore(userOnly.length === totalPostsCount)
         setPosts(computed)
         setAllPosts(merged)
       } else {
