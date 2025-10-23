@@ -1,38 +1,31 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { routePreloads } from '@/app/configs/routePreloads'
-import { Preferences } from '@capacitor/preferences'
 import { useNavigation } from '@/shared/hooks/useNavigation'
+import { useUser } from '@/features/auth/contexts/UserContext'
+import { SocialLogin } from '@capgo/capacitor-social-login'
 
 type Props = {
-  authCheck?: () => Promise<boolean>
   concurrency?: number
   timeoutMs?: number
   authedRoute?: string
   unauthedRoute?: string
 }
 
-async function defaultAuthCheck (): Promise<boolean> {
-  try {
-    const { value } = await Preferences.get({ key: 'authToken' })
-    return Boolean(value)
-  } catch {
-    return false
-  }
-}
-
 export default function StartupLoading ({
-  authCheck = defaultAuthCheck,
   concurrency = 3,
   timeoutMs = 8000,
   authedRoute = '/user/home',
   unauthedRoute = '/auth'
 }: Props) {
   const [done, setDone] = useState(0)
+  const [isAuthed, setIsAuthed] = useState<boolean | null>(null)
   const routes = useMemo(() => Object.keys(routePreloads), [])
   const total = routes.length
   const cancelled = useRef(false)
   const { navigate } = useNavigation()
+  const { refreshUser, getUser, clearUser } = useUser()
 
+  // Preload modules
   useEffect(() => {
     cancelled.current = false
 
@@ -67,7 +60,7 @@ export default function StartupLoading ({
       try {
         await Promise.race([Promise.allSettled(workers), guard])
       } catch {
-        // timed out — carry on
+        // timed out — continue
       }
     }
 
@@ -75,26 +68,34 @@ export default function StartupLoading ({
       await new Promise(r => setTimeout(r, 120))
       await preloadAll()
 
-      let loggedIn = false
+      // Check auth state
       try {
-        loggedIn = await authCheck()
-      } catch {}
-      if (cancelled.current) return
-      navigate(loggedIn ? authedRoute : unauthedRoute, 'preload')
+        const currentUser = await getUser()
+        if (currentUser) {
+          await refreshUser(currentUser.user_id)
+          setIsAuthed(true)
+        } else {
+          await SocialLogin.logout({ provider: 'google' })
+          clearUser()
+          setIsAuthed(false)
+        }
+      } catch (error) {
+        console.error(error)
+        setIsAuthed(false)
+      }
     })()
 
     return () => {
       cancelled.current = true
     }
-  }, [
-    authCheck,
-    concurrency,
-    timeoutMs,
-    routes,
-    authedRoute,
-    unauthedRoute,
-    navigate
-  ])
+  }, [concurrency, timeoutMs, routes, refreshUser, getUser, clearUser])
+
+  // Navigate after authCheck result
+  useEffect(() => {
+    if (isAuthed === null) return
+    if (cancelled.current) return
+    navigate(isAuthed ? authedRoute : unauthedRoute, 'preload')
+  }, [isAuthed, navigate, authedRoute, unauthedRoute])
 
   const pct = total ? Math.round((done / total) * 100) : 0
 

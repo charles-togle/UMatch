@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { IonButton, IonIcon } from '@ionic/react'
+import { IonButton } from '@ionic/react'
 import { searchOutline } from 'ionicons/icons'
 import ItemStatusSelector from '../shared/ItemStatusSelector'
 import LastSeenModal from '../shared/LastSeenModal'
 import LocationDetailsSelector from '../shared/LocationDetailsSelector'
 import ImageUpload from '@/shared/components/ImageUpload'
+import CardHeader from '@/shared/components/CardHeader'
 
 const toISODate = (date: string, time: string, meridian: 'AM' | 'PM') => {
   const [month, day, year] = date.split('/')
@@ -42,7 +43,7 @@ export default function AdvancedSearch () {
   const meridianVal = hours >= 12 ? 'PM' : 'AM'
   hours = hours % 12 || 12
 
-  const [status, setStatus] = useState<'lost' | 'found'>('lost')
+  const [status, setStatus] = useState<'missing' | 'found'>('found')
   const [time, setTime] = useState(`${hours}:${minutes}`)
   const [meridian, setMeridian] = useState(meridianVal as 'AM' | 'PM')
   const [locationDetails, setLocationDetails] = useState({
@@ -94,17 +95,7 @@ export default function AdvancedSearch () {
   return (
     <div className=' bg-gray-50 mb-5 w-full'>
       <div className='mx-5 mt-3 rounded-xl shadow-md p-4 border border-gray-200'>
-        <div className='flex items-center space-x-2 mb-3'>
-          <IonIcon
-            icon={searchOutline}
-            className='text-[#1e2b87]'
-            style={{ fontSize: '32px', ['--ionicon-stroke-width']: '40px' }}
-          />
-          <div className='text-umak-blue font-default-font text-base font-light'>
-            Advanced Search
-          </div>
-        </div>
-        <div className='h-px w-full bg-black my-3'> </div>
+        <CardHeader title='Advanced Search' icon={searchOutline} />
 
         <div className='max-w-2/3'>
           <ItemStatusSelector value={status} onChange={setStatus} />

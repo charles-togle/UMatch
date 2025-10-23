@@ -13,23 +13,23 @@ export const locationsData: Level1[] = [
     name: 'HPSB',
     level2: [
       {
-        name: '1',
+        name: '1 Floor',
         level3: ['Lobby', 'Parking Area']
       },
       {
-        name: '2',
+        name: '2 Floor',
         level3: ['Parking Area']
       },
       {
-        name: '3',
+        name: '3 Floor',
         level3: ['Parking Area']
       },
       {
-        name: '4',
+        name: '4 Floor',
         level3: ['Parking Area', 'Bridgeway']
       },
       {
-        name: '5',
+        name: '5 Floor',
         level3: [
           'Room 501',
           'Room 502',
@@ -49,7 +49,7 @@ export const locationsData: Level1[] = [
         ]
       },
       {
-        name: '6',
+        name: '6 Floor',
         level3: [
           'Room 601',
           'Room 602',
@@ -69,7 +69,7 @@ export const locationsData: Level1[] = [
         ]
       },
       {
-        name: '7',
+        name: '7 Floor',
         level3: [
           'Room 701',
           'Room 702',
@@ -89,7 +89,7 @@ export const locationsData: Level1[] = [
         ]
       },
       {
-        name: '8',
+        name: '8 Floor',
         level3: [
           'Room 801',
           'Room 802',
@@ -109,7 +109,7 @@ export const locationsData: Level1[] = [
         ]
       },
       {
-        name: '9',
+        name: '9 Floor',
         level3: [
           'Room 901',
           'Room 902',
@@ -129,7 +129,7 @@ export const locationsData: Level1[] = [
         ]
       },
       {
-        name: '10',
+        name: '10 Floor',
         level3: [
           'Room 1001',
           'Room 1002',
@@ -149,7 +149,7 @@ export const locationsData: Level1[] = [
         ]
       },
       {
-        name: '11',
+        name: '11 Floor',
         level3: [
           'Gym Area',
           'Gym Female CR',
@@ -164,7 +164,7 @@ export const locationsData: Level1[] = [
         ]
       },
       {
-        name: '12',
+        name: '12 Floor',
         level3: [
           'Volleyball Court',
           'Basketball Court',
@@ -179,21 +179,21 @@ export const locationsData: Level1[] = [
   {
     name: 'Academic Building 1',
     level2: Array.from({ length: 3 }, (_, i) => ({
-      name: `${i + 1}`,
+      name: `${i + 1} Floor`,
       level3: ['Not Applicable']
     }))
   },
   {
     name: 'Academic Building 2',
     level2: Array.from({ length: 3 }, (_, i) => ({
-      name: `${i + 1}`,
+      name: `${i + 1} Floor`,
       level3: ['Not Applicable']
     }))
   },
   {
     name: 'Academic Building 3',
     level2: Array.from({ length: 3 }, (_, i) => ({
-      name: `${i + 1}`,
+      name: `${i + 1} Floor`,
       level3: ['Not Applicable']
     }))
   },
@@ -202,7 +202,7 @@ export const locationsData: Level1[] = [
     level2: [
       { name: 'Basement', level3: ['Not Applicable'] },
       ...Array.from({ length: 5 }, (_, i) => ({
-        name: `${i + 1}`,
+        name: `${i + 1} Floor`,
         level3: ['Not Applicable']
       }))
     ]

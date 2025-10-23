@@ -9,15 +9,9 @@ import {
   IonIcon,
   IonButtons,
   IonButton,
-  IonChip,
   IonText
 } from '@ionic/react'
 import { ellipsisVertical, personCircle } from 'ionicons/icons'
-
-export type Chip = {
-  label: string
-  icon?: string
-}
 
 export type CatalogPostProps = {
   username?: string
@@ -25,11 +19,11 @@ export type CatalogPostProps = {
   itemName?: string
   description?: string
   lastSeen?: string
-  chips?: Chip[]
-  extraCountLabel?: string | null
   imageUrl?: string
   locationLastSeenAt?: string
   className?: string
+  onActionSheetClick?: () => void | undefined
+  itemStatus?: string | null
 }
 
 const CatalogPost: React.FC<CatalogPostProps> = ({
@@ -38,18 +32,22 @@ const CatalogPost: React.FC<CatalogPostProps> = ({
   itemName = 'Item Name',
   description = 'Some really really really really long description that should be truncated.',
   lastSeen = 'MM/DD/YYYY    00:00 AM/PM',
-  chips = [
-    { label: 'Chip label', icon: personCircle },
-    { label: 'Chip label', icon: personCircle }
-  ],
-  extraCountLabel = null,
   imageUrl,
   className = '',
-  locationLastSeenAt = 'Location where item was last seen'
+  locationLastSeenAt = 'Location where item was last seen',
+  onActionSheetClick = undefined,
+  itemStatus = null
 }) => {
+  const normalizedStatus = (itemStatus || '').toLowerCase()
+  const statusColorClass =
+    normalizedStatus === 'unclaimed'
+      ? 'text-red-600'
+      : normalizedStatus === 'claimed'
+      ? 'text-green-600'
+      : ''
   return (
     <IonCard
-      className={`rounded-2xl shadow-md border border-gray-200 font-default-font overflow-hidden ${className}`}
+      className={`shadow-md border border-gray-200 font-default-font overflow-hidden px-2 ${className}`}
     >
       {/* Header with avatar + username + kebab menu */}
       <IonItem lines='none' className='py-2 -mx-2'>
@@ -73,7 +71,12 @@ const CatalogPost: React.FC<CatalogPostProps> = ({
           </div>
         </IonLabel>
         <IonButtons slot='end'>
-          <IonButton fill='clear' color='medium' aria-label='More options'>
+          <IonButton
+            fill='clear'
+            color='medium'
+            aria-label='More options'
+            onClick={() => onActionSheetClick?.()}
+          >
             <IonIcon icon={ellipsisVertical} />
           </IonButton>
         </IonButtons>
@@ -81,7 +84,14 @@ const CatalogPost: React.FC<CatalogPostProps> = ({
       <div className='h-px bg-black mx-3'></div>
 
       <IonCardContent className='-mt-2'>
-        <div className='text-xl font-bold text-gray-900'>{itemName}</div>
+        <div className='text-xl font-bold text-gray-900 flex justify-between items-center'>
+          <span>{itemName}</span>{' '}
+          <span className={`text-sm ${statusColorClass}`}>
+            {itemStatus
+              ? itemStatus.charAt(0).toUpperCase() + itemStatus.slice(1)
+              : null}
+          </span>
+        </div>
         <p className='text-gray-700 pb-2 leading-snug line-clamp-2'>
           {description}
         </p>
@@ -109,23 +119,6 @@ const CatalogPost: React.FC<CatalogPostProps> = ({
             <strong>Location:</strong>
           </IonText>
           <IonText>{locationLastSeenAt}</IonText>
-        </div>
-        <div className='flex flex-wrap items-center gap-2 mt-3'>
-          {chips.map((c, i) => {
-            if (!c.label || !c.label.trim()) return null
-            return (
-              <IonChip
-                key={i}
-                className='bg-blue-900 text-white font-default-font px-6 '
-                outline={false}
-                color='primary'
-              >
-                {c.icon && <IonIcon icon={c.icon} className='mr-1' />}{' '}
-                <div className='text-xs'>{c.label}</div>
-              </IonChip>
-            )
-          })}
-          <IonText className='font-semibold ml-1'>{extraCountLabel}</IonText>
         </div>
       </IonCardContent>
     </IonCard>

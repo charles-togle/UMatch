@@ -21,6 +21,8 @@ import '@/features/auth/styles/auth.css'
 import { authServices } from '../services/authServices'
 import type { GoogleLoginResponse } from '@capgo/capacitor-social-login'
 import { useUser } from '@/features/auth/contexts/UserContext'
+import { PushNotifications } from '@capacitor/push-notifications'
+
 type GoogleResponseOnline = Awaited<ReturnType<typeof SocialLogin.login>>
 
 interface GoogleJwtPayload {
@@ -53,7 +55,7 @@ const Auth: React.FC = () => {
   const isWeb = Capacitor.getPlatform() === 'web'
   const [googleLoading, setGoogleLoading] = useState(false)
   const [socialLoginLoading, setSocialLoginLoading] = useState(false)
-  const { refreshUser, getUser, clearUser } = useUser()
+  const { refreshUser } = useUser()
 
   useEffect(() => {
     const images = [AdminBuilding, UmakSeal, OhsoLogo]
@@ -63,26 +65,6 @@ const Auth: React.FC = () => {
     })
   }, [])
 
-  useEffect(() => {
-    const checkUser = async () => {
-      try {
-        const currentUser = await getUser()
-        if (currentUser) {
-          refreshUser(currentUser.user_id)
-          navigate('/user/home')
-        } else {
-          SocialLogin.logout({ provider: 'google' })
-          googleLogout()
-          clearUser()
-        }
-      } catch (error) {
-        console.error(error)
-      }
-    }
-    console.log('Checking User')
-    checkUser()
-  }, [])
-
   const handleSocialLogin = useCallback(async () => {
     try {
       const googleWebClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID ?? ''
@@ -90,6 +72,9 @@ const Auth: React.FC = () => {
         google: { webClientId: googleWebClientId, mode: 'online' }
       })
       setSocialLoginLoading(true)
+      const { receive: permissionStatus } =
+        await PushNotifications.checkPermissions()  
+      if (permissionStatus === 'granted') await PushNotifications.register()
       const res: GoogleResponseOnline = await SocialLogin.login({
         provider: 'google',
         options: { scopes: ['profile', 'email'] }
@@ -111,6 +96,7 @@ const Auth: React.FC = () => {
             throw new Error(error || 'Authentication failed')
           }
           await refreshUser(user?.user_id || '')
+
           navigate('/user/home', 'auth')
           setSocialLoginLoading(false)
         }

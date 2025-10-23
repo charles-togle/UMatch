@@ -6,11 +6,12 @@ import { home, settings, time, helpCircle } from 'ionicons/icons'
 import HomeSkeleton from '@/features/user/components/skeletons/HomeSkeleton'
 import Home from '@/features/user/pages/Home'
 import FAQs from '@/features/user/pages/FAQs'
-import Settings from '@/shared/pages/Settings'
 import History from '@/features/user/pages/History'
 import NewPost from '@/features/user/pages/NewPost'
 import SearchItem from '@/features/user/pages/SearchItem'
 import Notifications from '@/features/user/pages/Notifications'
+import AccountPage from '@/features/user/pages/AccountPage'
+import Settings from '@/features/user/pages/Settings'
 
 const HistoryFallback = () => <div className='p-4'>Loading History…</div>
 const NewPostFallback = () => <div className='p-4'>Preparing form…</div>
@@ -61,10 +62,10 @@ export default function UserRoutes () {
           )}
         />
         <Route
-          path='/user/settings'
+          path='/user/account'
           render={() => (
             <Suspense fallback={<DefaultFallback />}>
-              <Settings />
+              <AccountPage />
             </Suspense>
           )}
         />
@@ -73,6 +74,14 @@ export default function UserRoutes () {
           render={() => (
             <Suspense fallback={<DefaultFallback />}>
               <Notifications />
+            </Suspense>
+          )}
+        />
+        <Route
+          path='/user/settings'
+          render={() => (
+            <Suspense fallback={<DefaultFallback />}>
+              <Settings />
             </Suspense>
           )}
         />

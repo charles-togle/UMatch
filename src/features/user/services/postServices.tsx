@@ -4,7 +4,7 @@ import { makeDisplay } from '@/shared/utils/imageUtils'
 import { uploadAndGetPublicUrl } from '@/shared/utils/supabaseStorageUtils'
 
 // Post type enum
-export type PostType = 'lost' | 'found'
+export type PostType = 'missing' | 'found'
 export type PostCategory =
   | 'Electronics'
   | 'Accessories'

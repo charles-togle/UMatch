@@ -15,8 +15,6 @@ export default function HomeSkeleton () {
               <CatalogPost
                 description='...'
                 itemName='...'
-                chips={[{ label: '.......' }, { label: '........' }]}
-                extraCountLabel='+000'
                 lastSeen='...'
                 key={index}
               />

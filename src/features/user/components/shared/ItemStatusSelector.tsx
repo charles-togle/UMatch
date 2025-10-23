@@ -1,8 +1,8 @@
 import CustomRadioGroup from '@/shared/components/CustomRadioGroup'
 
 interface ItemStatusSelectorProps {
-  value: 'lost' | 'found'
-  onChange: (value: 'lost' | 'found') => void
+  value: 'missing' | 'found'
+  onChange: (value: 'missing' | 'found') => void
   className?: string
   isRequired?: boolean
 }
@@ -21,9 +21,9 @@ const ItemStatusSelector: React.FC<ItemStatusSelectorProps> = ({
           value={value}
           options={[
             { label: 'Found (Surrendered)', value: 'found' },
-            { label: 'Lost (Looking for)', value: 'lost' }
+            { label: 'Missing (Looking for)', value: 'missing' }
           ]}
-          onChange={val => onChange(val as 'lost' | 'found')}
+          onChange={val => onChange(val as 'missing' | 'found')}
           direction='horizontal'
           isRequired={isRequired}
         />
