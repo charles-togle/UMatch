@@ -42,7 +42,7 @@ export default function NewPost () {
   const [anonymous, setAnonymous] = useState<'no' | 'yes'>('no')
   const [title, setTitle] = useState('')
   const [desc, setDesc] = useState('')
-  const [type, setType] = useState<'lost' | 'found'>('lost')
+  const [type, setType] = useState<'missing' | 'found'>('found')
   const [date, setDate] = useState(
     ph.toLocaleDateString('en-US', {
       month: '2-digit',
@@ -182,7 +182,7 @@ export default function NewPost () {
   return (
     <IonContent>
       <div className='fixed top-0 w-full z-999'>
-        <Header logoShown={false}>
+        <Header logoShown={false} isProfileAndNotificationShown={false}>
           <div className='flex justify-between items-center bg-[#1e2b87] ion-padding-start ion-padding-end'>
             <IonButton
               style={{
@@ -292,7 +292,7 @@ export default function NewPost () {
             <div className='pr-5'>
               <ItemStatusSelector
                 value={type}
-                onChange={value => setType(value as 'lost' | 'found')}
+                onChange={value => setType(value as 'missing' | 'found')}
                 isRequired={true}
               />
             </div>

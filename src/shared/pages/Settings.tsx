@@ -1,9 +1,17 @@
-import { IonContent } from '@ionic/react'
+import { IonPage, IonContent, IonCard } from '@ionic/react'
+import Header from '@/shared/components/Header'
+import SettingsList from '@/shared/components/SettingsList'
 
-export default function Settings () {
+export default function SettingsPage () {
   return (
-    <IonContent className='ion-padding'>
-      <h2>Settings</h2>
-    </IonContent>
+    <IonPage>
+      <Header logoShown={true} isProfileAndNotificationShown={true} />
+      <IonContent fullscreen className='bg-default-bg'>
+        <IonCard className='ion-padding mt-4'>
+          <h2 className='text-lg font-semibold'>Settings</h2>
+        </IonCard>
+        <SettingsList />
+      </IonContent>
+    </IonPage>
   )
 }

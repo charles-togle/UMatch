@@ -52,7 +52,7 @@ export default function SearchItem () {
   return (
     <IonContent>
       <div className='fixed top-0 w-full z-999'>
-        <Header logoShown={false}>
+        <Header logoShown={false} isProfileAndNotificationShown={false}>
           <div className='flex items-center bg-[#1e2b87]'>
             <IonSearchbar
               ref={searchRef}

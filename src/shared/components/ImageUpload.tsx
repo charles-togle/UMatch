@@ -1,6 +1,17 @@
-import React, { useRef } from 'react'
-import { IonButton, IonIcon } from '@ionic/react'
-import { cloudUploadOutline, refreshOutline } from 'ionicons/icons'
+import React, { useRef, useState } from 'react'
+import {
+  IonButton,
+  IonIcon,
+  IonModal,
+  IonLabel
+} from '@ionic/react'
+import {
+  cloudUploadOutline,
+  refreshOutline,
+  camera,
+  images
+} from 'ionicons/icons'
+import { Camera, CameraResultType, CameraSource } from '@capacitor/camera'
 
 interface ImageUploadSectionProps {
   label?: string
@@ -18,6 +29,10 @@ const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
   isRequired = false
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [isOpen, setIsOpen] = useState(false)
+
+  const openModal = () => setIsOpen(true)
+  const closeModal = () => setIsOpen(false)
 
   const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -26,7 +41,36 @@ const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
   }
 
   const handleReplaceClick = () => {
+    openModal()
+  }
+
+  const handlePickFile = () => {
+    closeModal()
+    // trigger native file picker
     fileInputRef.current?.click()
+  }
+
+  const handleTakePhoto = async () => {
+    try {
+      const photo = await Camera.getPhoto({
+        quality: 80,
+        resultType: CameraResultType.Uri,
+        source: CameraSource.Camera
+      })
+      const uri = photo.webPath || photo.path
+      if (!uri) throw new Error('No photo path')
+      const resp = await fetch(uri)
+      const blob = await resp.blob()
+      const ext = blob.type.includes('png') ? 'png' : 'jpg'
+      const file = new File([blob], `photo_${Date.now()}.${ext}`, {
+        type: blob.type || 'image/jpeg'
+      })
+      onImageChange(file)
+    } catch (e) {
+      // optional: toast error
+    } finally {
+      closeModal()
+    }
   }
 
   return (
@@ -39,7 +83,10 @@ const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
           </span>
         )}
       </p>
-      <label
+      <div
+        role='button'
+        aria-label='Upload image'
+        onClick={!image ? openModal : undefined}
         className={`flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg h-32 cursor-pointer transition relative hover:bg-gray-50`}
       >
         {!image ? (
@@ -58,7 +105,10 @@ const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
             <IonButton
               type='button'
               onClick={handleReplaceClick}
-              className='flex items-center gap-1 text-xs font-default-font hover:underline'
+              className='flex items-center gap-1 text-xs font-default-font hover:underline bg-umak'
+              style={{
+                '--background': 'var(--color-umak-blue)'
+              }}
             >
               <IonIcon icon={refreshOutline} className='text-base mr-2' />
               Replace
@@ -73,7 +123,48 @@ const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
           onChange={handleUpload}
           hidden
         />
-      </label>
+      </div>
+
+      {/* Modal selector for image source */}
+      <IonModal
+        isOpen={isOpen}
+        onDidDismiss={closeModal}
+        backdropDismiss={true}
+        initialBreakpoint={0.2}
+        breakpoints={[0, 0.2, 0.35]}
+        className='category-selection-modal font-default-font '
+        style={{ '--border-radius': '2rem' }}
+      >
+        <div className='flex flex-col items-center '>
+          <p className='my-4'>Select Picture Method</p>
+          <div className='flex flex-row w-full h-20'>
+            <button
+              onClick={handleTakePhoto}
+              className='flex flex-col items-center justify-center w-full gap-2'
+            >
+              <IonIcon
+                slot='start'
+                icon={camera}
+                size='large'
+                className='text-umak-blue'
+              />
+              <IonLabel>Open Camera</IonLabel>
+            </button>
+            <button
+              onClick={handlePickFile}
+              className='flex flex-col items-center justify-center w-full gap-2'
+            >
+              <IonIcon
+                slot='start'
+                icon={images}
+                size='large'
+                className='text-umak-blue'
+              />
+              <IonLabel>Select from gallery</IonLabel>
+            </button>
+          </div>
+        </div>
+      </IonModal>
     </div>
   )
 }
