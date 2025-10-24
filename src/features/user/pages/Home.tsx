@@ -56,6 +56,23 @@ export default function Home () {
 
   const fetchPosts = async (): Promise<void> => {
     try {
+      let cachedPosts = await homeCacheRef.current.loadCachedPublicPosts()
+      if (cachedPosts.length > 0 && posts.length === 0) {
+        cachedPosts = cachedPosts.sort((a, b) => {
+          if (!a.submission_date && !b.submission_date) return 0
+          if (!a.submission_date) return 1
+          if (!b.submission_date) return -1
+          return SORT_DIR === 'desc'
+            ? (b.submission_date as string).localeCompare(
+                a.submission_date as string
+              )
+            : (a.submission_date as string).localeCompare(
+                b.submission_date as string
+              )
+        })
+        cachedPosts.forEach(p => loadedIdsRef.current.add(p.post_id))
+      }
+
       const exclude = Array.from(loadedIdsRef.current)
       const newPosts = await listPublicPosts(exclude, PAGE_SIZE)
       if (newPosts.length > 0) {
@@ -133,6 +150,7 @@ export default function Home () {
           loadedKey: 'LoadedPosts:home',
           cacheKey: 'CachedPublicPosts:home'
         }}
+        pageSize={PAGE_SIZE}
         ionFabButton={
           <IonFab
             slot='fixed'

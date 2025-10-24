@@ -17,11 +17,11 @@ import { useNavigation } from '@/shared/hooks/useNavigation'
 import AdminBuilding from '@/shared/assets/umak-admin-building.jpg'
 import UmakSeal from '@/shared/assets/umak-seal.png'
 import OhsoLogo from '@/shared/assets/umak-ohso.png'
-import '@/features/auth/styles/auth.css'
 import { authServices } from '../services/authServices'
 import type { GoogleLoginResponse } from '@capgo/capacitor-social-login'
 import { useUser } from '@/features/auth/contexts/UserContext'
 import { PushNotifications } from '@capacitor/push-notifications'
+import '@/features/auth/styles/auth.css'
 
 type GoogleResponseOnline = Awaited<ReturnType<typeof SocialLogin.login>>
 
@@ -55,6 +55,7 @@ const Auth: React.FC = () => {
   const isWeb = Capacitor.getPlatform() === 'web'
   const [googleLoading, setGoogleLoading] = useState(false)
   const [socialLoginLoading, setSocialLoginLoading] = useState(false)
+
   const { refreshUser } = useUser()
 
   useEffect(() => {
@@ -73,7 +74,7 @@ const Auth: React.FC = () => {
       })
       setSocialLoginLoading(true)
       const { receive: permissionStatus } =
-        await PushNotifications.checkPermissions()  
+        await PushNotifications.checkPermissions()
       if (permissionStatus === 'granted') await PushNotifications.register()
       const res: GoogleResponseOnline = await SocialLogin.login({
         provider: 'google',
@@ -215,6 +216,7 @@ const Auth: React.FC = () => {
                       text='continue_with'
                       shape='square'
                       logo_alignment='center'
+                      ux_mode='popup'
                     />
                   </div>
                 </div>

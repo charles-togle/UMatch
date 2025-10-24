@@ -60,7 +60,7 @@ export default function History () {
   const [posts, setPosts] = useState<PublicPost[]>([])
   const [hasMore, setHasMore] = useState<boolean>(true)
   const [allPosts, setAllPosts] = useState<PublicPost[]>([])
-  const { user } = useUser()
+  const { getUser } = useUser()
   const [isFilterOpen, setIsFilterOpen] = useState(false)
   const [isSortOpen, setIsSortOpen] = useState(false)
   const [activeFilter, setActiveFilter] = useState<PostStatus>('All')
@@ -75,8 +75,11 @@ export default function History () {
 
   useEffect(() => {
     console.log(allPosts)
+  }, [allPosts])
+
+  useEffect(() => {
     setPosts(applySort(applyFilter(allPosts)))
-  }, [activeFilter, sortDir])
+  }, [activeFilter, sortDir, allPosts])
 
   useEffect(() => {
     const handler = (_ev?: Event) => {
@@ -131,7 +134,14 @@ export default function History () {
   // fetchPosts now does: fetch -> merge -> filter -> sort -> cache -> state
   const fetchPosts = async (): Promise<void> => {
     try {
-      const userID = user?.user_id
+      const cachedPosts = await historyCacheRef.current.loadCachedPublicPosts()
+      if (cachedPosts.length > 0 && posts.length === 0) {
+        setAllPosts(applySort(applyFilter(cachedPosts)))
+        cachedPosts.forEach(p => loadedIdsRef.current.add(p.post_id))
+      }
+
+      const currentUser = await getUser()
+      const userID = currentUser?.user_id
       if (!userID) return
 
       const exclude = Array.from(loadedIdsRef.current)
@@ -141,26 +151,31 @@ export default function History () {
         limit: PAGE_SIZE
       })
 
-      if (newPosts.length > 0) {
-        const userOnly = newPosts.filter(p => p.user_id === userID)
-        const newIds = new Set(userOnly.map(np => np.post_id))
-        const filteredPrev = posts.filter(p => !newIds.has(p.post_id))
-        const merged = [...userOnly, ...filteredPrev]
-        const filtered = applyFilter(merged)
-        const computed = applySort(filtered)
-        userOnly.forEach(p => loadedIdsRef.current.add(p.post_id))
-        await historyCacheRef.current.saveLoadedPostIds(loadedIdsRef.current)
-        await historyCacheRef.current.addPostsToCache(computed)
-
-        const hasMorePosts: boolean = merged.length !== totalPostsCount
-        setHasMore(hasMorePosts)
-
-        setHasMore(userOnly.length === totalPostsCount)
-        setPosts(computed)
-        setAllPosts(merged)
-      } else {
+      if (newPosts.length === 0) {
         setHasMore(false)
+        historyCacheRef.current.loadCachedPublicPosts().then(cachedPosts => {
+          setAllPosts(cachedPosts)
+        })
+        return
       }
+
+      const userOnly = newPosts.filter(p => p.user_id === userID)
+      const existingLoaded = new Set(loadedIdsRef.current)
+      const newlyUncached = userOnly.filter(p => !existingLoaded.has(p.post_id))
+      const newIds = new Set(userOnly.map(np => np.post_id))
+      const filteredPrev = allPosts.filter(p => !newIds.has(p.post_id))
+      const mergedAll = [...userOnly, ...filteredPrev]
+      if (newlyUncached.length > 0) {
+        await historyCacheRef.current.addPostsToCache(newlyUncached)
+      }
+      newlyUncached.forEach(p => loadedIdsRef.current.add(p.post_id))
+      await historyCacheRef.current.saveLoadedPostIds(loadedIdsRef.current)
+      const hasMorePosts: boolean = mergedAll.length !== totalPostsCount
+      if (!hasMorePosts) {
+        return
+      }
+      setAllPosts(mergedAll)
+      setHasMore(hasMorePosts)
     } catch (error) {
       console.error('Error fetching posts:', error)
     }
@@ -218,6 +233,7 @@ export default function History () {
             loadedKey: 'LoadedPosts:history',
             cacheKey: 'CachedPublicPosts:history'
           }}
+          pageSize={PAGE_SIZE}
         >
           <UserCard className='mb-3' />
 

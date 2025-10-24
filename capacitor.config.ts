@@ -5,15 +5,15 @@ const config: CapacitorConfig = {
   appName: 'UMatch',
   webDir: 'dist',
   backgroundColor: '#FFFFFF',
-  server: {
-    cleartext: true,
-    url: 'http://192.168.1.94:5173/'
-  },
   plugins: {
     pushNotifications: {
       presentationOptions: ['alert', 'badge', 'sound']
     }
   }
+  //   server: {
+  //   cleartext: true,
+  //   url: 'http://192.168.1.94:5173/'
+  // },
 }
 
 export default config

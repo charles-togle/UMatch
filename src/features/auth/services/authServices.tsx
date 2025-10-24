@@ -102,9 +102,11 @@ export const authServices = {
         user_name:
           profile?.user_name ?? supabaseUser.user_metadata?.name ?? 'New User',
         email: authoritativeEmail,
-        profile_picture_url: uploadedProfileUrl,
         user_type: profile?.user_type ?? 'User',
-        last_login: new Date().toISOString()
+        last_login: new Date().toISOString(),
+        ...(uploadedProfileUrl
+          ? { profile_picture_url: uploadedProfileUrl }
+          : {})
       }
 
       const { data: userRow, error: upsertErr } = await supabase

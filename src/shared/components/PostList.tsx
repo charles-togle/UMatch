@@ -11,10 +11,7 @@ import {
 import { useState, useEffect } from 'react'
 import CatalogPost from '@/features/user/components/home/CatalogPost'
 import { useCallback } from 'react'
-import {
-  createPostCache,
-  type PostCacheKeys
-} from '@/features/user/data/postsCache'
+import { type PostCacheKeys } from '@/features/user/data/postsCache'
 import { useNavigation } from '@/shared/hooks/useNavigation'
 
 export default function PostList ({
@@ -23,12 +20,8 @@ export default function PostList ({
   ref,
   fetchPosts,
   hasMore,
-  setPosts,
-  loadedIdsRef,
   loadMorePosts,
-  ionFabButton,
-  cacheKeys,
-  sortDirection = 'desc'
+  ionFabButton
 }: {
   ref?: React.RefObject<HTMLIonContentElement | null>
   posts: PublicPost[]
@@ -41,6 +34,7 @@ export default function PostList ({
   ionFabButton?: React.ReactNode
   cacheKeys?: Partial<PostCacheKeys>
   sortDirection?: 'asc' | 'desc'
+  pageSize: number
 }) {
   const [isRefreshingContent, setRefreshingContent] = useState<boolean>(false)
   const [showActions, setShowActions] = useState(false)
@@ -55,34 +49,12 @@ export default function PostList ({
   }
 
   useEffect(() => {
-    const cache = createPostCache(cacheKeys)
-    const bootstrap = async () => {
+    const loadInitialPosts = async () => {
       setLoading(true)
-      try {
-        const [cached, loadedIds] = await Promise.all([
-          cache.loadCachedPublicPosts(),
-          cache.loadLoadedPostIds()
-        ])
-        const currPosts = cached.sort((a, b) => {
-          if (!a.submission_date && !b.submission_date) return 0
-          if (!a.submission_date) return 1
-          if (!b.submission_date) return -1
-          return sortDirection === 'desc'
-            ? (b.submission_date as string).localeCompare(
-                a.submission_date as string
-              )
-            : (a.submission_date as string).localeCompare(
-                b.submission_date as string
-              )
-        })
-        if (cached && cached.length > 0) setPosts(currPosts)
-        loadedIdsRef.current = loadedIds
-        await fetchPosts()
-      } finally {
-        setLoading(false)
-      }
+      await fetchPosts()
+      setLoading(false)
     }
-    bootstrap()
+    loadInitialPosts()
   }, [])
 
   const handleRefresh = useCallback((event: CustomEvent) => {
