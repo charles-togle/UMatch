@@ -75,32 +75,49 @@ export default function Home () {
 
       const exclude = Array.from(loadedIdsRef.current)
       const newPosts = await listPublicPosts(exclude, PAGE_SIZE)
-      if (newPosts.length > 0) {
-        const newIds = new Set(newPosts.map(np => np.post_id))
-        const filteredPrev = posts.filter(p => !newIds.has(p.post_id))
-        const merged = [...newPosts, ...filteredPrev].sort((a, b) => {
-          if (!a.submission_date && !b.submission_date) return 0
-          if (!a.submission_date) return 1
-          if (!b.submission_date) return -1
-          return SORT_DIR === 'desc'
-            ? (b.submission_date as string).localeCompare(
-                a.submission_date as string
-              )
-            : (a.submission_date as string).localeCompare(
-                b.submission_date as string
-              )
-        })
-        newPosts.forEach(p => loadedIdsRef.current.add(p.post_id))
-        await homeCacheRef.current.saveLoadedPostIds(loadedIdsRef.current)
-        await homeCacheRef.current.addPostsToCache(newPosts)
-        const totalPostsCount = await getTotalPostsCount()
-        const hasMorePosts: boolean = merged.length !== totalPostsCount
-        setHasMore(hasMorePosts)
-        if (hasMorePosts) {
-          setPosts(merged)
-        }
-      } else {
+      if (newPosts.length === 0) {
         setHasMore(false)
+        homeCacheRef.current.loadCachedPublicPosts().then(cachedPosts => {
+          setPosts(
+            cachedPosts.sort((a, b) => {
+              if (!a.submission_date && !b.submission_date) return 0
+              if (!a.submission_date) return 1
+              if (!b.submission_date) return -1
+              return SORT_DIR === 'desc'
+                ? (b.submission_date as string).localeCompare(
+                    a.submission_date as string
+                  )
+                : (a.submission_date as string).localeCompare(
+                    b.submission_date as string
+                  )
+            })
+          )
+        })
+        return
+      }
+
+      const newIds = new Set(newPosts.map(np => np.post_id))
+      const filteredPrev = posts.filter(p => !newIds.has(p.post_id))
+      const merged = [...newPosts, ...filteredPrev].sort((a, b) => {
+        if (!a.submission_date && !b.submission_date) return 0
+        if (!a.submission_date) return 1
+        if (!b.submission_date) return -1
+        return SORT_DIR === 'desc'
+          ? (b.submission_date as string).localeCompare(
+              a.submission_date as string
+            )
+          : (a.submission_date as string).localeCompare(
+              b.submission_date as string
+            )
+      })
+      newPosts.forEach(p => loadedIdsRef.current.add(p.post_id))
+      await homeCacheRef.current.saveLoadedPostIds(loadedIdsRef.current)
+      await homeCacheRef.current.addPostsToCache(newPosts)
+      const totalPostsCount = await getTotalPostsCount()
+      const hasMorePosts: boolean = merged.length !== totalPostsCount
+      setHasMore(hasMorePosts)
+      if (hasMorePosts) {
+        setPosts(merged)
       }
     } catch (error) {
       console.error('Error fetching posts:', error)
