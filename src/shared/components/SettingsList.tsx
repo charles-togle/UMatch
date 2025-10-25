@@ -6,8 +6,8 @@ import {
   IonIcon,
   IonToast,
   IonCard,
-  IonAlert,
-//   IonToggle
+  IonAlert
+  //   IonToggle
 } from '@ionic/react'
 import {
   trash,
@@ -28,8 +28,8 @@ export default function SettingsList () {
   const [toastOpen, setToastOpen] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
   const [confirmOpen, setConfirmOpen] = useState(false)
-//   const [inAppNotifs, setInAppNotifs] = useState(false)
-//   const [pushNotifs, setPushNotifs] = useState(false)
+  //   const [inAppNotifs, setInAppNotifs] = useState(false)
+  //   const [pushNotifs, setPushNotifs] = useState(false)
   const [permState, setPermState] = useState({
     camera: '',
     files: '',
@@ -37,9 +37,25 @@ export default function SettingsList () {
   })
 
   const handleClearPostsCache = async () => {
-    await clearPostsCache()
-    setToastMessage('Posts cache cleared')
-    setToastOpen(true)
+    try {
+      // Clear both home and history caches to avoid stale data in either feed
+      await Promise.all([
+        clearPostsCache({
+          loadedKey: 'LoadedPosts:home',
+          cacheKey: 'CachedPublicPosts:home'
+        }),
+        clearPostsCache({
+          loadedKey: 'LoadedPosts:history',
+          cacheKey: 'CachedPublicPosts:history'
+        })
+      ])
+      setToastMessage('Posts cache cleared (home & history)')
+    } catch (e) {
+      console.error('Failed to clear posts cache:', e)
+      setToastMessage('Failed to clear posts cache')
+    } finally {
+      setToastOpen(true)
+    }
   }
 
   const handleRequestCameraPermission = async () => {
@@ -145,25 +161,25 @@ export default function SettingsList () {
     }
   }, [])
 
-//   const updateInApp = async (val: boolean) => {
-//     setInAppNotifs(val)
-//     try {
-//       await Preferences.set({ key: 'notifications.inApp', value: String(val) })
-//     } catch {}
-//   }
+  //   const updateInApp = async (val: boolean) => {
+  //     setInAppNotifs(val)
+  //     try {
+  //       await Preferences.set({ key: 'notifications.inApp', value: String(val) })
+  //     } catch {}
+  //   }
 
-//   const updatePush = async (val: boolean) => {
-//     setPushNotifs(val)
-//     try {
-//       await Preferences.set({ key: 'notifications.push', value: String(val) })
-//     } catch {}
-//   }
+  //   const updatePush = async (val: boolean) => {
+  //     setPushNotifs(val)
+  //     try {
+  //       await Preferences.set({ key: 'notifications.push', value: String(val) })
+  //     } catch {}
+  //   }
 
   return (
     <>
       {/* Permissions */}
       <IonCard className='ion-padding mt-3'>
-        <CardHeader title='Permissions' icon={lockClosed}/>
+        <CardHeader title='Permissions' icon={lockClosed} />
         <IonList>
           <IonItem
             button
