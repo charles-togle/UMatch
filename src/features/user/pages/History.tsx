@@ -22,6 +22,7 @@ import { listOwnPosts } from '@/features/user/data/posts'
 import { createPostCache } from '@/features/user/data/postsCache'
 import type { PublicPost } from '@/features/user/types/post'
 import { useUser } from '@/features/auth/contexts/UserContext'
+import { Network } from '@capacitor/network'
 
 // Status filter types
 type PostStatus =
@@ -138,6 +139,10 @@ export default function History () {
       if (cachedPosts.length > 0 && posts.length === 0) {
         setAllPosts(applySort(applyFilter(cachedPosts)))
         cachedPosts.forEach(p => loadedIdsRef.current.add(p.post_id))
+      }
+
+      if ((await Network.getStatus()).connected === false) {
+        return
       }
 
       const currentUser = await getUser()

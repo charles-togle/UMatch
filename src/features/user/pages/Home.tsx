@@ -15,6 +15,7 @@ import { createPostCache } from '@/features/user/data/postsCache'
 import type { PublicPost } from '@/features/user/types/post'
 import { getTotalPostsCount } from '@/features/user/data/posts'
 import PostList from '@/shared/components/PostList'
+import { Network } from '@capacitor/network'
 
 // CatalogHeader Component
 const CatalogHeader = memo(
@@ -71,6 +72,11 @@ export default function Home () {
               )
         })
         cachedPosts.forEach(p => loadedIdsRef.current.add(p.post_id))
+        setPosts(cachedPosts)
+      }
+
+      if ((await Network.getStatus()).connected === false) {
+        return
       }
 
       const exclude = Array.from(loadedIdsRef.current)
