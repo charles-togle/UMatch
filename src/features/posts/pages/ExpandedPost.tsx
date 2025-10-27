@@ -38,7 +38,7 @@ export default function ExpandedPost () {
   }, [postId])
 
   if (loading) {
-    return <div>Loading...</div>s
+    return <div>Loading...</div>
   }
   if (!loading && post === null) {
     return <div>No post found.</div>

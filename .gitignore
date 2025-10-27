@@ -25,7 +25,6 @@ dist-ssr
 
 .idea/
 dist/
-types/
 .sourcemaps
 xcuserdata/
 node_modules/
