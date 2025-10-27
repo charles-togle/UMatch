@@ -1,4 +1,4 @@
-import type { PublicPost } from '@/features/user/types/post'
+import type { PublicPost } from '@/features/posts/types/post'
 import {
   IonContent,
   IonRefresher,

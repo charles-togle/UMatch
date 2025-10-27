@@ -1,7 +1,7 @@
 import { useParams } from 'react-router-dom'
 import { useEffect, useRef, useState } from 'react'
 import { createPostCache } from '@/features/posts/data/postsCache'
-import type { PublicPost } from '@/features/user/types/post'
+import type { PublicPost } from '@/features/posts/types/post'
 import { getPost } from '../data/posts'
 import Post from '@/features/posts/components/Post'
 import Header from '@/shared/components/Header'

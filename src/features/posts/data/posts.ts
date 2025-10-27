@@ -1,5 +1,5 @@
 import { supabase } from '@/shared/lib/supabase'
-import type { PublicPost } from '@/features/user/types/post'
+import type { PublicPost } from '@/features/posts/types/post'
 
 const fmtManila = (iso: string | null) => {
   if (!iso) return null

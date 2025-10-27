@@ -20,7 +20,7 @@ import PostList from '@/shared/components/PostList'
 import { useEffect, useRef, useState } from 'react'
 import { listOwnPosts } from '@/features/posts/data/posts'
 import { createPostCache } from '@/features/posts/data/postsCache'
-import type { PublicPost } from '@/features/user/types/post'
+import type { PublicPost } from '@/features/posts/types/post'
 import { useUser } from '@/features/auth/contexts/UserContext'
 import { Network } from '@capacitor/network'
 

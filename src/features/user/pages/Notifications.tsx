@@ -12,7 +12,7 @@ import NotificationItem from '@/features/user/components/notifications/Notificat
 import type {
   NotificationData,
   ActionItem
-} from '@/features/user/types/notifications'
+} from '@/features/posts/types/notifications'
 import {
   personCircle,
   trashOutline,

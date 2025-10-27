@@ -1,6 +1,6 @@
 import { Capacitor } from '@capacitor/core'
 import { Preferences } from '@capacitor/preferences'
-import type { PublicPost } from '@/features/user/types/post'
+import type { PublicPost } from '@/features/posts/types/post'
 
 export type PostCacheKeys = {
   loadedKey: string
