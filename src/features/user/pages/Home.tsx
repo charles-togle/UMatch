@@ -10,10 +10,10 @@ import { IonSearchbar, IonIcon, IonFab, IonFabButton } from '@ionic/react'
 import { Keyboard } from '@capacitor/keyboard'
 import { useNavigation } from '@/shared/hooks/useNavigation'
 import Header from '@/shared/components/Header'
-import { listPublicPosts } from '@/features/user/data/posts'
-import { createPostCache } from '@/features/user/data/postsCache'
+import { listPublicPosts } from '@/features/posts/data/posts'
+import { createPostCache } from '@/features/posts/data/postsCache'
 import type { PublicPost } from '@/features/user/types/post'
-import { getTotalPostsCount } from '@/features/user/data/posts'
+import { getTotalPostsCount } from '@/features/posts/data/posts'
 import PostList from '@/shared/components/PostList'
 import { Network } from '@capacitor/network'
 
@@ -50,8 +50,8 @@ export default function Home () {
   const loadedIdsRef = useRef<Set<string>>(new Set())
   const homeCacheRef = useRef(
     createPostCache({
-      loadedKey: 'LoadedPosts:home',
-      cacheKey: 'CachedPublicPosts:home'
+      loadedKey: 'LoadedPosts',
+      cacheKey: 'CachedPublicPosts'
     })
   )
 
@@ -157,6 +157,9 @@ export default function Home () {
     navigate('/user/new-post')
   }
 
+  const handlePostClick = (postId: string) => {
+    navigate(`/user/post/view/${postId}`)
+  }
   return (
     <>
       <CatalogHeader handleClick={handleSearchBarClick} />
@@ -173,6 +176,7 @@ export default function Home () {
           loadedKey: 'LoadedPosts:home',
           cacheKey: 'CachedPublicPosts:home'
         }}
+        onClick={handlePostClick}
         pageSize={PAGE_SIZE}
         ionFabButton={
           <IonFab

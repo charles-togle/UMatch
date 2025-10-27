@@ -12,6 +12,7 @@ import SearchItem from '@/features/user/pages/SearchItem'
 import Notifications from '@/features/user/pages/Notifications'
 import AccountPage from '@/features/user/pages/AccountPage'
 import Settings from '@/features/user/pages/Settings'
+import ExpandedPost from '@/features/posts/pages/ExpandedPost'
 
 const HistoryFallback = () => <div className='p-4'>Loading History…</div>
 const NewPostFallback = () => <div className='p-4'>Preparing form…</div>
@@ -21,6 +22,7 @@ export default function UserRoutes () {
   return (
     <IonTabs>
       <IonRouterOutlet>
+        <Route path='/user/post/view/:postId' render={() => <ExpandedPost />} />
         <Route
           path='/user/home'
           render={() => (

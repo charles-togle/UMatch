@@ -11,7 +11,7 @@ import {
 import { useState, useEffect } from 'react'
 import CatalogPost from '@/features/user/components/home/CatalogPost'
 import { useCallback } from 'react'
-import { type PostCacheKeys } from '@/features/user/data/postsCache'
+import { type PostCacheKeys } from '@/features/posts/data/postsCache'
 import { useNavigation } from '@/shared/hooks/useNavigation'
 
 export default function PostList ({
@@ -21,7 +21,8 @@ export default function PostList ({
   fetchPosts,
   hasMore,
   loadMorePosts,
-  ionFabButton
+  ionFabButton,
+  onClick
 }: {
   ref?: React.RefObject<HTMLIonContentElement | null>
   posts: PublicPost[]
@@ -35,6 +36,7 @@ export default function PostList ({
   cacheKeys?: Partial<PostCacheKeys>
   sortDirection?: 'asc' | 'desc'
   pageSize: number
+  onClick?: (postId: string) => void | undefined
 }) {
   const [isRefreshingContent, setRefreshingContent] = useState<boolean>(false)
   const [showActions, setShowActions] = useState(false)
@@ -103,6 +105,8 @@ export default function PostList ({
                 className={!hasMore && idx === posts.length - 1 ? '' : ''}
                 onActionSheetClick={() => handleActionSheetClick(post.post_id)}
                 itemStatus={post.item_status}
+                onClick={() => onClick?.(post.post_id)}
+                postId={post.post_id}
               />
             ))}
           </div>

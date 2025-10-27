@@ -38,6 +38,7 @@ const App: React.FC = () => {
         <IonApp>
           <IonReactRouter>
             <IonRouterOutlet>
+              <Route path='/post/report/:postId' render={() => <></>} />
               <Route path='/test' render={() => <HomeSkeleton />} />
               <Route exact path='/' render={() => <Redirect to='/preload' />} />
               <Route path='/preload' render={() => <StartupLoading />} />

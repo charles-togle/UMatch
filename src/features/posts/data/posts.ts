@@ -25,6 +25,59 @@ export async function getTotalPostsCount (): Promise<number | null> {
   return count
 }
 
+export async function getPost (postId: string): Promise<PublicPost | null> {
+  let query = supabase
+    .from('post_public_view')
+    .select(
+      `
+      post_id,
+      poster_name,
+      poster_id,
+      item_name,
+      profile_picture_url,
+      item_image_url,
+      item_description,
+      category,
+      last_seen_at,
+      item_status,
+      last_seen_location,
+      is_anonymous,
+      submission_date,
+      item_type,
+      post_status
+    `
+    )
+    .eq('post_id', postId)
+    .eq('item_type', 'found')
+
+  const { data, error } = await query
+  if (error) {
+    console.error('Error fetching post:', error)
+    return null
+  }
+
+  if (!data || data.length === 0) return null
+
+  const r: any = data[0]
+  return {
+    user_id: r.poster_id,
+    username: r.poster_name,
+    item_name: r.item_name,
+    profilepicture_url: r.profile_picture_url,
+    item_image_url: r.item_image_url,
+    item_description: r.item_description,
+    item_status: r.item_status,
+    category: r.category,
+    last_seen_at: fmtManila(r.last_seen_at),
+    last_seen_location: r.last_seen_location,
+    is_anonymous: r.is_anonymous,
+    post_id: r.post_id,
+    submission_date: r.submission_date,
+    item_type: r.item_type,
+    post_status: r.post_status
+  }
+}
+
 export async function listOwnPosts ({
   excludeIds = [],
   userId,
@@ -122,6 +175,7 @@ export async function listPublicPosts (
     `
     )
     .eq('item_type', 'found')
+    .order('submission_date', { ascending: false })
 
   if (excludeIds && excludeIds.length > 0) {
     // Use single-quoted string literals for UUIDs in the IN list

@@ -9,7 +9,8 @@ import {
   IonIcon,
   IonButtons,
   IonButton,
-  IonText
+  IonText,
+  IonChip
 } from '@ionic/react'
 import { ellipsisVertical, personCircle } from 'ionicons/icons'
 
@@ -18,17 +19,16 @@ export type CatalogPostProps = {
   user_profile_picture_url?: string | null
   itemName?: string
   description?: string
+  category?: string
   lastSeen?: string
   imageUrl?: string
   locationLastSeenAt?: string
   className?: string
   onActionSheetClick?: () => void | undefined
   itemStatus?: string | null
-  onClick?: (postId: string) => void | undefined
-  postId?: string
 }
 
-const CatalogPost: React.FC<CatalogPostProps> = ({
+const Post: React.FC<CatalogPostProps> = ({
   username = 'Profile Picture and Username',
   user_profile_picture_url = null,
   itemName = 'Item Name',
@@ -36,11 +36,10 @@ const CatalogPost: React.FC<CatalogPostProps> = ({
   lastSeen = 'MM/DD/YYYY 00:00 AM/PM',
   imageUrl,
   className = '',
+  category,
   locationLastSeenAt = 'Location where item was last seen',
   onActionSheetClick = undefined,
-  itemStatus = null,
-  onClick,
-  postId
+  itemStatus = null
 }) => {
   const normalizedStatus = (itemStatus || '').toLowerCase()
   const statusColorClass =
@@ -49,11 +48,9 @@ const CatalogPost: React.FC<CatalogPostProps> = ({
       : normalizedStatus === 'claimed'
       ? 'text-green-600'
       : ''
-
   return (
     <IonCard
-      className={`shadow-md border border-gray-200 font-default-font overflow-hidden px-2 ${className}`}
-      onClick={postId ? () => onClick?.(postId) : undefined}
+      className={`shadow-md border border-gray-200 font-default-font  px-2 ${className}`}
     >
       {/* Header with avatar + username + kebab menu */}
       <IonItem lines='none' className='py-2 -mx-2'>
@@ -98,7 +95,8 @@ const CatalogPost: React.FC<CatalogPostProps> = ({
               : null}
           </span>
         </div>
-        <p className='text-gray-700 pb-2 leading-snug line-clamp-2'>
+        <div className='h-px w-full my-2 bg-gray-300' />
+        <p className='text-slate-900 pb-2 leading-snug line-clamp-2'>
           {description}
         </p>
         <React.Suspense
@@ -106,29 +104,35 @@ const CatalogPost: React.FC<CatalogPostProps> = ({
             <div className='h-56 bg-gray-50 border border-gray-200 rounded-xl animate-pulse' />
           }
         >
-          <LazyImage
-            src={imageUrl}
-            alt={itemName}
-            className='h-56 rounded-xl'
-          />
+          <div className='max-h-128 flex justify-center items-center overflow-hidden  rounded-xl'>
+            <LazyImage src={imageUrl} alt={itemName} />
+          </div>
         </React.Suspense>
-
-        <div className='flex items-center gap-2 mt-3 text-xs text-gray-500'>
-          <IonText>
+        <div className='flex flex-col my-3 text-xl text-slate-900'>
+          <IonText class='font-extrabold'>
             <strong>Last seen:</strong>
           </IonText>
-          <IonText>{lastSeen}</IonText>
+          <IonText className='text-base '>{lastSeen}</IonText>
         </div>
-
-        <div className='flex items-center gap-2 mt-3 text-xs text-gray-500'>
-          <IonText>
+        {category && (
+          <div className='flex flex-col my-3 text-xl text-slate-900'>
+            <IonText class='font-extrabold'>
+              <strong>Last seen:</strong>
+            </IonText>
+            <IonChip className='w-fit bg-umak-blue text-white px-10 mt-1'>
+              {category}
+            </IonChip>
+          </div>
+        )}
+        <div className='flex flex-col text-xl text-slate-900'>
+          <IonText class='font-extrabold'>
             <strong>Location:</strong>
           </IonText>
-          <IonText>{locationLastSeenAt}</IonText>
+          <IonText className='text-base'>{locationLastSeenAt}</IonText>
         </div>
       </IonCardContent>
     </IonCard>
   )
 }
 
-export default memo(CatalogPost)
+export default memo(Post)

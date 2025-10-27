@@ -17,7 +17,7 @@ import {
   notifications,
   folderOpen
 } from 'ionicons/icons'
-import { clearPostsCache } from '@/features/user/data/postsCache'
+import { clearPostsCache } from '@/features/posts/data/postsCache'
 import CardHeader from './CardHeader'
 import { Camera } from '@capacitor/camera'
 import { Filesystem } from '@capacitor/filesystem'
