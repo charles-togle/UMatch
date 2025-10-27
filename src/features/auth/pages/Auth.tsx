@@ -93,8 +93,13 @@ const Auth: React.FC = () => {
             throw new Error(error || 'Authentication failed')
           }
           await refreshUser(user?.user_id || '')
-
-          navigate('/user/home', 'auth')
+          const redirect = sessionStorage.getItem('redirect_after_login')
+          if (redirect) {
+            navigate(redirect)
+            sessionStorage.removeItem('redirect_after_login')
+          } else {
+            navigate('/user/home', 'auth')
+          }
           setSocialLoginLoading(false)
         }
       }

@@ -43,7 +43,7 @@ export const authServices = {
       if (!session || !supabaseUser)
         return { user: null, token: null, error: 'No session returned' }
 
-      registerForPushNotifications(supabaseUser.id).catch(err => {
+      const deviceToken = await registerForPushNotifications().catch(err => {
         console.error(
           '[authServices] Push notification registration failed:',
           err
@@ -115,7 +115,7 @@ export const authServices = {
         ...(uploadedProfileUrl
           ? { profile_picture_url: uploadedProfileUrl }
           : {}),
-        notification_token: null
+        notification_token: deviceToken ?? null
       }
 
       const { data: userRow, error: upsertErr } = await supabase

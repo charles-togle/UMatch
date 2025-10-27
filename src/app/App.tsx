@@ -4,12 +4,12 @@ import { IonReactRouter } from '@ionic/react-router'
 import { Route, Redirect } from 'react-router-dom'
 import { setupIonicReact } from '@ionic/react'
 import { GoogleOAuthProvider } from '@react-oauth/google'
-import { UserProvider } from '@/features/auth/contexts/UserContext'
 import ProtectedRoute from '@/shared/components/ProtectedRoute'
 import UserRoutes from './routes/UserRoutes'
 import Auth from '@/features/auth/pages/Auth'
 import StartupLoading from './pages/StartupLoading'
 import HomeSkeleton from '@/features/user/components/skeletons/HomeSkeleton'
+import { usePushRedirect } from './hooks/usePushRedirect'
 
 import '@ionic/react/css/core.css'
 import '@ionic/react/css/normalize.css'
@@ -26,15 +26,13 @@ import '@/app/styles/tailwind.css'
 setupIonicReact({ mode: 'md' })
 
 const App: React.FC = () => {
+
+  usePushRedirect();
   const googleWebClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
-
-  console.log('Client ID value:', googleWebClientId)
-
   return (
     <GoogleOAuthProvider
       clientId={googleWebClientId || 'YOUR_GOOGLE_CLIENT_ID_HERE'}
     >
-      <UserProvider>
         <IonApp>
           <IonReactRouter>
             <IonRouterOutlet>
@@ -54,7 +52,6 @@ const App: React.FC = () => {
             </IonRouterOutlet>
           </IonReactRouter>
         </IonApp>
-      </UserProvider>
     </GoogleOAuthProvider>
   )
 }

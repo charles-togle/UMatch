@@ -1,6 +1,5 @@
-import { Capacitor } from '@capacitor/core'
-import { Preferences } from '@capacitor/preferences'
 import type { PublicPost } from '@/features/posts/types/post'
+import createCache, { type CacheKeys } from '@/shared/lib/cache'
 
 export type PostCacheKeys = {
   loadedKey: string
@@ -12,103 +11,110 @@ const DEFAULT_KEYS: PostCacheKeys = {
   cacheKey: 'CachedPublicPosts'
 }
 
-// Hybrid storage: Preferences on native, localStorage on web
-const storage = {
-  async get (key: string): Promise<string | null> {
-    if (Capacitor.isNativePlatform()) {
-      const { value } = await Preferences.get({ key })
-      return value ?? null
-    }
-    return localStorage.getItem(key)
-  },
-  async set (key: string, value: string): Promise<void> {
-    if (Capacitor.isNativePlatform()) {
-      await Preferences.set({ key, value })
-      return
-    }
-    localStorage.setItem(key, value)
-  },
-  async remove (key: string): Promise<void> {
-    if (Capacitor.isNativePlatform()) {
-      await Preferences.remove({ key })
-      return
-    }
-    localStorage.removeItem(key)
-  }
-}
+// default scoped cache instance used by convenience functions below
+const defaultPostsCache = createCache<PublicPost>({
+  keys: { loadedKey: DEFAULT_KEYS.loadedKey, cacheKey: DEFAULT_KEYS.cacheKey },
+  idSelector: p => p.post_id
+})
 
+// Backwards-compatible wrappers that accept optional keys (like the original API)
 export async function loadLoadedPostIds (
   keys: PostCacheKeys = DEFAULT_KEYS
 ): Promise<Set<string>> {
-  try {
-    const raw = await storage.get(keys.loadedKey)
-    if (!raw) return new Set()
-    const arr: string[] = JSON.parse(raw)
-    return new Set(arr)
-  } catch {
-    return new Set()
+  if (
+    keys.loadedKey === DEFAULT_KEYS.loadedKey &&
+    keys.cacheKey === DEFAULT_KEYS.cacheKey
+  ) {
+    return defaultPostsCache.loadLoadedIds()
   }
+  const c = createCache<PublicPost>({
+    keys: keys as CacheKeys,
+    idSelector: p => p.post_id
+  })
+  return c.loadLoadedIds()
 }
 
 export async function saveLoadedPostIds (
   ids: Set<string>,
   keys: PostCacheKeys = DEFAULT_KEYS
 ): Promise<void> {
-  try {
-    const arr = Array.from(ids)
-    await storage.set(keys.loadedKey, JSON.stringify(arr))
-  } catch {
-    // no-op
+  if (
+    keys.loadedKey === DEFAULT_KEYS.loadedKey &&
+    keys.cacheKey === DEFAULT_KEYS.cacheKey
+  ) {
+    return defaultPostsCache.saveLoadedIds(ids)
   }
+  const c = createCache<PublicPost>({
+    keys: keys as CacheKeys,
+    idSelector: p => p.post_id
+  })
+  return c.saveLoadedIds(ids)
 }
 
 export async function loadCachedPublicPosts (
   keys: PostCacheKeys = DEFAULT_KEYS
 ): Promise<PublicPost[]> {
-  try {
-    const raw = await storage.get(keys.cacheKey)
-    if (!raw) return []
-    const arr: PublicPost[] = JSON.parse(raw)
-    return Array.isArray(arr) ? arr : []
-  } catch {
-    return []
+  if (
+    keys.loadedKey === DEFAULT_KEYS.loadedKey &&
+    keys.cacheKey === DEFAULT_KEYS.cacheKey
+  ) {
+    return defaultPostsCache.loadCache()
   }
+  const c = createCache<PublicPost>({
+    keys: keys as CacheKeys,
+    idSelector: p => p.post_id
+  })
+  return c.loadCache()
 }
 
 export async function saveCachedPublicPosts (
   posts: PublicPost[],
   keys: PostCacheKeys = DEFAULT_KEYS
 ): Promise<void> {
-  try {
-    await storage.set(keys.cacheKey, JSON.stringify(posts))
-  } catch {
-    // no-op
+  if (
+    keys.loadedKey === DEFAULT_KEYS.loadedKey &&
+    keys.cacheKey === DEFAULT_KEYS.cacheKey
+  ) {
+    return defaultPostsCache.saveCache(posts)
   }
+  const c = createCache<PublicPost>({
+    keys: keys as CacheKeys,
+    idSelector: p => p.post_id
+  })
+  return c.saveCache(posts)
 }
 
 export async function addPostsToCache (
   newPosts: PublicPost[],
   keys: PostCacheKeys = DEFAULT_KEYS
 ): Promise<void> {
-  const current = await loadCachedPublicPosts(keys)
-  // Merge by post_id, keep first occurrence (assume newest first in newPosts)
-  const byId = new Map<string, PublicPost>()
-  for (const p of [...newPosts, ...current]) {
-    byId.set(p.post_id, p)
+  if (
+    keys.loadedKey === DEFAULT_KEYS.loadedKey &&
+    keys.cacheKey === DEFAULT_KEYS.cacheKey
+  ) {
+    return defaultPostsCache.addToCache(newPosts)
   }
-  const merged = Array.from(byId.values())
-  await saveCachedPublicPosts(merged, keys)
+  const c = createCache<PublicPost>({
+    keys: keys as CacheKeys,
+    idSelector: p => p.post_id
+  })
+  return c.addToCache(newPosts)
 }
 
 export async function clearPostsCache (
   keys: PostCacheKeys = DEFAULT_KEYS
 ): Promise<void> {
-  try {
-    await storage.remove(keys.loadedKey)
-    await storage.remove(keys.cacheKey)
-  } catch {
-    // no-op
+  if (
+    keys.loadedKey === DEFAULT_KEYS.loadedKey &&
+    keys.cacheKey === DEFAULT_KEYS.cacheKey
+  ) {
+    return defaultPostsCache.clearCache()
   }
+  const c = createCache<PublicPost>({
+    keys: keys as CacheKeys,
+    idSelector: p => p.post_id
+  })
+  return c.clearCache()
 }
 
 // Convenience factory to create a scoped cache instance with custom keys
@@ -117,14 +123,18 @@ export function createPostCache (customKeys: Partial<PostCacheKeys> = {}) {
     loadedKey: customKeys.loadedKey ?? DEFAULT_KEYS.loadedKey,
     cacheKey: customKeys.cacheKey ?? DEFAULT_KEYS.cacheKey
   }
+  const c = createCache<PublicPost>({
+    keys: keys as CacheKeys,
+    idSelector: p => p.post_id
+  })
+
+  // return the old API shape
   return {
-    loadLoadedPostIds: () => loadLoadedPostIds(keys),
-    saveLoadedPostIds: (ids: Set<string>) => saveLoadedPostIds(ids, keys),
-    loadCachedPublicPosts: () => loadCachedPublicPosts(keys),
-    saveCachedPublicPosts: (posts: PublicPost[]) =>
-      saveCachedPublicPosts(posts, keys),
-    addPostsToCache: (newPosts: PublicPost[]) =>
-      addPostsToCache(newPosts, keys),
-    clearPostsCache: () => clearPostsCache(keys)
+    loadLoadedPostIds: () => c.loadLoadedIds(),
+    saveLoadedPostIds: (ids: Set<string>) => c.saveLoadedIds(ids),
+    loadCachedPublicPosts: () => c.loadCache(),
+    saveCachedPublicPosts: (posts: PublicPost[]) => c.saveCache(posts),
+    addPostsToCache: (newPosts: PublicPost[]) => c.addToCache(newPosts),
+    clearPostsCache: () => c.clearCache()
   }
 }

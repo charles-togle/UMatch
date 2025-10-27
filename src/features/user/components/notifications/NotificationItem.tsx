@@ -1,5 +1,5 @@
 // components/user/notifications/NotificationItem.tsx
-import React, { useMemo, useState } from 'react'
+import React, { useMemo, useState, useRef, useEffect } from 'react'
 import { IonIcon, IonActionSheet, IonButton } from '@ionic/react'
 import {
   shieldOutline,
@@ -22,6 +22,7 @@ interface NotificationItemProps {
   type: NotificationType
   title: string
   description: string
+  read?: boolean
   actions?: ActionItem[]
   actionSheetHeader?: string
 }
@@ -45,13 +46,58 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
   type,
   title,
   description,
+  read = false,
   actions = [],
   actionSheetHeader = 'Actions'
 }) => {
   const [open, setOpen] = useState(false)
   const { icon, colorClass } = iconForType(type)
+  const [expanded, setExpanded] = useState(false)
 
-  // Map your ActionItem[] to IonActionSheet buttons
+  // Long-press handling
+  const longPressTimeout = useRef<number | null>(null)
+  const longPressTriggered = useRef(false)
+  const [holding, setHolding] = useState(false)
+
+  useEffect(() => {
+    return () => {
+      if (longPressTimeout.current) {
+        window.clearTimeout(longPressTimeout.current)
+        longPressTimeout.current = null
+      }
+    }
+  }, [])
+
+  const startPress = () => {
+    longPressTriggered.current = false
+    // indicate the user started pressing
+    setHolding(true)
+    longPressTimeout.current = window.setTimeout(() => {
+      longPressTriggered.current = true
+      setOpen(true)
+    }, 500) as unknown as number
+  }
+
+  const clearPress = () => {
+    if (longPressTimeout.current) {
+      window.clearTimeout(longPressTimeout.current)
+      longPressTimeout.current = null
+    }
+    // remove holding visual
+    setHolding(false)
+  }
+
+  const handlePointerDown = () => startPress()
+  const handlePointerUp = () => clearPress()
+  const handlePointerLeave = () => clearPress()
+  const handleClick = () => {
+    if (longPressTriggered.current) {
+      longPressTriggered.current = false
+      return
+    }
+    setExpanded(prev => !prev)
+  }
+
   const sheetButtons = useMemo(
     () =>
       actions.map(a => ({
@@ -66,9 +112,22 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
     [actions]
   )
 
+  const expandedClassName = expanded
+    ? 'line-clamp-none'
+    : 'line-clamp-2 truncate'
+
   return (
     <>
-      <div className='flex items-start gap-3 px-3 py-3 border-b border-slate-200'>
+      <div
+        onPointerDown={handlePointerDown}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+        onPointerLeave={handlePointerLeave}
+        onClick={handleClick}
+        className={`flex items-start gap-3 px-3 py-3 border-b border-slate-200 ${
+          read ? 'bg-slate-50 opacity-70' : ''
+        } ${holding ? 'bg-black/10' : ''}`}
+      >
         {/* left icon */}
         <div className={`mt-0.5 ${colorClass}`}>
           <IonIcon icon={icon} style={{ fontSize: 22 }} />
@@ -76,17 +135,27 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
 
         {/* text */}
         <div className='flex-1 min-w-0'>
-          <div className='font-default-font text-[15px] font-semibold text-slate-900 truncate'>
+          <div
+            className={`font-default-font text-[15px] ${
+              read ? 'font-default' : 'font-semibold'
+            } text-slate-900 ${expandedClassName}`}
+          >
             {title}
           </div>
-          <div className='font-default-font text-[13px] text-slate-600 truncate'>
+          <div
+            className={`font-default-font text-[13px] text-slate-600 ${expandedClassName}`}
+          >
             {description}
           </div>
         </div>
 
         {/* actions (three dots) */}
         <IonButton
-          onClick={() => setOpen(true)}
+          onClick={e => {
+            // Prevent the parent click which toggles expand
+            e.stopPropagation()
+            setOpen(true)
+          }}
           aria-label='Actions'
           fill='clear'
           size='small'

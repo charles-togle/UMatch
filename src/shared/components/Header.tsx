@@ -21,12 +21,14 @@ export default function Header ({
   children,
   logoShown,
   unreadCount,
-  isProfileAndNotificationShown = true
+  isProfileAndNotificationShown = true,
+  isNotificationPage = false
 }: {
   children?: React.ReactNode
   logoShown: boolean
   unreadCount?: number
   isProfileAndNotificationShown?: boolean
+  isNotificationPage?: boolean
 }) {
   const [profilePicUrl, setProfilePicUrl] = useState<string | null>(null)
   const profilePicRef = useRef<string | null>(null)
@@ -52,6 +54,9 @@ export default function Header ({
   const handleProfileClick = useCallback(() => {
     navigate('/user/account')
   }, [navigate])
+  const notificationIconClass = isNotificationPage
+    ? 'text-amber-500 '
+    : 'text-white'
   return (
     <IonHeader className='ion-no-border'>
       <IonToolbar style={toolbarStyle}>
@@ -76,9 +81,9 @@ export default function Header ({
                 <IonIcon
                   icon={notifications}
                   slot='icon-only'
-                  className='text-white text-2xl'
+                  className={`text-2xl ${notificationIconClass}`}
                 />
-                {unreadCount && unreadCount > 0 && (
+                {!isNotificationPage && unreadCount && unreadCount > 0 && (
                   <IonBadge
                     color='danger'
                     className='absolute -top-1 -right-1 text-[10px] px-1.5 py-0.5 rounded-full'

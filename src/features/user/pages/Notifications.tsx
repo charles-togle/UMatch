@@ -1,97 +1,138 @@
 // pages/user/Notifications.tsx
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   IonContent,
-  IonButtons,
   IonButton,
   IonIcon,
-  IonActionSheet
+  IonActionSheet,
+  IonRefresher,
+  IonRefresherContent
 } from '@ionic/react'
 import Header from '@/shared/components/Header'
 import NotificationItem from '@/features/user/components/notifications/NotificationItem'
-import type {
-  NotificationData,
-  ActionItem
-} from '@/features/posts/types/notifications'
+import type { ActionItem } from '@/features/posts/types/notifications'
+import useNotifications from '@/features/user/hooks/useNotifications'
+import { useUser } from '@/features/auth/contexts/UserContext'
 import {
-  personCircle,
   trashOutline,
   checkmarkOutline,
-  notifications,
   ellipsisVertical
 } from 'ionicons/icons'
+import NotificationItemSkeleton from '../components/notifications/NotificationItemSkeleton'
 
 // Extend to include id & read status for local state
-type Notif = NotificationData & { id: number; read?: boolean }
-
-const seed: Notif[] = [
-  {
-    id: 1,
-    type: 'info',
-    title: 'Notification Title',
-    description: 'Description'
-  },
-  {
-    id: 2,
-    type: 'found',
-    title: 'Item Found',
-    description: 'An item you’ve been looking for has been identified.'
-  },
-  {
-    id: 3,
-    type: 'resolved',
-    title: 'Case Resolved',
-    description: 'An item you’ve reported has been returned.'
-  },
-  {
-    id: 4,
-    type: 'progress',
-    title: 'Report in Progress',
-    description: 'The report you’ve submitted will be reviewed soon.'
-  }
-]
+// Local shim type was removed — notifications are provided by the hook
 
 export default function Notifications () {
-  const [items, setItems] = useState<Notif[]>(seed)
+  const { getUser } = useUser()
+  const {
+    notifications: notificationsList,
+    loading,
+    getAllNotifications,
+    markAsRead,
+    deleteNotification
+  } = useNotifications()
+
+  // Local view-state for action sheet
+  const [showBulkSheet, setShowBulkSheet] = useState(false)
+  const [user, setUser] = useState<{ user_id: string } | null>(null)
+
+  useEffect(() => {
+    let mounted = true
+    try {
+      getUser().then(currentUser => {
+        if (mounted) setUser(currentUser)
+      })
+    } catch (e) {
+      console.error('Failed to get user', e)
+    }
+  }, [])
+
+  const fetchNotificationsForUser = async (userId: string) => {
+    try {
+      console.log('Fetching notifications for user', userId)
+      await getAllNotifications(userId)
+    } catch (e) {
+      console.error('Failed to fetch notifications for user', e)
+    }
+  }
+
+  useEffect(() => {
+    let mounted = true
+    async function load () {
+      fetchNotificationsForUser(user?.user_id || '').catch(err => {
+        if (mounted) {
+          console.error('Failed to load notifications', err)
+        }
+      })
+    }
+    load()
+    return () => {
+      mounted = false
+    }
+  }, [user])
 
   // Per-item actions
-  const handleNotificationDelete = (id: number) => {
-    setItems(prev => prev.filter(n => n.id !== id))
+  const handleNotificationDelete = async (notificationId?: string) => {
+    if (!notificationId) return
+    const ok = await deleteNotification(notificationId)
+    if (!ok) console.error('Failed to delete notification', notificationId)
   }
-  const handleMarkAsRead = (id: number) => {
-    setItems(prev => prev.map(n => (n.id === id ? { ...n, read: true } : n)))
+
+  const handleMarkAsRead = async (notificationId?: string) => {
+    if (!notificationId) return
+    const ok = await markAsRead(notificationId)
+    if (!ok) console.error('Failed to mark as read', notificationId)
   }
 
   // Bulk actions (horizontal ellipsis)
-  const [showBulkSheet, setShowBulkSheet] = useState(false)
-  const handleDeleteAll = () => setItems([])
-  const handleMarkAllRead = () =>
-    setItems(prev => prev.map(n => ({ ...n, read: true })))
+  const handleDeleteAll = async () => {
+    setShowBulkSheet(false)
+    try {
+      await Promise.all(
+        (notificationsList ?? []).map(n =>
+          deleteNotification(n.notification_id)
+        )
+      )
+    } catch (e) {
+      console.error('Failed to delete all notifications', e)
+    }
+  }
+
+  const handleMarkAllRead = async () => {
+    setShowBulkSheet(false)
+    try {
+      await Promise.all(
+        (notificationsList ?? []).map(n => markAsRead(n.notification_id))
+      )
+    } catch (e) {
+      console.error('Failed to mark all notifications read', e)
+    }
+  }
+
+  const handleRefresh = async (event: CustomEvent) => {
+    try {
+      const currentUser = await getUser()
+      if (!currentUser) return
+      await getAllNotifications(currentUser.user_id)
+    } catch (e) {
+      console.error('Failed to refresh notifications', e)
+    } finally {
+      event.detail.complete()
+    }
+  }
 
   return (
     <IonContent className='bg-gray-50'>
       {/* App header you already have */}
-      <Header logoShown={true}>
-        <IonButtons slot='end'>
-          <IonButton className='relative'>
-            <IonIcon
-              icon={notifications}
-              slot='icon-only'
-              className=' text-2xl text-amber-500'
-            />
-          </IonButton>
-        </IonButtons>
-        {/* Profile Icon */}
-        <IonButtons slot='end'>
-          <IonButton>
-            <IonIcon
-              icon={personCircle}
-              slot='icon-only'
-              className='text-white text-2xl'
-            />
-          </IonButton>
-        </IonButtons>
-      </Header>
+      <Header
+        logoShown={true}
+        isProfileAndNotificationShown={true}
+        isNotificationPage={true}
+      />
+      <IonRefresher slot='fixed' onIonRefresh={handleRefresh}>
+        <IonRefresherContent />
+      </IonRefresher>
 
       {/* Section header with horizontal ellipsis for list-level actions */}
       <div className='bg-white border-y border-slate-200 px-3 py-2 font-default-font'>
@@ -126,32 +167,40 @@ export default function Notifications () {
 
       {/* Notifications list */}
       <div className='bg-white'>
-        {items.length === 0 ? (
+        {loading ? (
+          [...Array(10)].map((_, idx) => <NotificationItemSkeleton key={idx} />)
+        ) : (notificationsList ?? []).length === 0 ? (
           <div className='px-4 py-10 text-center text-slate-500 font-default-font text-sm'>
             You’re all caught up.
           </div>
         ) : (
-          items.map(n => {
+          (notificationsList ?? []).map(n => {
+            // Construct title/description from available fields
+            const title =
+              (n.data as any)?.title ?? n.description ?? 'Notification'
+            const description = n.description ?? JSON.stringify(n.data ?? '')
+
             const actions: ActionItem[] = [
               {
-                color: 'danger', // per spec: danger => umak-blue text (we style via cssClass in NotificationItem)
+                color: 'danger',
                 type: 'Delete notification',
-                onClick: () => handleNotificationDelete(n.id),
+                onClick: () => handleNotificationDelete(n.notification_id),
                 icon: trashOutline
               },
               {
-                color: 'primary', // slate-900 text
+                color: 'primary',
                 type: 'Mark as read',
-                onClick: () => handleMarkAsRead(n.id),
+                onClick: () => handleMarkAsRead(n.notification_id),
                 icon: checkmarkOutline
               }
             ]
             return (
               <NotificationItem
-                key={n.id}
-                type={n.type}
-                title={n.title}
-                description={n.description}
+                key={n.notification_id}
+                type={(n.type as any) || 'info'}
+                title={title}
+                description={description}
+                read={Boolean(n.is_read)}
                 actions={actions}
               />
             )
