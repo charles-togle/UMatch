@@ -1,11 +1,17 @@
 import { useState } from 'react'
 import { IonContent, IonIcon, IonButton, IonSpinner } from '@ionic/react'
 import ImageUpload from '@/shared/components/ImageUpload'
+import ActionModal from '@/shared/components/ActionModal'
 import LocationDetailsSelector from '@/features/user/components/shared/LocationDetailsSelector'
 import LastSeenModal from '@/features/user/components/shared/LastSeenModal'
 import ItemStatusSelector from '@/features/user/components/shared/ItemStatusSelector'
 import Header from '@/shared/components/Header'
-import { create } from 'ionicons/icons'
+import {
+  create,
+  informationCircle,
+  backspace,
+  checkmarkCircle
+} from 'ionicons/icons'
 import { useNavigation } from '@/shared/hooks/useNavigation'
 import { IonToast } from '@ionic/react'
 import { useUser, type User } from '@/features/auth/contexts/UserContext'
@@ -64,6 +70,8 @@ export default function NewPost () {
   const { navigate } = useNavigation()
   const { getUser } = useUser()
   const { createPost } = postServices
+  const [showFinalizeModal, setShowFinalizeModal] = useState(false)
+  const [showCancelModal, setShowCancelModal] = useState(false)
 
   const handleDateChange = (e: CustomEvent) => {
     const iso = e.detail.value as string
@@ -189,7 +197,7 @@ export default function NewPost () {
                 '--background': 'var(--color-umak-red)',
                 '--box-shadow': 'none'
               }}
-              onClick={handleCancel}
+              onClick={() => setShowCancelModal(true)}
             >
               Cancel
             </IonButton>
@@ -199,7 +207,7 @@ export default function NewPost () {
                   '--background': 'transparent',
                   '--box-shadow': 'none'
                 }}
-                onClick={handleSubmit}
+                onClick={() => setShowFinalizeModal(true)}
                 disabled={loading}
               >
                 {loading ? <IonSpinner name='crescent' /> : 'Submit'}
@@ -331,7 +339,7 @@ export default function NewPost () {
               <IonButton
                 style={{ '--background': 'var(--color-umak-blue)' }}
                 expand='full'
-                onClick={handleSubmit}
+                onClick={() => setShowFinalizeModal(true)}
                 disabled={loading}
               >
                 {loading ? <IonSpinner name='crescent' /> : 'Submit'}
@@ -340,6 +348,82 @@ export default function NewPost () {
           </div>
         </div>
       </div>
+
+      {/* Finalize Submit Modal */}
+      <ActionModal
+        isOpen={showFinalizeModal}
+        onDidDismiss={() => setShowFinalizeModal(false)}
+        header={
+          <div className='flex flex-col items-center'>
+            <IonIcon
+              icon={informationCircle}
+              className='text-3xl text-umak-blue'
+            />
+            <div className='mt-2 text-base font-semibold'>
+              Finalize and submit report?
+            </div>
+          </div>
+        }
+        actions={[
+          {
+            text: 'Continue editing',
+            onClick: close => {
+              close()
+              setShowFinalizeModal(false)
+            },
+            icon: create,
+            iconColor: 'text-amber-500'
+          },
+          {
+            text: 'Upload report',
+            onClick: close => {
+              close()
+              setShowFinalizeModal(false)
+              void handleSubmit()
+            },
+            icon: checkmarkCircle,
+            iconColor: 'text-lime-500'
+          }
+        ]}
+      />
+
+      {/* Cancel Confirmation Modal */}
+      <ActionModal
+        isOpen={showCancelModal}
+        onDidDismiss={() => setShowCancelModal(false)}
+        header={
+          <div className='flex flex-col items-center'>
+            <IonIcon
+              icon={informationCircle}
+              className='text-3xl text-umak-blue'
+            />
+            <div className='mt-2 text-base font-normal'>
+              Are you sure you want to cancel?
+            </div>
+          </div>
+        }
+        actions={[
+          {
+            text: 'Cancel report',
+            onClick: close => {
+              close()
+              setShowCancelModal(false)
+              handleCancel()
+            },
+            icon: backspace,
+            iconColor: 'text-umak-red'
+          },
+          {
+            text: 'Continue writing',
+            onClick: close => {
+              close()
+              setShowCancelModal(false)
+            },
+            icon: create,
+            iconColor: 'text-lime-600'
+          }
+        ]}
+      />
       <IonToast
         isOpen={showToast}
         onDidDismiss={() => setShowToast(false)}

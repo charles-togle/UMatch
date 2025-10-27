@@ -81,7 +81,8 @@ const CatalogPost: React.FC<CatalogPostProps> = ({
             fill='clear'
             color='medium'
             aria-label='More options'
-            onClick={() => {
+            onClick={(e: React.MouseEvent) => {
+              e.stopPropagation()
               onKebabButtonlick?.()
             }}
           >

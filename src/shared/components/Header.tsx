@@ -12,6 +12,8 @@ import { cachedFileExists } from '../utils/fileUtils'
 import { getCachedImage } from '../utils/fileUtils'
 import { useNavigation } from '../hooks/useNavigation'
 import { notifications, personCircle } from 'ionicons/icons'
+import useNotifications from '@/features/user/hooks/useNotifications'
+import { useUser } from '@/features/auth/contexts/UserContext'
 
 const toolbarStyle = {
   ['--background']: 'var(--color-umak-blue, #1D2981)'
@@ -20,7 +22,6 @@ const toolbarStyle = {
 export default function Header ({
   children,
   logoShown,
-  unreadCount,
   isProfileAndNotificationShown = true,
   isNotificationPage = false
 }: {
@@ -31,8 +32,35 @@ export default function Header ({
   isNotificationPage?: boolean
 }) {
   const [profilePicUrl, setProfilePicUrl] = useState<string | null>(null)
+  const [unreadCount, setUnreadCount] = useState<number | null>(null)
   const profilePicRef = useRef<string | null>(null)
   const { navigate } = useNavigation()
+  const { getNotificationCount } = useNotifications()
+  const { getUser } = useUser()
+
+  useEffect(() => {
+    let mounted = true
+    const fetchUnreadCount = async () => {
+      try {
+        let userId
+        const user = await getUser()
+        if (user) {
+          userId = user.user_id
+        } else {
+          console.error('No user found for fetching unread count')
+          return
+        }
+        const count = await getNotificationCount(userId)
+        if (mounted) setUnreadCount(count)
+      } catch (error) {
+        console.error('Error fetching unread count:', error)
+      }
+    }
+    fetchUnreadCount()
+    return () => {
+      mounted = false
+    }
+  }, [])
   useEffect(() => {
     const getProfilePicture = async () => {
       if (profilePicRef.current) return
@@ -81,12 +109,12 @@ export default function Header ({
                 <IonIcon
                   icon={notifications}
                   slot='icon-only'
-                  className={`text-2xl ${notificationIconClass}`}
+                  className={`text-3xl ${notificationIconClass}`}
                 />
-                {!isNotificationPage && unreadCount && unreadCount > 0 && (
+                {!isNotificationPage && Number(unreadCount) > 0 && (
                   <IonBadge
                     color='danger'
-                    className='absolute -top-1 -right-1 text-[10px] px-1.5 py-0.5 rounded-full'
+                    className='absolute -top-1 -right-2 text-[10px] px-1.5 py-0.5 rounded-full'
                   >
                     {unreadCount}
                   </IonBadge>

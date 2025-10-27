@@ -9,6 +9,7 @@ type UseNotificationsReturn = {
   getAllNotifications: (userId: string) => Promise<NotificationData[]>
   markAsRead: (notificationId: string) => Promise<boolean>
   deleteNotification: (notificationId: string) => Promise<boolean>
+  getNotificationCount: (userId: string) => Promise<number>
 }
 
 /**
@@ -38,6 +39,28 @@ export default function useNotifications (): UseNotificationsReturn {
       },
       idSelector: n => n.notification_id
     })
+
+  const getNotificationCount = useCallback(
+    async (userId: string): Promise<number> => {
+      try {
+        const { count, error } = await supabase
+          .from('notification_table')
+          .select('notification_id', { count: 'exact', head: true })
+          .eq('sent_to', userId)
+          .eq('is_read', false)
+
+        if (error) {
+          console.error('Error fetching notification count:', error)
+          return 0
+        }
+        return count ?? 0
+      } catch (error) {
+        console.error('Error fetching notification count:', error)
+        return 0
+      }
+    },
+    []
+  )
 
   const getAllNotifications = useCallback(async (userId: string) => {
     setLoading(true)
@@ -182,6 +205,7 @@ export default function useNotifications (): UseNotificationsReturn {
     loading,
     getAllNotifications,
     markAsRead,
-    deleteNotification
+    deleteNotification,
+    getNotificationCount
   }
 }

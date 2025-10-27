@@ -1,16 +1,13 @@
 import React, { useRef, useState } from 'react'
-import {
-  IonButton,
-  IonIcon,
-  IonModal,
-  IonLabel
-} from '@ionic/react'
+import { IonButton, IonIcon } from '@ionic/react'
 import {
   cloudUploadOutline,
   refreshOutline,
   camera,
-  images
+  images,
+  informationCircle
 } from 'ionicons/icons'
+import ActionModal from './ActionModal'
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera'
 
 interface ImageUploadSectionProps {
@@ -125,46 +122,43 @@ const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
         />
       </div>
 
-      {/* Modal selector for image source */}
-      <IonModal
+      <ActionModal
         isOpen={isOpen}
         onDidDismiss={closeModal}
-        backdropDismiss={true}
-        initialBreakpoint={0.2}
-        breakpoints={[0, 0.2, 0.35]}
-        className='category-selection-modal font-default-font '
-        style={{ '--border-radius': '2rem' }}
-      >
-        <div className='flex flex-col items-center '>
-          <p className='my-4'>Select Picture Method</p>
-          <div className='flex flex-row w-full h-20'>
-            <button
-              onClick={handleTakePhoto}
-              className='flex flex-col items-center justify-center w-full gap-2'
-            >
-              <IonIcon
-                slot='start'
-                icon={camera}
-                size='large'
-                className='text-umak-blue'
-              />
-              <IonLabel>Open Camera</IonLabel>
-            </button>
-            <button
-              onClick={handlePickFile}
-              className='flex flex-col items-center justify-center w-full gap-2'
-            >
-              <IonIcon
-                slot='start'
-                icon={images}
-                size='large'
-                className='text-umak-blue'
-              />
-              <IonLabel>Select from gallery</IonLabel>
-            </button>
+        header={
+          <div className='flex flex-col items-center'>
+            <IonIcon
+              icon={informationCircle}
+              className='text-3xl text-umak-blue'
+            />
+            <p>Select Picture Method</p>
           </div>
-        </div>
-      </IonModal>
+        }
+        actions={[
+          {
+            text: 'Open Camera',
+            icon: camera,
+            onClick: close => {
+              // close modal then take photo
+              close()
+              // small timeout to ensure modal closed before native camera opens
+              setTimeout(() => void handleTakePhoto(), 50)
+            }
+          },
+          {
+            text: 'Select from gallery',
+            icon: images,
+            onClick: close => {
+              close()
+              setTimeout(() => void handlePickFile(), 50)
+            }
+          }
+        ]}
+        initialBreakpoint={0.25}
+        breakpoints={[0, 0.25, 0.35]}
+        backdropDismiss={true}
+        className='category-selection-modal font-default-font'
+      />
     </div>
   )
 }
