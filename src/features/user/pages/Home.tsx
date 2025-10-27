@@ -6,7 +6,13 @@ import {
   memo,
   type MouseEventHandler
 } from 'react'
-import { IonSearchbar, IonIcon, IonFab, IonFabButton } from '@ionic/react'
+import {
+  IonSearchbar,
+  IonIcon,
+  IonFab,
+  IonFabButton,
+  IonToast
+} from '@ionic/react'
 import { Keyboard } from '@capacitor/keyboard'
 import { useNavigation } from '@/shared/hooks/useNavigation'
 import Header from '@/shared/components/Header'
@@ -45,6 +51,8 @@ export default function Home () {
   const SORT_DIR: 'asc' | 'desc' = 'desc'
   const [posts, setPosts] = useState<PublicPost[]>([])
   const [hasMore, setHasMore] = useState<boolean>(true)
+  const [showToast, setShowToast] = useState(false)
+  const [toastMessage, setToastMessage] = useState('')
   const contentRef = useRef<HTMLIonContentElement | null>(null)
   const { navigate } = useNavigation()
   const loadedIdsRef = useRef<Set<string>>(new Set())
@@ -75,7 +83,12 @@ export default function Home () {
         setPosts(cachedPosts)
       }
 
-      if ((await Network.getStatus()).connected === false) {
+      const status = await Network.getStatus()
+      if (status.connected === false) {
+        setToastMessage(
+          'Getting updated posts failed — not connected to the internet'
+        )
+        setShowToast(true)
         return
       }
 
@@ -163,6 +176,14 @@ export default function Home () {
   return (
     <>
       <CatalogHeader handleClick={handleSearchBarClick} />
+      <IonToast
+        isOpen={showToast}
+        onDidDismiss={() => setShowToast(false)}
+        message={toastMessage}
+        duration={3000}
+        position='top'
+        color='danger'
+      />
       <PostList
         posts={posts}
         fetchPosts={fetchPosts}
