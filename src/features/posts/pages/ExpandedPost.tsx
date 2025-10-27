@@ -1,35 +1,44 @@
 import { useParams } from 'react-router-dom'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { createPostCache } from '@/features/posts/data/postsCache'
 import type { PublicPost } from '@/features/posts/types/post'
 import { getPost } from '../data/posts'
 import Post from '@/features/posts/components/Post'
+import PostSkeleton from '../components/PostSkeleton'
 import Header from '@/shared/components/Header'
-import { IonContent } from '@ionic/react'
+import { IonContent, IonActionSheet } from '@ionic/react'
+import { Share } from '@capacitor/share'
+import { useNavigation } from '@/shared/hooks/useNavigation'
 
 export default function ExpandedPost () {
   const { postId } = useParams<{ postId: string }>()
+  const { navigate } = useNavigation()
+
   const [post, setPost] = useState<PublicPost | null>()
-  const [loading, setLoading] = useState<Boolean>(true)
+  const [loading, setLoading] = useState<boolean>(true)
+  const [actionSheetOpen, setActionSheetOpen] = useState<boolean>(false)
+
   const postCache = useRef(
     createPostCache({
       loadedKey: 'LoadedPosts',
       cacheKey: 'CachedPublicPosts'
     })
   )
+
   useEffect(() => {
     const getCurrentPost = async () => {
       if (!postId) return
       setLoading(true)
       setPost(undefined)
 
-      let cachedPosts = await postCache.current.loadCachedPublicPosts()
-      let currPost = cachedPosts.find(p => p.post_id === postId) || null
+      const cachedPosts = await postCache.current.loadCachedPublicPosts()
+      const currPost = cachedPosts.find(p => p.post_id === postId) || null
       if (currPost) {
         setPost(currPost)
         setLoading(false)
         return
       }
+
       const fetchedPost = await getPost(postId as string)
       setPost(fetchedPost)
       setLoading(false)
@@ -37,9 +46,30 @@ export default function ExpandedPost () {
     getCurrentPost()
   }, [postId])
 
-  if (loading) {
-    return <div>Loading...</div>
-  }
+  const handleOpenActions = useCallback(() => {
+    setActionSheetOpen(true)
+  }, [])
+
+  const handleShare = useCallback(async () => {
+    if (!postId) return
+    try {
+      await Share.share({
+        title: post?.item_name || 'Check this post',
+        text: post?.item_description || '',
+        url: `${window.location.origin}/user/post/view/${postId}`,
+        dialogTitle: 'Share post'
+      })
+    } catch (e) {
+      // No-op if user cancels or Share isn't available
+      console.debug('Share cancelled/unavailable', e)
+    }
+  }, [postId, post?.item_name, post?.item_description])
+
+  const handleReport = useCallback(() => {
+    if (!postId) return
+    navigate(`/user/post/report/${postId}`)
+  }, [navigate, postId])
+
   if (!loading && post === null) {
     return <div>No post found.</div>
   }
@@ -47,16 +77,43 @@ export default function ExpandedPost () {
   return (
     <IonContent>
       <Header isProfileAndNotificationShown={true} logoShown={true} />
-      <Post
-        category={post?.category ?? ''}
-        description={post?.item_description ?? ''}
-        imageUrl={post?.item_image_url ?? ''}
-        itemName={post?.is_anonymous ? 'Anonymous' : post?.item_name ?? ''}
-        itemStatus={post?.item_status ?? ''}
-        lastSeen={post?.last_seen_at ?? ''}
-        locationLastSeenAt={post?.last_seen_location ?? ''}
-        user_profile_picture_url={post?.profilepicture_url ?? ''}
-        username={post?.username ?? ''}
+
+      {loading ? (
+        <PostSkeleton />
+      ) : (
+        <Post
+          category={post?.category ?? ''}
+          description={post?.item_description ?? ''}
+          imageUrl={post?.item_image_url ?? ''}
+          itemName={post?.is_anonymous ? 'Anonymous' : post?.item_name ?? ''}
+          itemStatus={post?.item_status ?? ''}
+          lastSeen={post?.last_seen_at ?? ''}
+          locationLastSeenAt={post?.last_seen_location ?? ''}
+          user_profile_picture_url={post?.profilepicture_url ?? ''}
+          username={post?.username ?? ''}
+          onKebabButtonlick={handleOpenActions}
+        />
+      )}
+
+      <IonActionSheet
+        isOpen={actionSheetOpen}
+        onDidDismiss={() => setActionSheetOpen(false)}
+        header='Post actions'
+        buttons={[
+          {
+            text: 'Report',
+            role: 'destructive',
+            handler: handleReport
+          },
+          {
+            text: 'Share',
+            handler: handleShare
+          },
+          {
+            text: 'Cancel',
+            role: 'cancel'
+          }
+        ]}
       />
     </IonContent>
   )

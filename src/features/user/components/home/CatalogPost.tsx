@@ -22,7 +22,7 @@ export type CatalogPostProps = {
   imageUrl?: string
   locationLastSeenAt?: string
   className?: string
-  onActionSheetClick?: () => void | undefined
+  onKebabButtonlick?: () => void | undefined
   itemStatus?: string | null
   onClick?: (postId: string) => void | undefined
   postId?: string
@@ -37,7 +37,7 @@ const CatalogPost: React.FC<CatalogPostProps> = ({
   imageUrl,
   className = '',
   locationLastSeenAt = 'Location where item was last seen',
-  onActionSheetClick = undefined,
+  onKebabButtonlick = undefined,
   itemStatus = null,
   onClick,
   postId
@@ -81,7 +81,9 @@ const CatalogPost: React.FC<CatalogPostProps> = ({
             fill='clear'
             color='medium'
             aria-label='More options'
-            onClick={() => onActionSheetClick?.()}
+            onClick={() => {
+              onKebabButtonlick?.()
+            }}
           >
             <IonIcon icon={ellipsisVertical} />
           </IonButton>
@@ -130,5 +132,7 @@ const CatalogPost: React.FC<CatalogPostProps> = ({
     </IonCard>
   )
 }
+
+// Action sheet rendered inside the component's JSX via state
 
 export default memo(CatalogPost)

@@ -20,7 +20,6 @@ import OhsoLogo from '@/shared/assets/umak-ohso.png'
 import { authServices } from '../services/authServices'
 import type { GoogleLoginResponse } from '@capgo/capacitor-social-login'
 import { useUser } from '@/features/auth/contexts/UserContext'
-import { PushNotifications } from '@capacitor/push-notifications'
 import '@/features/auth/styles/auth.css'
 
 type GoogleResponseOnline = Awaited<ReturnType<typeof SocialLogin.login>>
@@ -73,9 +72,6 @@ const Auth: React.FC = () => {
         google: { webClientId: googleWebClientId, mode: 'online' }
       })
       setSocialLoginLoading(true)
-      const { receive: permissionStatus } =
-        await PushNotifications.checkPermissions()
-      if (permissionStatus === 'granted') await PushNotifications.register()
       const res: GoogleResponseOnline = await SocialLogin.login({
         provider: 'google',
         options: { scopes: ['profile', 'email'] }

@@ -10,6 +10,7 @@ import {
 } from '@ionic/react'
 import { useState, useEffect } from 'react'
 import CatalogPost from '@/features/user/components/home/CatalogPost'
+import CatalogPostSkeleton from '@/features/user/components/home/CatalogPostSkeleton'
 import { useCallback } from 'react'
 import { type PostCacheKeys } from '@/features/posts/data/postsCache'
 import { useNavigation } from '@/shared/hooks/useNavigation'
@@ -80,12 +81,7 @@ export default function PostList ({
         {loading ? (
           <div className='flex flex-col gap-4 animate-pulse'>
             {[...Array(2)].map((_, index) => (
-              <CatalogPost
-                description='...'
-                itemName='...'
-                lastSeen='...'
-                key={index}
-              />
+              <CatalogPostSkeleton className='w-full' key={index} />
             ))}
           </div>
         ) : (
@@ -103,7 +99,7 @@ export default function PostList ({
                 }
                 username={post.is_anonymous ? 'Anonymous' : post.username}
                 className={!hasMore && idx === posts.length - 1 ? '' : ''}
-                onActionSheetClick={() => handleActionSheetClick(post.post_id)}
+                onKebabButtonlick={() => handleActionSheetClick(post.post_id)}
                 itemStatus={post.item_status}
                 onClick={() => onClick?.(post.post_id)}
                 postId={post.post_id}

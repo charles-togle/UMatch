@@ -24,7 +24,7 @@ export type CatalogPostProps = {
   imageUrl?: string
   locationLastSeenAt?: string
   className?: string
-  onActionSheetClick?: () => void | undefined
+  onKebabButtonlick?: () => void | undefined
   itemStatus?: string | null
 }
 
@@ -38,7 +38,7 @@ const Post: React.FC<CatalogPostProps> = ({
   className = '',
   category,
   locationLastSeenAt = 'Location where item was last seen',
-  onActionSheetClick = undefined,
+  onKebabButtonlick = undefined,
   itemStatus = null
 }) => {
   const normalizedStatus = (itemStatus || '').toLowerCase()
@@ -78,7 +78,7 @@ const Post: React.FC<CatalogPostProps> = ({
             fill='clear'
             color='medium'
             aria-label='More options'
-            onClick={() => onActionSheetClick?.()}
+            onClick={() => onKebabButtonlick?.()}
           >
             <IonIcon icon={ellipsisVertical} />
           </IonButton>

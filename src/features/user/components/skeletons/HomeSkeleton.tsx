@@ -1,5 +1,5 @@
 import { IonPage, IonContent } from '@ionic/react'
-import CatalogPost from '../home/CatalogPost'
+import CatalogPostSkeleton from '../home/CatalogPostSkeleton'
 import Header from '@/shared/components/Header'
 
 export default function HomeSkeleton () {
@@ -7,17 +7,10 @@ export default function HomeSkeleton () {
     <IonPage>
       <IonContent>
         <div className='h-screen overflow-y-hidden pointer-events-none'>
-          <Header logoShown={true}>
-            <div></div>
-          </Header>
+          <Header logoShown={true}></Header>
           <div className='flex flex-col gap-4 animate-pulse'>
             {[...Array(2)].map((_, index) => (
-              <CatalogPost
-                description='...'
-                itemName='...'
-                lastSeen='...'
-                key={index}
-              />
+              <CatalogPostSkeleton className='w-full' key={index} />
             ))}
           </div>
         </div>

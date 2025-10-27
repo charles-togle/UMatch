@@ -16,6 +16,7 @@
     "full:run": "concurrently \"npm run android:run\" \"npm run backend\" "
   },
   "dependencies": {
+    "@capacitor-community/fcm": "^7.1.3",
     "@capacitor/android": "^7.4.3",
     "@capacitor/camera": "^7.0.2",
     "@capacitor/core": "^7.4.4",
@@ -25,6 +26,7 @@
     "@capacitor/network": "^7.0.2",
     "@capacitor/preferences": "^7.0.2",
     "@capacitor/push-notifications": "^7.0.3",
+    "@capacitor/share": "^7.0.2",
     "@capgo/capacitor-social-login": "^7.11.21",
     "@ionic/react": "^8.7.7",
     "@ionic/react-router": "^8.7.7",
@@ -36,6 +38,7 @@
     "blockhash-core": "^0.1.0",
     "cors": "^2.8.5",
     "express": "^5.1.0",
+    "firebase": "^12.4.0",
     "fs": "^0.0.1-security",
     "ionicons": "^8.0.13",
     "jwt-decode": "^4.0.0",

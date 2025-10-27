@@ -4,6 +4,7 @@ import { supabase } from '@/shared/lib/supabase'
 import type { User, UserType } from '@/features/auth/contexts/UserContext'
 import { saveCachedImage } from '@/shared/utils/fileUtils'
 import { makeThumb } from '@/shared/utils/imageUtils'
+import { registerForPushNotifications } from '@/features/auth/services/registerForPushNotifications'
 
 export interface GoogleProfile {
   googleIdToken: string
@@ -41,6 +42,13 @@ export const authServices = {
       const supabaseUser = signInData.user
       if (!session || !supabaseUser)
         return { user: null, token: null, error: 'No session returned' }
+
+      registerForPushNotifications(supabaseUser.id).catch(err => {
+        console.error(
+          '[authServices] Push notification registration failed:',
+          err
+        )
+      })
 
       const authoritativeEmail = supabaseUser.email ?? profile?.email ?? null
 
@@ -106,7 +114,8 @@ export const authServices = {
         last_login: new Date().toISOString(),
         ...(uploadedProfileUrl
           ? { profile_picture_url: uploadedProfileUrl }
-          : {})
+          : {}),
+        notification_token: null
       }
 
       const { data: userRow, error: upsertErr } = await supabase
