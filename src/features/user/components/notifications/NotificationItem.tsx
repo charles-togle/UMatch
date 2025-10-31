@@ -25,6 +25,8 @@ interface NotificationItemProps {
   read?: boolean
   actions?: ActionItem[]
   actionSheetHeader?: string
+  notificationId?: string
+  handleMarkAsRead?: (notificationId: string) => void
 }
 
 const iconForType = (type: NotificationType) => {
@@ -48,7 +50,9 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
   description,
   read = false,
   actions = [],
-  actionSheetHeader = 'Actions'
+  actionSheetHeader = 'Actions',
+  notificationId,
+  handleMarkAsRead
 }) => {
   const [open, setOpen] = useState(false)
   const { icon, colorClass } = iconForType(type)
@@ -123,7 +127,10 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerUp}
         onPointerLeave={handlePointerLeave}
-        onClick={handleClick}
+        onClick={() => {
+          handleClick();
+          handleMarkAsRead && handleMarkAsRead(notificationId!);
+        }}
         className={`flex items-start gap-3 px-3 py-3 border-b border-slate-200 ${
           read ? 'bg-slate-50 opacity-70' : ''
         } ${holding ? 'bg-black/10' : ''}`}

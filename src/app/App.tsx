@@ -26,32 +26,31 @@ import '@/app/styles/tailwind.css'
 setupIonicReact({ mode: 'md' })
 
 const App: React.FC = () => {
-
-  usePushRedirect();
+  usePushRedirect()
   const googleWebClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
   return (
     <GoogleOAuthProvider
       clientId={googleWebClientId || 'YOUR_GOOGLE_CLIENT_ID_HERE'}
     >
-        <IonApp>
-          <IonReactRouter>
-            <IonRouterOutlet>
-              <Route path='/post/report/:postId' render={() => <></>} />
-              <Route path='/test' render={() => <HomeSkeleton />} />
-              <Route exact path='/' render={() => <Redirect to='/preload' />} />
-              <Route path='/preload' render={() => <StartupLoading />} />
-              <Route path='/auth' render={() => <Auth />} />
-              <Route
-                path='/user/*'
-                render={() => (
-                  <ProtectedRoute allowedRoles={['user']}>
+      <IonApp>
+        <IonReactRouter>
+          <IonRouterOutlet>
+            <Route path='/post/report/:postId' render={() => <></>} />
+            <Route path='/test' render={() => <HomeSkeleton />} />
+            <Route exact path='/' render={() => <Redirect to='/preload' />} />
+            <Route path='/preload' render={() => <StartupLoading />} />
+            <Route path='/auth' render={() => <Auth />} />
+            <Route
+              path='/user/*'
+              render={() => (
+                <ProtectedRoute allowedRoles={['user']}>
                     <UserRoutes />
-                  </ProtectedRoute>
-                )}
-              />
-            </IonRouterOutlet>
-          </IonReactRouter>
-        </IonApp>
+                </ProtectedRoute>
+              )}
+            />
+          </IonRouterOutlet>
+        </IonReactRouter>
+      </IonApp>
     </GoogleOAuthProvider>
   )
 }

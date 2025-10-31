@@ -3,15 +3,17 @@ import { IonIcon } from '@ionic/react'
 export default function CardHeader ({
   icon,
   title,
-  iconSize = '32px'
+  iconSize = '32px',
+  hasLineBelow = true
 }: {
   icon: string
   title: string
   iconSize?: string
+  hasLineBelow?: boolean
 }) {
   return (
     <>
-      <div className='flex items-center space-x-2 mb-3'>
+      <div className='flex items-center space-x-2'>
         <IonIcon
           icon={icon}
           className='text-[#1e2b87]'
@@ -21,7 +23,7 @@ export default function CardHeader ({
           {title}
         </div>
       </div>
-      <div className='h-px w-full bg-black my-3'> </div>
+      {hasLineBelow && <div className='h-px w-full bg-black my-3 mx-3'> </div>}
     </>
   )
 }

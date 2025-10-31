@@ -1,5 +1,6 @@
 import { supabase } from '@/shared/lib/supabase'
 import type { PublicPost } from '@/features/posts/types/post'
+import { createPostCache } from '@/features/posts/data/postsCache'
 
 const fmtManila = (iso: string | null) => {
   if (!iso) return null
@@ -49,6 +50,19 @@ export async function getPost (postId: string): Promise<PublicPost | null> {
     )
     .eq('post_id', postId)
     .eq('item_type', 'found')
+
+  const postCache = createPostCache({
+    loadedKey: 'LoadedPosts',
+    cacheKey: 'CachedPublicPosts'
+  })
+
+  if (!postId) return null
+
+  const cachedPosts = await postCache.loadCachedPublicPosts()
+  const currPost = cachedPosts.find(p => p.post_id === postId) || null
+  if (currPost) {
+    return currPost
+  }
 
   const { data, error } = await query
   if (error) {

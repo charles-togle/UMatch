@@ -115,7 +115,7 @@ export const authServices = {
         ...(uploadedProfileUrl
           ? { profile_picture_url: uploadedProfileUrl }
           : {}),
-        notification_token: deviceToken ?? null
+        ...(deviceToken ? { notification_token: deviceToken } : {})
       }
 
       const { data: userRow, error: upsertErr } = await supabase

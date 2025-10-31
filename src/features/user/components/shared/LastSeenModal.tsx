@@ -7,6 +7,7 @@ import {
   IonButton
 } from '@ionic/react'
 import './styles/lastSeenModal.css'
+import FormSectionHeader from '@/shared/components/FormSectionHeader'
 
 interface LastSeenModalProps {
   date?: string
@@ -36,14 +37,7 @@ const LastSeenModal: React.FC<LastSeenModalProps> = ({
 
   return (
     <div className='mb-4'>
-      <p className='font-default-font text-xl mb-2 text-slate-900 font-extrabold flex items-center'>
-        Last Seen
-        {isRequired && (
-          <span className='text-umak-red font-default-font text-sm font-normal ml-3'>
-            (required)
-          </span>
-        )}
-      </p>
+      <FormSectionHeader header='Last Seen' isRequired={isRequired} />
       <div className='flex flex-col space-x-3'>
         {/* Date & Time Picker */}
         <div className='flex flex-row justify-start space-x-5 items-center'>

@@ -138,7 +138,7 @@ export default function PostList ({
           {
             text: 'View details',
             handler: () => {
-              if (activePostId) navigate(`/user/post/${activePostId}`)
+              if (activePostId) navigate(`/user/post/view/${activePostId}`)
             }
           },
           {
@@ -147,7 +147,7 @@ export default function PostList ({
               try {
                 if (!activePostId) return
                 await navigator.clipboard.writeText(
-                  `${window.location.origin}/user/post/${activePostId}`
+                  `${window.location.origin}/user/post/view/${activePostId}`
                 )
               } catch (e) {
                 console.warn('Share copy failed', e)
@@ -158,8 +158,9 @@ export default function PostList ({
             text: 'Report',
             role: 'destructive',
             handler: () => {
-              if (activePostId) navigate(`/user/report/${activePostId}`)
-            }
+              if (activePostId) navigate(`/user/post/report/${activePostId}`)
+            },
+            cssClass: 'report-btn'
           },
           {
             text: 'Cancel',

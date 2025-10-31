@@ -99,7 +99,7 @@ export const postServices = {
       )
 
       // Parse lastSeenISO to extract date and time
-      const lastSeenDate = new Date() // local device time
+      const lastSeenDate = new Date(postData.lastSeenISO) // local device time
       const lastSeenHours = lastSeenDate.getHours() // 0–23 (local)
       const lastSeenMinutes = lastSeenDate.getMinutes() // 0–59
 
@@ -156,6 +156,54 @@ export const postServices = {
     } catch (error) {
       console.error('[postServices] Exception creating post:', error)
       return { post: null, error: 'Failed to create post' }
+    }
+  },
+
+  reportPost: async (
+    postId: string | number,
+    reason: string,
+    proofImage?: File | null
+  ): Promise<{
+    success: boolean
+    error: string | null
+    report?: { report_id: string; report_status: string }
+  }> => {
+    try {
+      let proofUrl: string | null = null
+
+      if (proofImage) {
+        // create a display-optimized image and upload
+        const displayBlob = await makeDisplay(proofImage)
+        const path = `reports/${postId}/${Date.now()}.webp`
+        proofUrl = await uploadAndGetPublicUrl(path, displayBlob, 'image/webp')
+      }
+
+      const { data, error } = await supabase.rpc('create_or_get_fraud_report', {
+        p_post_id: Number(postId),
+        p_reason: reason,
+        p_proof_image_url: proofUrl
+      })
+
+      if (error) {
+        console.error('[postServices] Error creating/reporting post:', error)
+        return { success: false, error: error.message }
+      }
+
+      // RPC with RETURNS TABLE returns an array of rows
+      const row = Array.isArray(data) ? data[0] : data
+
+      if (!row) {
+        return { success: false, error: 'No report returned from RPC' }
+      }
+
+      return {
+        success: true,
+        error: null,
+        report: { report_id: row.report_id, report_status: row.report_status }
+      }
+    } catch (err) {
+      console.error('[postServices] Exception reporting post:', err)
+      return { success: false, error: 'Failed to report post' }
     }
   }
 

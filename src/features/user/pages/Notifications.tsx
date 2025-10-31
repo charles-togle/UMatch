@@ -202,6 +202,8 @@ export default function Notifications () {
                 description={description}
                 read={Boolean(n.is_read)}
                 actions={actions}
+                notificationId={n.notification_id}
+                handleMarkAsRead={handleMarkAsRead}
               />
             )
           })

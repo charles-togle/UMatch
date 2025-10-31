@@ -12,14 +12,20 @@ import { cachedFileExists } from '../utils/fileUtils'
 import { getCachedImage } from '../utils/fileUtils'
 import { useNavigation } from '../hooks/useNavigation'
 import { notifications, personCircle } from 'ionicons/icons'
-import useNotifications from '@/features/user/hooks/useNotifications'
 import { useUser } from '@/features/auth/contexts/UserContext'
+import { useUnreadNotificationCount } from '@/features/user/hooks/useUnreadNotificationCount'
+import createCache from '@/shared/lib/cache'
+
+type CachedCount = {
+  count: number
+  timestamp: number
+}
 
 const toolbarStyle = {
   ['--background']: 'var(--color-umak-blue, #1D2981)'
 } as React.CSSProperties
 
-export default function Header ({
+function Header ({
   children,
   logoShown,
   isProfileAndNotificationShown = true,
@@ -32,35 +38,46 @@ export default function Header ({
   isNotificationPage?: boolean
 }) {
   const [profilePicUrl, setProfilePicUrl] = useState<string | null>(null)
-  const [unreadCount, setUnreadCount] = useState<number | null>(null)
+  const [cachedCount, setCachedCount] = useState<number>(0)
   const profilePicRef = useRef<string | null>(null)
   const { navigate } = useNavigation()
-  const { getNotificationCount } = useNotifications()
-  const { getUser } = useUser()
+  const { user } = useUser()
 
   useEffect(() => {
-    let mounted = true
-    const fetchUnreadCount = async () => {
+    if (!user?.user_id) return
+    const loadCachedCount = async () => {
       try {
-        let userId
-        const user = await getUser()
-        if (user) {
-          userId = user.user_id
-        } else {
-          console.error('No user found for fetching unread count')
-          return
+        const userCountCache = createCache<CachedCount>({
+          keys: {
+            loadedKey: `LoadedNotificationCount:${user.user_id}`,
+            cacheKey: `CachedNotificationCount:${user.user_id}`
+          },
+          idSelector: () => 'count'
+        })
+
+        const cached = await userCountCache.loadCache()
+        if (cached.length > 0) {
+          const cachedData = cached[0]
+
+          setCachedCount(cachedData.count)
         }
-        const count = await getNotificationCount(userId)
-        if (mounted) setUnreadCount(count)
-      } catch (error) {
-        console.error('Error fetching unread count:', error)
+      } catch (err) {
+        console.log('Header: No cached count available')
       }
     }
-    fetchUnreadCount()
-    return () => {
-      mounted = false
+
+    loadCachedCount()
+  }, [user?.user_id])
+
+  const { unreadCount, error } = useUnreadNotificationCount(
+    user?.user_id,
+    cachedCount
+  )
+  useEffect(() => {
+    if (error) {
+      console.warn('Notification count fetch error:', error.message)
     }
-  }, [])
+  }, [error])
   useEffect(() => {
     const getProfilePicture = async () => {
       if (profilePicRef.current) return
@@ -146,3 +163,5 @@ export default function Header ({
     </IonHeader>
   )
 }
+
+export default Header

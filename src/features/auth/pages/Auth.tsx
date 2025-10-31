@@ -17,7 +17,7 @@ import { useNavigation } from '@/shared/hooks/useNavigation'
 import AdminBuilding from '@/shared/assets/umak-admin-building.jpg'
 import UmakSeal from '@/shared/assets/umak-seal.png'
 import OhsoLogo from '@/shared/assets/umak-ohso.png'
-import { authServices } from '../services/authServices'
+import { useAuth } from '../hooks/useAuth'
 import type { GoogleLoginResponse } from '@capgo/capacitor-social-login'
 import { useUser } from '@/features/auth/contexts/UserContext'
 import '@/features/auth/styles/auth.css'
@@ -56,6 +56,7 @@ const Auth: React.FC = () => {
   const [socialLoginLoading, setSocialLoginLoading] = useState(false)
 
   const { refreshUser } = useUser()
+  const { getOrRegisterAccount } = useAuth()
 
   useEffect(() => {
     const images = [AdminBuilding, UmakSeal, OhsoLogo]
@@ -81,7 +82,7 @@ const Auth: React.FC = () => {
         if ('profile' in result && 'idToken' in result) {
           const { name, email, imageUrl } = result.profile
 
-          const { user, error } = await authServices.GetOrRegisterAccount({
+          const { user, error } = await getOrRegisterAccount({
             googleIdToken: result.idToken || '',
             email: email || '',
             user_name: toSentenceCaseFull(name || 'New User'),
@@ -123,7 +124,7 @@ const Auth: React.FC = () => {
       setGoogleLoading(true)
       const token = credentialResponse.credential
       const googleResponse = jwtDecode<GoogleJwtPayload>(token)
-      const { user, error } = await authServices.GetOrRegisterAccount({
+      const { user, error } = await getOrRegisterAccount({
         googleIdToken: token,
         email: googleResponse.email,
         user_name: toSentenceCaseFull(googleResponse.name),

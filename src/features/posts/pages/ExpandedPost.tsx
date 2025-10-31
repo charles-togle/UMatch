@@ -1,6 +1,5 @@
 import { useParams } from 'react-router-dom'
-import { useEffect, useRef, useState, useCallback } from 'react'
-import { createPostCache } from '@/features/posts/data/postsCache'
+import { useEffect, useState, useCallback } from 'react'
 import type { PublicPost } from '@/features/posts/types/post'
 import { getPost } from '../data/posts'
 import Post from '@/features/posts/components/Post'
@@ -18,27 +17,11 @@ export default function ExpandedPost () {
   const [loading, setLoading] = useState<boolean>(true)
   const [actionSheetOpen, setActionSheetOpen] = useState<boolean>(false)
 
-  const postCache = useRef(
-    createPostCache({
-      loadedKey: 'LoadedPosts',
-      cacheKey: 'CachedPublicPosts'
-    })
-  )
-
   useEffect(() => {
     const getCurrentPost = async () => {
       if (!postId) return
       setLoading(true)
       setPost(undefined)
-
-      const cachedPosts = await postCache.current.loadCachedPublicPosts()
-      const currPost = cachedPosts.find(p => p.post_id === postId) || null
-      if (currPost) {
-        setPost(currPost)
-        setLoading(false)
-        return
-      }
-
       const fetchedPost = await getPost(postId as string)
       setPost(fetchedPost)
       setLoading(false)
@@ -103,7 +86,8 @@ export default function ExpandedPost () {
           {
             text: 'Report',
             role: 'destructive',
-            handler: handleReport
+            handler: handleReport,
+            cssClass: 'report-btn'
           },
           {
             text: 'Share',

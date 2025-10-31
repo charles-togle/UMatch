@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react'
 import { supabase } from '@/shared/lib/supabase'
 import createCache from '@/shared/lib/cache'
 import type { NotificationData } from '@/features/posts/types/notifications'
+import { useUser } from '@/features/auth/contexts/UserContext'
 
 type UseNotificationsReturn = {
   notifications: NotificationData[]
@@ -10,6 +11,12 @@ type UseNotificationsReturn = {
   markAsRead: (notificationId: string) => Promise<boolean>
   deleteNotification: (notificationId: string) => Promise<boolean>
   getNotificationCount: (userId: string) => Promise<number>
+  sendNotificationToSelf: (params: {
+    message: string
+    title: string
+    type: 'info' | 'found' | 'resolved' | 'progress'
+    data?: any
+  }) => Promise<void>
 }
 
 /**
@@ -29,8 +36,77 @@ type UseNotificationsReturn = {
 export default function useNotifications (): UseNotificationsReturn {
   const [notifications, setNotifications] = useState<NotificationData[]>([])
   const [loading, setLoading] = useState<boolean>(false)
+  const [ownDeviceToken, setOwnDeviceToken] = useState<string | null>(null)
+  const { user } = useUser()
 
   // helper to create a per-user notifications cache (scoped by user id)
+
+  const getOwnDeviceToken = useCallback(async (): Promise<string | null> => {
+    try {
+      const userId = user?.user_id
+      if (!userId) {
+        console.warn('No user ID available to fetch device token')
+        return null
+      }
+      const { data, error } = await supabase
+        .from('user_table')
+        .select('notification_token')
+        .eq('user_id', userId)
+        .single()
+
+      if (error) {
+        console.error('Error fetching own device token:', error)
+        return null
+      }
+      if (data && data.notification_token) {
+        setOwnDeviceToken(data.notification_token)
+        return data.notification_token
+      } else {
+        return null
+      }
+    } catch (e) {
+      console.error('Error fetching own device token:', e)
+      return null
+    }
+  }, [user])
+
+  const sendNotificationToSelf = useCallback(
+    async ({
+      message,
+      title,
+      type,
+      data
+    }: {
+      message: string
+      title: string
+      type: 'info' | 'found' | 'resolved' | 'progress'
+      data?: any
+    }) => {
+      try {
+        let token = ownDeviceToken
+        if (!token) {
+          token = await getOwnDeviceToken()
+        }
+        if (!token) {
+          console.warn('No valid device token available for self-notification')
+          return
+        }
+        await supabase.functions.invoke('send-notification', {
+          body: {
+            token: token,
+            title: title,
+            body: message,
+            type: type,
+            data: data || {}
+          }
+        })
+      } catch (error) {
+        console.error('Error sending notification to self:', error)
+      }
+    },
+    [ownDeviceToken, getOwnDeviceToken]
+  )
+
   const makeCacheForUser = (userId: string) =>
     createCache<NotificationData>({
       keys: {
@@ -43,6 +119,7 @@ export default function useNotifications (): UseNotificationsReturn {
   const getNotificationCount = useCallback(
     async (userId: string): Promise<number> => {
       try {
+
         const { count, error } = await supabase
           .from('notification_table')
           .select('notification_id', { count: 'exact', head: true })
@@ -206,6 +283,7 @@ export default function useNotifications (): UseNotificationsReturn {
     getAllNotifications,
     markAsRead,
     deleteNotification,
-    getNotificationCount
+    getNotificationCount,
+    sendNotificationToSelf
   }
 }

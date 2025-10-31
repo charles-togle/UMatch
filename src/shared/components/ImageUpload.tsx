@@ -9,6 +9,7 @@ import {
 } from 'ionicons/icons'
 import ActionModal from './ActionModal'
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera'
+import FormSectionHeader from '@/shared/components/FormSectionHeader'
 
 interface ImageUploadSectionProps {
   label?: string
@@ -72,14 +73,7 @@ const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
 
   return (
     <div className={`mb-6 ${className}`}>
-      <p className='font-default-font text-xl mb-2 text-slate-900 font-extrabold flex items-center'>
-        {label}
-        {isRequired && (
-          <span className='text-umak-red font-default-font text-sm font-normal ml-2'>
-            (required)
-          </span>
-        )}
-      </p>
+      <FormSectionHeader header={label} isRequired={isRequired} />
       <div
         role='button'
         aria-label='Upload image'

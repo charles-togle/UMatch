@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { IonContent, IonIcon, IonButton, IonSpinner } from '@ionic/react'
 import ImageUpload from '@/shared/components/ImageUpload'
+import FormSectionHeader from '@/shared/components/FormSectionHeader'
 import ActionModal from '@/shared/components/ActionModal'
 import LocationDetailsSelector from '@/features/user/components/shared/LocationDetailsSelector'
 import LastSeenModal from '@/features/user/components/shared/LastSeenModal'
@@ -14,10 +15,11 @@ import {
 } from 'ionicons/icons'
 import { useNavigation } from '@/shared/hooks/useNavigation'
 import { IonToast } from '@ionic/react'
-import { useUser, type User } from '@/features/auth/contexts/UserContext'
-import { postServices } from '../services/postServices'
+import { usePost } from '../hooks/usePost'
 import CategorySelection from '@/features/user/components/shared/CategorySelection'
 import CategorySelectionTrigger from '@/features/user/components/shared/CategorySelectionTrigger'
+import TextArea from '@/shared/components/TextArea'
+import { Network } from '@capacitor/network'
 
 /** ---------- Helpers ---------- */
 const toISODate = (date: string, time: string, meridian: 'AM' | 'PM') => {
@@ -68,10 +70,10 @@ export default function NewPost () {
   })
   const [loading, setLoading] = useState(false)
   const { navigate } = useNavigation()
-  const { getUser } = useUser()
-  const { createPost } = postServices
+  const { createPost } = usePost()
   const [showFinalizeModal, setShowFinalizeModal] = useState(false)
   const [showCancelModal, setShowCancelModal] = useState(false)
+  const submitTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const handleDateChange = (e: CustomEvent) => {
     const iso = e.detail.value as string
@@ -97,94 +99,101 @@ export default function NewPost () {
   }
 
   const handleSubmit = async () => {
-    setLoading(true)
-    let currentUser: User | null = null
-    try {
-      currentUser = await getUser()
-    } catch (error) {
-      console.error('Error fetching user:', error)
-      setLoading(false)
-      setErrorMessage('Failed to authenticate user')
-      setToastColor('danger')
-      setShowToast(true)
-      return
-    }
-    // Trim text inputs
-    const titleTrimmed = title.trim()
-    const descTrimmed = desc.trim()
-
-    // Validate required fields
-    if (
-      !titleTrimmed ||
-      !descTrimmed ||
-      !image ||
-      !category ||
-      !locationDetails.level1.trim() ||
-      !locationDetails.level2.trim() ||
-      !locationDetails.level3.trim() ||
-      !type ||
-      !date ||
-      !time ||
-      !meridian
-    ) {
-      setErrorMessage('Please fill in all required fields.')
-      setToastColor('danger')
-      setShowToast(true)
-      setLoading(false)
-      return
+    // Clear any existing timeout (debounce)
+    if (submitTimeoutRef.current) {
+      clearTimeout(submitTimeoutRef.current)
     }
 
-    const payload = {
-      anonymous: anonymous === 'yes',
-      item: {
-        title: titleTrimmed,
-        desc: descTrimmed,
-        type
-      },
-      category: category as any,
-      lastSeenISO: toISODate(date, time, meridian),
-      locationDetails: {
-        level1: locationDetails.level1.trim(),
-        level2: locationDetails.level2.trim(),
-        level3: locationDetails.level3.trim()
-      },
-      imageName: image.name,
-      image: image
-    }
+    // Debounce the submit action
+    submitTimeoutRef.current = setTimeout(async () => {
+      if (loading) return
 
-    console.log('Submitting New Post:', payload)
+      setLoading(true)
 
-    try {
-      if (!currentUser) {
-        throw new Error('No Error is logged in')
-      }
-      const result = await createPost(currentUser.user_id, payload)
+      // Trim text inputs
+      const titleTrimmed = title.trim()
+      const descTrimmed = desc.trim()
 
-      if (result.error) {
-        setErrorMessage(result.error)
+      // Validate required fields
+      if (
+        !titleTrimmed ||
+        !descTrimmed ||
+        !image ||
+        !category ||
+        !locationDetails.level1.trim() ||
+        !locationDetails.level2.trim() ||
+        !locationDetails.level3.trim() ||
+        !type ||
+        !date ||
+        !time ||
+        !meridian
+      ) {
+        setErrorMessage('Please fill in all required fields.')
         setToastColor('danger')
         setShowToast(true)
         setLoading(false)
         return
       }
 
-      // Success
-      setErrorMessage('Post created successfully!')
-      setToastColor('success')
-      setShowToast(true)
-      setLoading(false)
+      // Check network connectivity
+      const status = await Network.getStatus()
+      if (status.connected === false) {
+        setErrorMessage('You are not connected to the internet')
+        setToastColor('danger')
+        setShowToast(true)
+        setLoading(false)
+        return
+      }
 
-      // Navigate after a brief delay to show the toast
-      setTimeout(() => {
-        navigate('/user/home')
-      }, 1000)
-    } catch (error) {
-      console.error('Error creating post:', error)
-      setErrorMessage('Failed to create post')
-      setToastColor('danger')
-      setShowToast(true)
-      setLoading(false)
-    }
+      const payload = {
+        anonymous: anonymous === 'yes',
+        item: {
+          title: titleTrimmed,
+          desc: descTrimmed,
+          type
+        },
+        category: category as any,
+        lastSeenISO: toISODate(date, time, meridian),
+        locationDetails: {
+          level1: locationDetails.level1.trim(),
+          level2: locationDetails.level2.trim(),
+          level3: locationDetails.level3.trim()
+        },
+        imageName: image.name,
+        image: image
+      }
+
+      console.log('Submitting New Post:', payload)
+
+      try {
+        const result = await createPost(payload)
+
+        if (result.error) {
+          setErrorMessage(result.error)
+          setToastColor('danger')
+          setShowToast(true)
+          setLoading(false)
+          return
+        }
+
+        // Success
+        setErrorMessage('Post created successfully!')
+        setToastColor('success')
+        setShowToast(true)
+        setLoading(false)
+
+        // Navigate after a brief delay to show the toast
+        setTimeout(() => {
+          navigate('/user/home')
+        }, 1000)
+      } catch (error) {
+        console.error('Error creating post:', error)
+        setErrorMessage('Failed to create post')
+        setToastColor('danger')
+        setShowToast(true)
+        setLoading(false)
+      }
+    }, 300) // 300ms debounce
   }
 
   return (
@@ -232,12 +241,16 @@ export default function NewPost () {
           <div>
             {/* ANONYMOUS RADIO */}
             <div className='mb-4'>
-              <p className='font-default-font text-xl mb-2 text-slate-900 font-extrabold flex items-center'>
-                Upload as anonymous?
-                <span className='text-umak-red font-default-font text-sm font-normal ml-3'>
-                  (for reporters only)
-                </span>
-              </p>
+              <FormSectionHeader
+                header={
+                  <>
+                    <span>Upload as anonymous?</span>
+                    <span className='text-umak-red font-default-font text-sm font-normal ml-3'>
+                      (for reporters only)
+                    </span>
+                  </>
+                }
+              />
               <div className='flex flex-row justify-start gap-10'>
                 <label className='flex justify-center cursor-pointer select-none'>
                   <input
@@ -261,12 +274,7 @@ export default function NewPost () {
             </div>
             {/* ITEM NAME */}
             <div className='mb-4'>
-              <p className='font-default-font text-xl mb-2 text-slate-900 font-extrabold flex items-center'>
-                Item Name/Title
-                <span className='text-umak-red font-default-font text-sm font-normal ml-2'>
-                  (required)
-                </span>
-              </p>
+              <FormSectionHeader header='Item Name/Title' isRequired />
               <input
                 type='text'
                 className='border-2 border-black rounded-xs py-1 px-2 w-full focus:border-2-umak-blue focus:outline-none font-default-font text-base'
@@ -279,22 +287,12 @@ export default function NewPost () {
             </div>
 
             <div className='mb-4'>
-              <p className='font-default-font text-xl mb-2 text-slate-900 font-extrabold flex items-center'>
-                Description
-              </p>
-              <textarea
-                className={`border-2 max-h-25 border-black rounded-xs py-1 px-2 w-full 
-                  focus:border-2-umak-blue focus:outline-none font-default-font 
-                  text-base overflow-hidden`}
+              <FormSectionHeader header='Description' />
+              <TextArea
                 value={desc}
-                placeholder='Max 150 characters'
+                setValue={setDesc}
                 maxLength={150}
-                onChange={e => {
-                  setDesc(e.target.value)
-                  const target = e.target
-                  target.style.height = 'auto'
-                  target.style.height = target.scrollHeight + 'px'
-                }}
+                placeholder='Provide additional details about the item (e.g., color, brand, unique features). Max 150 characters.'
               />
             </div>
             <div className='pr-5'>
@@ -310,12 +308,7 @@ export default function NewPost () {
               isRequired={true}
             />
             <div className='mb-4'>
-              <p className='font-default-font text-xl mb-2 text-slate-900 font-extrabold flex items-center'>
-                Category
-                <span className='text-umak-red font-default-font text-sm font-normal ml-2'>
-                  (required)
-                </span>
-              </p>
+              <FormSectionHeader header='Category' isRequired />
               <div>
                 <CategorySelectionTrigger
                   category={category}

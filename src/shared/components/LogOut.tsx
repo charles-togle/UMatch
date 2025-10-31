@@ -9,14 +9,15 @@ import {
 import { logOut } from 'ionicons/icons'
 import { useUser } from '@/features/auth/contexts/UserContext'
 import { useNavigation } from '@/shared/hooks/useNavigation'
-import { authServices } from '@/features/auth/services/authServices'
+import { useAuth } from '@/features/auth/hooks/useAuth'
 
 export default function Logout () {
   const { clearUser } = useUser()
   const { navigate } = useNavigation()
+  const { logout } = useAuth()
 
   const handleLogout = async () => {
-    await authServices.Logout()
+    await logout()
     clearUser()
     navigate('/auth')
   }

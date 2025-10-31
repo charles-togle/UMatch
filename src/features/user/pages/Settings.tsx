@@ -8,16 +8,17 @@ import {
 } from '@ionic/react'
 import { useUser } from '@/features/auth/contexts/UserContext'
 import { useNavigation } from '@/shared/hooks/useNavigation'
-import { authServices } from '@/features/auth/services/authServices'
+import { useAuth } from '@/features/auth/hooks/useAuth'
 import { logOut } from 'ionicons/icons'
 import Header from '@/shared/components/Header'
 import SettingsList from '@/shared/components/SettingsList'
 export default function Settings () {
   const { clearUser } = useUser()
   const { navigate } = useNavigation()
+  const { logout } = useAuth()
 
   const handleLogout = async () => {
-    await authServices.Logout()
+    await logout()
     clearUser()
     navigate('/auth')
   }

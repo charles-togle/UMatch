@@ -9,11 +9,11 @@ const config: CapacitorConfig = {
     pushNotifications: {
       presentationOptions: ['alert', 'badge', 'sound']
     }
-  },
-  server: {
-    cleartext: true,
-    url: 'http://192.168.5.199:5173'
   }
+  // server: {
+  //   cleartext: true,
+  //   url: 'http://192.168.5.199:5173'
+  // }
 }
 
 export default config

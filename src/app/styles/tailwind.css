@@ -10,3 +10,7 @@
   --color-slate-900: #0F172B;
   --color-default-bg: #F1F5F9;
 }
+
+.report-btn {
+  @apply text-umak-red;
+}

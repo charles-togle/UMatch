@@ -2,6 +2,7 @@ import React, { useMemo } from 'react'
 import { IonSelect, IonSelectOption } from '@ionic/react'
 import { locationsData } from '@/features/user/configs/locationsData'
 import type { Level1, Level2 } from '@/features/user/configs/locationsData'
+import FormSectionHeader from '@/shared/components/FormSectionHeader'
 
 interface LocationDetails {
   level1: string
@@ -48,14 +49,7 @@ const LocationDetailsSelector: React.FC<LocationDetailsSelectorProps> = ({
   // ------------------ UI ------------------
   return (
     <div className={`mb-4 ${className}`}>
-      <p className='font-default-font text-xl mb-2 text-slate-900 font-extrabold flex items-center'>
-        Details
-        {isRequired && (
-          <span className='text-umak-red font-default-font text-sm font-normal ml-2'>
-            (required)
-          </span>
-        )}
-      </p>
+      <FormSectionHeader header='Details' isRequired={isRequired} />
       {/* Building / Area */}
       <IonSelect
         placeholder='Building/Area'
