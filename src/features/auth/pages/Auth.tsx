@@ -7,7 +7,7 @@ import {
   IonIcon,
   IonSpinner
 } from '@ionic/react'
-import { GoogleLogin, googleLogout } from '@react-oauth/google'
+import { GoogleLogin } from '@react-oauth/google'
 import type { CredentialResponse } from '@react-oauth/google'
 import { arrowForward } from 'ionicons/icons'
 import { jwtDecode } from 'jwt-decode'
@@ -99,7 +99,15 @@ const Auth: React.FC = () => {
             navigate(redirect)
             sessionStorage.removeItem('redirect_after_login')
           } else {
-            navigate('/user/home', 'auth')
+            const getRouteByUserType = (userType: string): string => {
+              const type = userType.toLowerCase()
+              const routeMap: Record<string, string> = {
+                admin: '/admin/dashboard',
+                staff: '/staff/home'
+              }
+              return routeMap[type] || '/user/home'
+            }
+            navigate(getRouteByUserType(user.user_type), 'auth')
           }
           setSocialLoginLoading(false)
         }
@@ -146,7 +154,6 @@ const Auth: React.FC = () => {
       )
       setShowToast(true)
     } finally {
-      googleLogout()
       setGoogleLoading(false)
     }
   }

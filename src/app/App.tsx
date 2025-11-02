@@ -10,6 +10,8 @@ import Auth from '@/features/auth/pages/Auth'
 import StartupLoading from './pages/StartupLoading'
 import HomeSkeleton from '@/features/user/components/skeletons/HomeSkeleton'
 import { usePushRedirect } from './hooks/usePushRedirect'
+import { useUser } from '@/features/auth/contexts/UserContext'
+import AdminRoutes from './routes/AdminRoutes'
 
 import '@ionic/react/css/core.css'
 import '@ionic/react/css/normalize.css'
@@ -28,6 +30,7 @@ setupIonicReact({ mode: 'md' })
 const App: React.FC = () => {
   usePushRedirect()
   const googleWebClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
+  const { user } = useUser()
   return (
     <GoogleOAuthProvider
       clientId={googleWebClientId || 'YOUR_GOOGLE_CLIENT_ID_HERE'}
@@ -43,8 +46,16 @@ const App: React.FC = () => {
             <Route
               path='/user/*'
               render={() => (
-                <ProtectedRoute allowedRoles={['user']}>
-                    <UserRoutes />
+                <ProtectedRoute allowedRoles={['user']} user={user}>
+                  <UserRoutes />
+                </ProtectedRoute>
+              )}
+            />
+            <Route
+              path='/admin/*'
+              render={() => (
+                <ProtectedRoute allowedRoles={['admin']} user={user}>
+                  <AdminRoutes />
                 </ProtectedRoute>
               )}
             />

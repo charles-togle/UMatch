@@ -1,24 +1,21 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { routePreloads } from '@/app/configs/routePreloads'
 import { useNavigation } from '@/shared/hooks/useNavigation'
-import { useUser } from '@/features/auth/contexts/UserContext'
+import { useUser, type User } from '@/features/auth/contexts/UserContext'
 import { SocialLogin } from '@capgo/capacitor-social-login'
 
 type Props = {
   concurrency?: number
   timeoutMs?: number
-  authedRoute?: string
-  unauthedRoute?: string
 }
 
 export default function StartupLoading ({
   concurrency = 3,
-  timeoutMs = 8000,
-  authedRoute = '/user/home',
-  unauthedRoute = '/auth'
+  timeoutMs = 8000
 }: Props) {
   const [done, setDone] = useState(0)
   const [isAuthed, setIsAuthed] = useState<boolean | null>(null)
+  const [user, setUser] = useState<User | null>(null)
   const routes = useMemo(() => Object.keys(routePreloads), [])
   const total = routes.length
   const cancelled = useRef(false)
@@ -71,6 +68,7 @@ export default function StartupLoading ({
       // Check auth state
       try {
         const currentUser = await getUser()
+        setUser(currentUser)
         if (currentUser) {
           await refreshUser(currentUser.user_id)
           setIsAuthed(true)
@@ -92,10 +90,22 @@ export default function StartupLoading ({
 
   // Navigate after authCheck result
   useEffect(() => {
-    if (isAuthed === null) return
-    if (cancelled.current) return
-    navigate(isAuthed ? authedRoute : unauthedRoute, 'preload')
-  }, [isAuthed, navigate, authedRoute, unauthedRoute])
+    if (isAuthed === null || cancelled.current) return
+
+    const getRouteByUserType = (userType: string): string => {
+      const type = userType.toLowerCase()
+      const routeMap: Record<string, string> = {
+        admin: '/admin/dashboard',
+        staff: '/staff/home'
+      }
+      return routeMap[type] || '/user/home'
+    }
+
+    const targetRoute =
+      isAuthed && user ? getRouteByUserType(user.user_type) : '/auth'
+
+    navigate(targetRoute, 'auth')
+  }, [isAuthed, user, navigate])
 
   const pct = total ? Math.round((done / total) * 100) : 0
 

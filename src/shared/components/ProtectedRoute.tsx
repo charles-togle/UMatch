@@ -1,26 +1,28 @@
 // components/ProtectedRoute.tsx
-import type { ReactNode } from "react";
-import { useIonRouter } from "@ionic/react";
+import type { ReactNode } from 'react'
+import { useIonRouter } from '@ionic/react'
+import type { User } from '@/features/auth/contexts/UserContext'
 
-export default function ProtectedRoute({
+export default function ProtectedRoute ({
   allowedRoles,
   children,
+  user
 }: {
-  allowedRoles: string[];
-  children: ReactNode;
+  allowedRoles: string[]
+  children: ReactNode
+  user: User | null
 }) {
-  const router = useIonRouter();
-  const user = { role: "user" };
+  const router = useIonRouter()
 
-  if (!user) {
-    router.push("/login", "forward", "replace");
-    return null;
-  }
+  // if (!user) {
+  //   router.push('/auth', 'forward', 'replace')
+  //   return null
+  // }
 
-  if (!allowedRoles.includes(user.role)) {
-    router.push("/unauthorized", "forward", "replace");
-    return null;
-  }
+  // if (!allowedRoles.includes(user.user_type.toLowerCase())) {
+  //   router.push('/unauthorized', 'forward', 'replace')
+  //   return null
+  // }
 
-  return <>{children}</>;
+  return <>{children}</>
 }

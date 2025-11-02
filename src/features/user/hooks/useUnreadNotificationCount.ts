@@ -20,7 +20,6 @@ type CachedCount = {
   timestamp: number
 }
 
-const CACHE_EXPIRY = 5 * 60 * 1000 // 5 minutes
 const POLLING_INTERVAL = 30000 // 30 seconds fallback polling
 
 /**
@@ -95,13 +94,11 @@ export function useUnreadNotificationCount (
         const cached = await userCountCache.loadCache()
         if (cached.length > 0) {
           const cachedData = cached[0]
-          const age = Date.now() - cachedData.timestamp
 
           // Use cache if it's fresh
-          if (age < CACHE_EXPIRY) {
             setUnreadCount(cachedData.count)
             return true
-          }
+          
         }
       } catch (err) {
         console.log('No cached count available')

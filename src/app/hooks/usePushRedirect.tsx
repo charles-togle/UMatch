@@ -22,7 +22,7 @@ export function usePushRedirect () {
           navigate(targetUrl)
         } else {
           sessionStorage.setItem('redirect_after_login', targetUrl)
-          navigate('/login')
+          navigate('/auth')
         }
       }
     )
