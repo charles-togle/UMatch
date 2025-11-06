@@ -64,9 +64,12 @@ export default function History () {
   const { getUser } = useUser()
   const [isFilterOpen, setIsFilterOpen] = useState(false)
   const [isSortOpen, setIsSortOpen] = useState(false)
-  const [activeFilter, setActiveFilter] = useState<PostStatus>('All')
+  const [activeFilters, setActiveFilters] = useState<Set<PostStatus>>(
+    new Set(['All'])
+  )
   const [sortDir, setSortDir] = useState<SortDirection>('desc')
   const contentRef = useRef<HTMLIonContentElement | null>(null)
+  const isFetchingRef = useRef<boolean>(false)
   const historyCacheRef = useRef(
     createPostCache({
       loadedKey: 'LoadedPosts:history',
@@ -80,7 +83,7 @@ export default function History () {
 
   useEffect(() => {
     setPosts(applySort(applyFilter(allPosts)))
-  }, [activeFilter, sortDir, allPosts])
+  }, [activeFilters, sortDir, allPosts])
 
   useEffect(() => {
     const handler = (_ev?: Event) => {
@@ -93,30 +96,28 @@ export default function History () {
   }, [])
 
   const applyFilter = (items: PublicPost[]): PublicPost[] => {
-    if (activeFilter === 'All') return items
-    const expected = STATUS_MAP[activeFilter]
-    const expectedLower = (expected || '').toLowerCase()
+    if (activeFilters.has('All')) return items
 
-    const byPostStatus = items.filter(
-      p => (p.post_status || '').toLowerCase() === expectedLower
-    )
-    const byItemStatus = items.filter(
-      p => (p.item_status || '').toLowerCase() === expectedLower
-    )
-    const byItemType = items.filter(
-      p => (p.item_type || '').toLowerCase() === expectedLower
-    )
-    const result: PublicPost[] = []
-    const seen = new Set<string>()
-    for (const list of [byPostStatus, byItemStatus, byItemType]) {
-      for (const it of list) {
-        if (!seen.has(it.post_id)) {
-          seen.add(it.post_id)
-          result.push(it)
-        }
-      }
-    }
-    return result
+    // Convert filters to expected values
+    const expectedValues = Array.from(activeFilters)
+      .filter(f => f !== 'All')
+      .map(f => STATUS_MAP[f as Exclude<PostStatus, 'All'>].toLowerCase())
+
+    // Filter items that match ALL selected filters (AND logic)
+    return items.filter(post => {
+      const postStatus = (post.post_status || '').toLowerCase()
+      const itemStatus = (post.item_status || '').toLowerCase()
+      const itemType = (post.item_type || '').toLowerCase()
+
+      // Check if the post matches ALL active filters
+      return expectedValues.every(expectedValue => {
+        return (
+          postStatus === expectedValue ||
+          itemStatus === expectedValue ||
+          itemType === expectedValue
+        )
+      })
+    })
   }
 
   const applySort = (items: PublicPost[]): PublicPost[] => {
@@ -132,8 +133,11 @@ export default function History () {
     })
   }
 
-  // fetchPosts now does: fetch -> merge -> filter -> sort -> cache -> state
   const fetchPosts = async (): Promise<void> => {
+    // Prevent multiple simultaneous fetches
+    if (isFetchingRef.current) return
+    isFetchingRef.current = true
+
     try {
       const cachedPosts = await historyCacheRef.current.loadCachedPublicPosts()
       if (cachedPosts.length > 0 && posts.length === 0) {
@@ -183,6 +187,8 @@ export default function History () {
       setHasMore(hasMorePosts)
     } catch (error) {
       console.error('Error fetching posts:', error)
+    } finally {
+      isFetchingRef.current = false
     }
   }
 
@@ -200,13 +206,31 @@ export default function History () {
 
   // UI bits
   const FilterChip = ({ label }: { label: PostStatus }) => {
-    const isActive = activeFilter === label
+    const isActive = activeFilters.has(label)
+
+    const handleClick = () => {
+      if (label === 'All') {
+        setActiveFilters(new Set(['All']))
+      } else {
+        const newFilters = new Set(activeFilters)
+        newFilters.delete('All')
+
+        if (isActive) {
+          newFilters.delete(label)
+          if (newFilters.size === 0) {
+            newFilters.add('All')
+          }
+        } else {
+          newFilters.add(label)
+        }
+
+        setActiveFilters(newFilters)
+      }
+    }
+
     return (
       <IonChip
-        onClick={() => {
-          setActiveFilter(label)
-          setIsFilterOpen(false)
-        }}
+        onClick={handleClick}
         outline={!isActive}
         className='m-1 px-4'
         style={{
@@ -299,16 +323,26 @@ export default function History () {
                 <FilterChip key={f} label={f} />
               ))}
             </div>
-            <div className='mt-4'>
+            <div className='mt-4 flex gap-2'>
               <IonButton
                 fill='clear'
                 onClick={() => {
-                  setActiveFilter('All')
-                  setIsFilterOpen(false)
+                  setActiveFilters(new Set(['All']))
                 }}
                 style={{ '--color': 'var(--color-umak-blue)' }}
               >
-                Clear filter
+                Clear filters
+              </IonButton>
+              <IonButton
+                onClick={() => {
+                  setIsFilterOpen(false)
+                }}
+                style={{
+                  '--background': 'var(--color-umak-blue)',
+                  '--color': 'white'
+                }}
+              >
+                Apply
               </IonButton>
             </div>
           </div>

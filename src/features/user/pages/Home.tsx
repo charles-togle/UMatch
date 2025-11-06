@@ -11,17 +11,18 @@ import {
   IonIcon,
   IonFab,
   IonFabButton,
-  IonToast
+  IonToast,
+  IonSpinner,
+  IonPopover
 } from '@ionic/react'
 import { Keyboard } from '@capacitor/keyboard'
 import { useNavigation } from '@/shared/hooks/useNavigation'
 import Header from '@/shared/components/Header'
 import { listPublicPosts } from '@/features/posts/data/posts'
-import { createPostCache } from '@/features/posts/data/postsCache'
-import type { PublicPost } from '@/features/posts/types/post'
-import { getTotalPostsCount } from '@/features/posts/data/posts'
+import { refreshPublicPosts } from '@/features/posts/data/postsRefresh'
 import PostList from '@/shared/components/PostList'
-import { Network } from '@capacitor/network'
+import { usePostFetching } from '@/shared/hooks/usePostFetching'
+import type { PublicPost } from '@/features/posts/types/post'
 
 // CatalogHeader Component
 const CatalogHeader = memo(
@@ -45,120 +46,95 @@ const CatalogHeader = memo(
   }
 )
 
-// Main Catalog Component
+// Main User Home Component
 export default function Home () {
-  const PAGE_SIZE = 5
-  const SORT_DIR: 'asc' | 'desc' = 'desc'
-  const [posts, setPosts] = useState<PublicPost[]>([])
-  const [hasMore, setHasMore] = useState<boolean>(true)
   const [showToast, setShowToast] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
+  const [showLoadingModal, setShowLoadingModal] = useState(false)
   const contentRef = useRef<HTMLIonContentElement | null>(null)
   const { navigate } = useNavigation()
-  const loadedIdsRef = useRef<Set<string>>(new Set())
-  const homeCacheRef = useRef(
-    createPostCache({
+
+  const postComparator = (a: PublicPost, b: PublicPost): number => {
+    const aAccepted = a.accepted_on_date
+    const bAccepted = b.accepted_on_date
+
+    if (aAccepted && bAccepted) {
+      return bAccepted.localeCompare(aAccepted)
+    }
+    return aAccepted ? -1 : 1
+  }
+
+  const {
+    posts,
+    setPosts,
+    hasMore,
+    fetchPosts,
+    loadMorePosts,
+    fetchNewPosts,
+    refreshPosts,
+    loadedIdsRef
+  } = usePostFetching({
+    fetchFunction: listPublicPosts,
+    refreshPostFunction: refreshPublicPosts,
+    cacheKeys: {
       loadedKey: 'LoadedPosts',
       cacheKey: 'CachedPublicPosts'
-    })
-  )
-
-  const fetchPosts = async (): Promise<void> => {
-    try {
-      let cachedPosts = await homeCacheRef.current.loadCachedPublicPosts()
-      if (cachedPosts.length > 0 && posts.length === 0) {
-        cachedPosts = cachedPosts.sort((a, b) => {
-          if (!a.submission_date && !b.submission_date) return 0
-          if (!a.submission_date) return 1
-          if (!b.submission_date) return -1
-          return SORT_DIR === 'desc'
-            ? (b.submission_date as string).localeCompare(
-                a.submission_date as string
-              )
-            : (a.submission_date as string).localeCompare(
-                b.submission_date as string
-              )
-        })
-        cachedPosts.forEach(p => loadedIdsRef.current.add(p.post_id))
-        setPosts(cachedPosts)
-      }
-
-      const status = await Network.getStatus()
-      if (status.connected === false) {
-        setToastMessage(
-          'Getting updated posts failed — not connected to the internet'
-        )
-        setShowToast(true)
-        return
-      }
-
-      const exclude = Array.from(loadedIdsRef.current)
-      const newPosts = await listPublicPosts(exclude, PAGE_SIZE)
-      if (newPosts.length === 0) {
-        setHasMore(false)
-        homeCacheRef.current.loadCachedPublicPosts().then(cachedPosts => {
-          setPosts(
-            cachedPosts.sort((a, b) => {
-              if (!a.submission_date && !b.submission_date) return 0
-              if (!a.submission_date) return 1
-              if (!b.submission_date) return -1
-              return SORT_DIR === 'desc'
-                ? (b.submission_date as string).localeCompare(
-                    a.submission_date as string
-                  )
-                : (a.submission_date as string).localeCompare(
-                    b.submission_date as string
-                  )
-            })
-          )
-        })
-        return
-      }
-
-      const newIds = new Set(newPosts.map(np => np.post_id))
-      const filteredPrev = posts.filter(p => !newIds.has(p.post_id))
-      const merged = [...newPosts, ...filteredPrev].sort((a, b) => {
-        if (!a.submission_date && !b.submission_date) return 0
-        if (!a.submission_date) return 1
-        if (!b.submission_date) return -1
-        return SORT_DIR === 'desc'
-          ? (b.submission_date as string).localeCompare(
-              a.submission_date as string
-            )
-          : (a.submission_date as string).localeCompare(
-              b.submission_date as string
-            )
-      })
-      newPosts.forEach(p => loadedIdsRef.current.add(p.post_id))
-      await homeCacheRef.current.saveLoadedPostIds(loadedIdsRef.current)
-      await homeCacheRef.current.addPostsToCache(newPosts)
-      const totalPostsCount = await getTotalPostsCount()
-      const hasMorePosts: boolean = merged.length !== totalPostsCount
-      setHasMore(hasMorePosts)
-      if (hasMorePosts) {
-        setPosts(merged)
-      }
-    } catch (error) {
-      console.error('Error fetching posts:', error)
+    },
+    filterPosts: posts =>
+      posts.filter(
+        p =>
+          p.post_status &&
+          ['accepted', 'reported'].includes(p.post_status) &&
+          p.item_type === 'found'
+      ),
+    postComparator,
+    pageSize: 5,
+    onOffline: () => {
+      setToastMessage(
+        'Getting updated posts failed — not connected to the internet'
+      )
+      setShowToast(true)
     }
-  }
+  })
 
   useEffect(() => {
     const handler = (_ev?: Event) => {
+      // Scroll to top immediately (don't wait for fetch)
       contentRef.current?.scrollToTop?.(300)
+
+      // Fetch newest posts in background with loading modal
+      setShowLoadingModal(true)
+      fetchNewPosts()
+        .then(() => {
+          setShowLoadingModal(false)
+        })
+        .catch(() => {
+          setShowLoadingModal(false)
+        })
     }
 
     window.addEventListener('app:scrollToTop', handler as EventListener)
     return () =>
       window.removeEventListener('app:scrollToTop', handler as EventListener)
-  }, [])
+  }, [fetchNewPosts])
 
-  const loadMorePosts = async (event: CustomEvent<void>) => {
-    console.log(hasMore)
+  const handleLoadMore = async (event: CustomEvent<void>) => {
     const target = event.target as HTMLIonInfiniteScrollElement | null
     if (!target) return
-    await fetchPosts()
+    await loadMorePosts()
     target.complete()
+  }
+
+  // Pull-to-refresh: refresh currently loaded posts with fresh data from server
+  const handleRefresh = async (event: CustomEvent) => {
+    setShowLoadingModal(true)
+    try {
+      await fetchNewPosts()
+      await refreshPosts()
+    } finally {
+      setShowLoadingModal(false)
+      event.detail.complete()
+    }
   }
 
   const handleSearchBarClick = () => {
@@ -173,6 +149,7 @@ export default function Home () {
   const handlePostClick = (postId: string) => {
     navigate(`/user/post/view/${postId}`)
   }
+
   return (
     <>
       <CatalogHeader handleClick={handleSearchBarClick} />
@@ -184,21 +161,31 @@ export default function Home () {
         position='top'
         color='danger'
       />
+      {showLoadingModal && (
+        <IonPopover className='fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[9999] bg-white rounded-xl px-6 py-4 flex flex-col items-center justify-center gap-3 shadow-lg'>
+          <IonSpinner name='crescent' className='scale-125' />
+          <p className='text-gray-800 text-sm font-medium whitespace-nowrap m-0'>
+            Loading fresh content...
+          </p>
+        </IonPopover>
+      )}
       <PostList
         posts={posts}
         fetchPosts={fetchPosts}
         hasMore={hasMore}
         setPosts={setPosts}
         loadedIdsRef={loadedIdsRef}
-        loadMorePosts={loadMorePosts}
+        loadMorePosts={handleLoadMore}
+        handleRefresh={handleRefresh}
         ref={contentRef}
-        sortDirection={SORT_DIR}
+        fetchNewPosts={fetchNewPosts}
+        sortDirection={'desc'}
         cacheKeys={{
-          loadedKey: 'LoadedPosts:home',
-          cacheKey: 'CachedPublicPosts:home'
+          loadedKey: 'LoadedPosts',
+          cacheKey: 'CachedPublicPosts'
         }}
         onClick={handlePostClick}
-        pageSize={PAGE_SIZE}
+        pageSize={5}
         ionFabButton={
           <IonFab
             slot='fixed'

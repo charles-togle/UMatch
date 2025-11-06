@@ -1,7 +1,14 @@
 import { supabase } from '@/shared/lib/supabase'
 import type { User } from '@/features/auth/contexts/UserContext'
+import { useAuditLogs } from '@/shared/hooks/useAuditLogs'
+import { useUser } from '@/features/auth/contexts/UserContext'
+import { useState } from 'react'
 
 export function useAdminServices () {
+  const { insertAuditLog } = useAuditLogs()
+  const { getUser } = useUser()
+  const [user, setUser] = useState<User | null>(null)
+
   const getAllStaffAndAdmin = async (): Promise<Partial<User>[] | null> => {
     const { data, error } = await supabase
       .from('user_table')
@@ -15,7 +22,18 @@ export function useAdminServices () {
     return data || null
   }
 
-  const removeAdminOrStaffMember = async (userId: string): Promise<boolean> => {
+  const removeAdminOrStaffMember = async (
+    email: string,
+    userId: string,
+    previousRole: 'Staff' | 'Admin'
+  ): Promise<boolean> => {
+    let currentUser = user
+
+    if (!user) {
+      currentUser = await getUser()
+      setUser(currentUser)
+    }
+
     const { error } = await supabase
       .from('user_table')
       .update({ user_type: 'User' })
@@ -26,14 +44,34 @@ export function useAdminServices () {
       return false
     }
 
+    await insertAuditLog({
+      user_id: currentUser?.user_id || 'unknown',
+      action_type: `remove_${previousRole.toLowerCase()}`,
+      target_entity_type: 'user',
+      target_entity_id: userId,
+      details: {
+        action: `Remove ${previousRole}`,
+        email: email,
+        user_type: 'User'
+      }
+    })
+
     return true
   }
 
   const addStaffMember = async (
     userId: string,
+    email: string,
     role: 'Staff' | 'Admin'
   ): Promise<boolean> => {
     try {
+      let currentUser = user
+
+      if (!user) {
+        currentUser = await getUser()
+        setUser(currentUser)
+      }
+
       const { error } = await supabase
         .from('user_table')
         .update({ user_type: role })
@@ -44,6 +82,18 @@ export function useAdminServices () {
         console.error('Error adding staff member:', error)
         return false
       }
+
+      await insertAuditLog({
+        user_id: currentUser?.user_id || 'unknown',
+        action_type: `Add ${role}`,
+        target_entity_type: 'user',
+        target_entity_id: userId,
+        details: {
+          action: `add_${role.toLowerCase()}`,
+          email: email,
+          user_type: role
+        }
+      })
 
       return true
     } catch (error) {

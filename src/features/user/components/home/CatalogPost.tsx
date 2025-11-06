@@ -1,4 +1,4 @@
-import React, { lazy, memo } from 'react'
+import React, { lazy, memo, useState } from 'react'
 const LazyImage = lazy(() => import('@/shared/components/LazyImage'))
 import {
   IonCard,
@@ -9,9 +9,12 @@ import {
   IonIcon,
   IonButtons,
   IonButton,
-  IonText
+  IonText,
+  IonToast,
+  IonSpinner
 } from '@ionic/react'
 import { ellipsisVertical, personCircle } from 'ionicons/icons'
+import { usePost } from '@/features/user/hooks/usePost'
 
 export type CatalogPostProps = {
   username?: string
@@ -26,6 +29,8 @@ export type CatalogPostProps = {
   itemStatus?: string | null
   onClick?: (postId: string) => void | undefined
   postId?: string
+  variant?: 'user' | 'staff'
+  is_anonymous?: boolean
 }
 
 const CatalogPost: React.FC<CatalogPostProps> = ({
@@ -40,7 +45,9 @@ const CatalogPost: React.FC<CatalogPostProps> = ({
   onKebabButtonlick = undefined,
   itemStatus = null,
   onClick,
-  postId
+  postId,
+  variant = 'user',
+  is_anonymous = false
 }) => {
   const normalizedStatus = (itemStatus || '').toLowerCase()
   const statusColorClass =
@@ -50,6 +57,75 @@ const CatalogPost: React.FC<CatalogPostProps> = ({
       ? 'text-green-600'
       : ''
 
+  const { acceptPost, rejectPost } = usePost()
+  const [isProcessing, setIsProcessing] = useState(false)
+  const [toast, setToast] = useState<{
+    show: boolean
+    message: string
+    color: string
+  }>({
+    show: false,
+    message: '',
+    color: 'success'
+  })
+
+  // Staff action handlers
+  const handleReject = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!postId || isProcessing) return
+
+    setIsProcessing(true)
+    const result = await rejectPost(postId)
+    setIsProcessing(false)
+    if (result.success) {
+      setToast({
+        show: true,
+        message: 'Post rejected successfully',
+        color: 'success'
+      })
+      // Dispatch custom event for post status change
+      window.dispatchEvent(
+        new CustomEvent('post:statusChanged', {
+          detail: { postId, newStatus: 'rejected' }
+        })
+      )
+    } else {
+      setToast({
+        show: true,
+        message: result.error || 'Failed to reject post',
+        color: 'danger'
+      })
+    }
+  }
+
+  const handleAccept = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!postId || isProcessing) return
+
+    setIsProcessing(true)
+    const result = await acceptPost(postId)
+    setIsProcessing(false)
+    if (result.success) {
+      setToast({
+        show: true,
+        message: 'Post accepted successfully',
+        color: 'success'
+      })
+      // Dispatch custom event for post status change
+      window.dispatchEvent(
+        new CustomEvent('post:statusChanged', {
+          detail: { postId, newStatus: 'accepted' }
+        })
+      )
+    } else {
+      setToast({
+        show: true,
+        message: result.error || 'Failed to accept post',
+        color: 'danger'
+      })
+    }
+  }
+
   return (
     <IonCard
       className={`shadow-md border border-gray-200 font-default-font overflow-hidden px-2 ${className}`}
@@ -58,7 +134,7 @@ const CatalogPost: React.FC<CatalogPostProps> = ({
       {/* Header with avatar + username + kebab menu */}
       <IonItem lines='none' className='py-2 -mx-2'>
         <IonAvatar slot='start'>
-          {user_profile_picture_url ? (
+          {!is_anonymous && user_profile_picture_url ? (
             <img
               src={user_profile_picture_url}
               alt={username}
@@ -72,8 +148,13 @@ const CatalogPost: React.FC<CatalogPostProps> = ({
           )}
         </IonAvatar>
         <IonLabel>
-          <div className='font-semibold text-umak-blue pl-3'>
-            <p>{username}</p>
+          <div className='font-semibold text-umak-blue pl-3 flex items-center gap-2'>
+            <p>{is_anonymous ? 'Anonymous' : username}</p>
+            {variant === 'staff' && is_anonymous && (
+              <span className='text-xs font-normal bg-gray-200 text-gray-700 px-2 py-0.5 rounded'>
+                Anonymous
+              </span>
+            )}
           </div>
         </IonLabel>
         <IonButtons slot='end'>
@@ -129,7 +210,43 @@ const CatalogPost: React.FC<CatalogPostProps> = ({
           </IonText>
           <IonText>{locationLastSeenAt}</IonText>
         </div>
+
+        {/* Staff Action Buttons */}
+        {variant === 'staff' && (
+          <div className='flex justify-between h-7 w-full gap-4 mt-4 font-default-font'>
+            <button
+              onClick={handleReject}
+              disabled={isProcessing}
+              className='h-full flex-1 bg-[var(--color-umak-red)] text-white py-4 px-4 rounded-sm! hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center'
+            >
+              {isProcessing ? (
+                <IonSpinner name='crescent' className='w-5 h-5' />
+              ) : (
+                'REJECT'
+              )}
+            </button>
+            <button
+              onClick={handleAccept}
+              disabled={isProcessing}
+              className='flex-1 bg-lime-600 text-white py-4 px-4 rounded-sm! hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center'
+            >
+              {isProcessing ? (
+                <IonSpinner name='crescent' className='w-5 h-5' />
+              ) : (
+                'ACCEPT'
+              )}
+            </button>
+          </div>
+        )}
       </IonCardContent>
+
+      <IonToast
+        isOpen={toast.show}
+        onDidDismiss={() => setToast({ ...toast, show: false })}
+        message={toast.message}
+        duration={2000}
+        color={toast.color}
+      />
     </IonCard>
   )
 }

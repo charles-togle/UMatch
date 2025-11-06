@@ -13,7 +13,7 @@ const FormSectionHeader: React.FC<FormSectionHeaderProps> = ({
 }) => {
   return (
     <p
-      className={`font-default-font text-xl mb-2 text-slate-900 font-extrabold! flex items-center ${className}`}
+      className={`font-default-font text-xl! mb-2 text-slate-900 font-extrabold! flex items-center ${className}`}
     >
       {header}
       {isRequired && (

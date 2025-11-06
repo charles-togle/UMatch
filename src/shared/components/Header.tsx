@@ -15,6 +15,7 @@ import { notifications, personCircle } from 'ionicons/icons'
 import { useUser } from '@/features/auth/contexts/UserContext'
 import { useUnreadNotificationCount } from '@/features/user/hooks/useUnreadNotificationCount'
 import createCache from '@/shared/lib/cache'
+import type { User } from '@/features/auth/contexts/UserContext'
 
 type CachedCount = {
   count: number
@@ -39,9 +40,18 @@ function Header ({
 }) {
   const [profilePicUrl, setProfilePicUrl] = useState<string | null>(null)
   const [cachedCount, setCachedCount] = useState<number>(0)
+  const [user, setUser] = useState<User | null>(null)
   const profilePicRef = useRef<string | null>(null)
   const { navigate } = useNavigation()
-  const { user } = useUser()
+  const { getUser } = useUser()
+
+  useEffect(() => {
+    if (!user) {
+      getUser().then(currentUser => {
+        setUser(currentUser)
+      })
+    }
+  }, [])
 
   useEffect(() => {
     if (!user?.user_id) return
@@ -94,10 +104,10 @@ function Header ({
     getProfilePicture()
   }, [])
   const handleNotificationClick = useCallback(() => {
-    navigate('/user/notifications')
+    navigate('/notifications')
   }, [navigate])
   const handleProfileClick = useCallback(() => {
-    navigate('/user/account')
+    navigate('/account')
   }, [navigate])
   const notificationIconClass = isNotificationPage
     ? 'text-amber-500 '

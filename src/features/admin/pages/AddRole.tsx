@@ -130,7 +130,7 @@ export default function AddRole () {
     try {
       // Add each user one by one
       for (const user of selectedUsers) {
-        const success = await addStaffMember(user.id, user.role)
+        const success = await addStaffMember(user.id, user.email, selectedRole)
         if (success) {
           successCount++
         } else {

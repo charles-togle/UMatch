@@ -184,6 +184,8 @@ export const postServices = {
         p_proof_image_url: proofUrl
       })
 
+      console.log(data)
+
       if (error) {
         console.error('[postServices] Error creating/reporting post:', error)
         return { success: false, error: error.message }
@@ -204,6 +206,35 @@ export const postServices = {
     } catch (err) {
       console.error('[postServices] Exception reporting post:', err)
       return { success: false, error: 'Failed to report post' }
+    }
+  },
+
+  /**
+   * Update post status (accepted, rejected, pending)
+   * @param postId - The ID of the post to update
+   * @param status - The new status for the post
+   * @returns Success boolean and optional error
+   */
+  updatePostStatus: async (
+    postId: string,
+    status: 'accepted' | 'rejected' | 'pending'
+  ): Promise<{ success: boolean; error: string | null }> => {
+    try {
+      const { error } = await supabase
+        .from('post_table')
+        .update({ status: status })
+        .eq('post_id', postId)
+
+      if (error) {
+        console.error('[postServices] Error updating post status:', error)
+        return { success: false, error: error.message }
+      }
+
+      console.log('[postServices] Post status updated successfully:', postId)
+      return { success: true, error: null }
+    } catch (err) {
+      console.error('[postServices] Exception updating post status:', err)
+      return { success: false, error: 'Failed to update post status' }
     }
   }
 

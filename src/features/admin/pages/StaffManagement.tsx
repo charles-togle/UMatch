@@ -201,10 +201,17 @@ export default function StaffManagement () {
     setActiveUserId(prev => (prev === userId ? null : userId))
   }
 
-  const handleRemove = async (userId: string, userType: string) => {
-    const success = await removeAdminOrStaffMember(userId)
+  const handleRemove = async (
+    email: string,
+    userId: string,
+    userType: string
+  ) => {
+    const success = await removeAdminOrStaffMember(
+      email,
+      userId,
+      userType as 'Staff' | 'Admin'
+    )
     if (success) {
-      // Remove the user from the appropriate array
       if (userType === 'Staff') {
         setStaffs(prevStaffs =>
           prevStaffs.filter(staff => staff.user_id !== userId)
@@ -279,7 +286,12 @@ export default function StaffManagement () {
                   onToggle={() => handleToggle(admin.user_id!)}
                   onRemove={
                     !isCurrentUser
-                      ? () => handleRemove(admin.user_id!, admin.user_type!)
+                      ? () =>
+                          handleRemove(
+                            admin.email!,
+                            admin.user_id!,
+                            admin.user_type!
+                          )
                       : undefined
                   }
                   withActions={!isCurrentUser}
@@ -314,7 +326,9 @@ export default function StaffManagement () {
                 role={staff.user_type!}
                 isActive={activeUserId === staff.user_id}
                 onToggle={() => handleToggle(staff.user_id!)}
-                onRemove={() => handleRemove(staff.user_id!, staff.user_type!)}
+                onRemove={() =>
+                  handleRemove(staff.email!, staff.user_id!, staff.user_type!)
+                }
               />
             ))
           )}

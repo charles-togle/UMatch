@@ -1,5 +1,4 @@
-import React, { lazy, memo } from 'react'
-const LazyImage = lazy(() => import('@/shared/components/LazyImage'))
+import React, { memo } from 'react'
 import {
   IonCard,
   IonCardContent,
@@ -13,6 +12,7 @@ import {
   IonChip
 } from '@ionic/react'
 import { ellipsisVertical, personCircle } from 'ionicons/icons'
+import ExpandableImage from '@/shared/components/ExpandableImage'
 
 export type CatalogPostProps = {
   username?: string
@@ -50,7 +50,7 @@ const Post: React.FC<CatalogPostProps> = ({
       : ''
   return (
     <IonCard
-      className={`shadow-md border border-gray-200 font-default-font  px-2 ${className}`}
+      className={`shadow-md border border-gray-200 font-default-font min-h-[93%] px-2 ${className}`}
     >
       {/* Header with avatar + username + kebab menu */}
       <IonItem lines='none' className='py-2 -mx-2'>
@@ -104,9 +104,13 @@ const Post: React.FC<CatalogPostProps> = ({
             <div className='h-56 bg-gray-50 border border-gray-200 rounded-xl animate-pulse' />
           }
         >
-          <div className='max-h-128 flex justify-center items-center overflow-hidden  rounded-xl'>
-            <LazyImage src={imageUrl} alt={itemName} />
-          </div>
+          {imageUrl && (
+            <ExpandableImage
+              src={imageUrl}
+              alt={itemName}
+              className='justify-center items-center overflow-hidden  rounded-xl'
+            />
+          )}
         </React.Suspense>
         <div className='flex flex-col my-3 text-xl text-slate-900'>
           <IonText class='font-extrabold'>

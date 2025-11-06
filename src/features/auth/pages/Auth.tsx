@@ -87,7 +87,6 @@ const Auth: React.FC = () => {
             email: email || '',
             user_name: toSentenceCaseFull(name || 'New User'),
             profile_picture_url: imageUrl || '',
-            user_type: 'User'
           })
           if (error || !user) {
             console.log(error)
@@ -137,7 +136,6 @@ const Auth: React.FC = () => {
         email: googleResponse.email,
         user_name: toSentenceCaseFull(googleResponse.name),
         profile_picture_url: googleResponse.picture,
-        user_type: 'User'
       })
       await refreshUser(user?.user_id || '')
       navigate('/user/home', 'auth')

@@ -23,12 +23,16 @@ export default function PostList ({
   hasMore,
   loadMorePosts,
   ionFabButton,
-  onClick
+  fetchNewPosts,
+  onClick,
+  variant = 'user',
+  handleRefresh: customHandleRefresh
 }: {
   ref?: React.RefObject<HTMLIonContentElement | null>
   posts: PublicPost[]
   children?: React.ReactNode
   fetchPosts: () => Promise<void>
+  fetchNewPosts?: () => Promise<void>
   hasMore: boolean
   setPosts: React.Dispatch<React.SetStateAction<PublicPost[]>>
   loadedIdsRef: React.RefObject<Set<string>>
@@ -38,6 +42,8 @@ export default function PostList ({
   sortDirection?: 'asc' | 'desc'
   pageSize: number
   onClick?: (postId: string) => void | undefined
+  variant?: 'user' | 'staff'
+  handleRefresh?: (event: CustomEvent) => Promise<void>
 }) {
   const [isRefreshingContent, setRefreshingContent] = useState<boolean>(false)
   const [showActions, setShowActions] = useState(false)
@@ -55,19 +61,27 @@ export default function PostList ({
     const loadInitialPosts = async () => {
       setLoading(true)
       await fetchPosts()
+      await fetchNewPosts?.()
       setLoading(false)
     }
     loadInitialPosts()
   }, [])
 
-  const handleRefresh = useCallback((event: CustomEvent) => {
-    setRefreshingContent(true)
-    ;(async () => {
-      await fetchPosts()
-      event.detail.complete()
-      setRefreshingContent(false)
-    })()
-  }, [])
+  const handleRefresh = useCallback(
+    (event: CustomEvent) => {
+      setRefreshingContent(true)
+      ;(async () => {
+        if (customHandleRefresh) {
+          await customHandleRefresh(event)
+        } else {
+          await fetchPosts()
+          event.detail.complete()
+        }
+        setRefreshingContent(false)
+      })()
+    },
+    [customHandleRefresh, fetchPosts]
+  )
 
   return (
     <IonContent ref={ref} className='mb-16 bg-default-bg'>
@@ -94,15 +108,15 @@ export default function PostList ({
                 lastSeen={post.last_seen_at || ''}
                 imageUrl={post.item_image_url || ''}
                 locationLastSeenAt={post.last_seen_location || ''}
-                user_profile_picture_url={
-                  post.is_anonymous ? null : post.profilepicture_url
-                }
-                username={post.is_anonymous ? 'Anonymous' : post.username}
+                user_profile_picture_url={post.profilepicture_url}
+                username={post.username}
                 className={!hasMore && idx === posts.length - 1 ? '' : ''}
                 onKebabButtonlick={() => handleActionSheetClick(post.post_id)}
                 itemStatus={post.item_status}
                 onClick={() => onClick?.(post.post_id)}
                 postId={post.post_id}
+                variant={variant}
+                is_anonymous={post.is_anonymous}
               />
             ))}
           </div>
@@ -118,9 +132,12 @@ export default function PostList ({
             </div>
           </IonInfiniteScroll>
         ) : (
-          <p className='mb-10 h-15 flex justify-center items-center text-gray-400'>
-            You're all caught up
-          </p>
+          !loading &&
+          !hasMore && (
+            <p className='mb-10 h-15 flex justify-center items-center text-gray-400'>
+              You're all caught up!
+            </p>
+          )
         )}
       </div>
 

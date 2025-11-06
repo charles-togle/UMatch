@@ -10,8 +10,10 @@ import Auth from '@/features/auth/pages/Auth'
 import StartupLoading from './pages/StartupLoading'
 import HomeSkeleton from '@/features/user/components/skeletons/HomeSkeleton'
 import { usePushRedirect } from './hooks/usePushRedirect'
-import { useUser } from '@/features/auth/contexts/UserContext'
 import AdminRoutes from './routes/AdminRoutes'
+import StaffRoutes from '@/app/routes/StaffRoutes'
+import Notifications from '@/features/user/pages/Notifications'
+import AccountPage from '@/features/user/pages/AccountPage'
 
 import '@ionic/react/css/core.css'
 import '@ionic/react/css/normalize.css'
@@ -30,7 +32,6 @@ setupIonicReact({ mode: 'md' })
 const App: React.FC = () => {
   usePushRedirect()
   const googleWebClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID
-  const { user } = useUser()
   return (
     <GoogleOAuthProvider
       clientId={googleWebClientId || 'YOUR_GOOGLE_CLIENT_ID_HERE'}
@@ -43,10 +44,12 @@ const App: React.FC = () => {
             <Route exact path='/' render={() => <Redirect to='/preload' />} />
             <Route path='/preload' render={() => <StartupLoading />} />
             <Route path='/auth' render={() => <Auth />} />
+            <Route path='/notifications' render={() => <Notifications />} />
+            <Route path='/account' render={() => <AccountPage />} />
             <Route
               path='/user/*'
               render={() => (
-                <ProtectedRoute allowedRoles={['user']} user={user}>
+                <ProtectedRoute allowedRoles={['user']}>
                   <UserRoutes />
                 </ProtectedRoute>
               )}
@@ -54,8 +57,16 @@ const App: React.FC = () => {
             <Route
               path='/admin/*'
               render={() => (
-                <ProtectedRoute allowedRoles={['admin']} user={user}>
+                <ProtectedRoute allowedRoles={['admin']}>
                   <AdminRoutes />
+                </ProtectedRoute>
+              )}
+            />
+            <Route
+              path='/staff/*'
+              render={() => (
+                <ProtectedRoute allowedRoles={['staff']}>
+                  <StaffRoutes />
                 </ProtectedRoute>
               )}
             />

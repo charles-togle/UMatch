@@ -1,7 +1,7 @@
 import { googleLogout } from '@react-oauth/google'
 import { SocialLogin } from '@capgo/capacitor-social-login'
 import { supabase } from '@/shared/lib/supabase'
-import type { User, UserType } from '@/features/auth/contexts/UserContext'
+import type { User  } from '@/features/auth/contexts/UserContext'
 import { saveCachedImage } from '@/shared/utils/fileUtils'
 import { makeThumb } from '@/shared/utils/imageUtils'
 import { registerForPushNotifications } from '@/features/auth/services/registerForPushNotifications'
@@ -10,7 +10,6 @@ export interface GoogleProfile {
   googleIdToken: string
   email: string
   user_name: string
-  user_type?: UserType
   profile_picture_url?: string
 }
 
@@ -60,13 +59,6 @@ export const authServices = {
         }
       }
 
-      // Optional: update role metadata
-      if (profile?.user_type && profile.user_type !== 'User') {
-        await supabase.auth.updateUser({
-          data: { app_metadata: { role: profile.user_type } }
-        })
-      }
-
       let uploadedProfileUrl: string | null = null
       if (profile?.profile_picture_url) {
         try {
@@ -110,7 +102,6 @@ export const authServices = {
         user_name:
           profile?.user_name ?? supabaseUser.user_metadata?.name ?? 'New User',
         email: authoritativeEmail,
-        user_type: profile?.user_type ?? 'User',
         last_login: new Date().toISOString(),
         ...(uploadedProfileUrl
           ? { profile_picture_url: uploadedProfileUrl }
