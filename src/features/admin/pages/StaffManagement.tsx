@@ -94,7 +94,7 @@ export const AdminListItem = memo(
 
     return (
       <IonCard
-        className='rounded-2xl shadow-sm border border-slate-200/70 cursor-pointer'
+        className='rounded-2xl mb-4 shadow-sm border border-slate-200/70 cursor-pointer'
         onClick={onToggle}
       >
         <IonCardContent className='p-4'>
