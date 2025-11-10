@@ -2,6 +2,7 @@ import { Route } from 'react-router-dom'
 import { IonTabs, IonRouterOutlet } from '@ionic/react'
 import Toolbar from '@/shared/components/Toolbar'
 import { home, settings, time, helpCircle } from 'ionicons/icons'
+import Dashboard from '@/features/admin/pages/Dashboard'
 import StaffManagement from '@/features/admin/pages/StaffManagement'
 import AddRole from '@/features/admin/pages/AddRole'
 import AuditTrail from '@/features/admin/pages/AuditTrail'
@@ -12,7 +13,7 @@ export default function AdminRoutes () {
     <IonTabs>
       <IonRouterOutlet>
         <Route path='/admin/notifications' render={() => <Notifications />} />
-        <Route path='/admin/dashboard' render={() => <>Dashboard</>} />
+        <Route path='/admin/dashboard' render={() => <Dashboard />} />
         <Route path='/admin/audit-trail' render={() => <AuditTrail />} />
         <Route
           path='/admin/staff-management'

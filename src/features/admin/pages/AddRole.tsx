@@ -130,7 +130,12 @@ export default function AddRole () {
     try {
       // Add each user one by one
       for (const user of selectedUsers) {
-        const success = await updateUserRole(user.id, user.email, selectedRole)
+        const success = await updateUserRole({
+          userId: user.id,
+          email: user.email,
+          name: user.name,
+          role: selectedRole
+        })
         if (success) {
           successCount++
         } else {
