@@ -86,7 +86,7 @@ const Auth: React.FC = () => {
             googleIdToken: result.idToken || '',
             email: email || '',
             user_name: toSentenceCaseFull(name || 'New User'),
-            profile_picture_url: imageUrl || '',
+            profile_picture_url: imageUrl || ''
           })
           if (error || !user) {
             console.log(error)
@@ -135,7 +135,7 @@ const Auth: React.FC = () => {
         googleIdToken: token,
         email: googleResponse.email,
         user_name: toSentenceCaseFull(googleResponse.name),
-        profile_picture_url: googleResponse.picture,
+        profile_picture_url: googleResponse.picture
       })
       await refreshUser(user?.user_id || '')
       navigate('/user/home', 'auth')

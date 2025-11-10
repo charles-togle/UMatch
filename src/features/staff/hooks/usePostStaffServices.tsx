@@ -15,7 +15,7 @@ export interface CreateStaffPostInput {
   p_post_status: 'pending' | 'accepted' | 'rejected'
 }
 
-export function usePostStaffServices () {
+export function usePostActionsStaffServices () {
   const { insertAuditLog } = useAuditLogs()
   const { user, getUser, setUser } = useUser()
 
@@ -136,6 +136,31 @@ export function usePostStaffServices () {
         setUser(currentUser)
       }
 
+      // Fetch post and item details before update
+      const { data: postData, error: postError } = await supabase
+        .from('post_table')
+        .select('item_id, post_status')
+        .eq('post_id', postId)
+        .single()
+
+      if (postError) {
+        console.error('Error fetching post data:', postError)
+        return false
+      }
+
+      const { data: itemData, error: itemError } = await supabase
+        .from('item_table')
+        .select('item_name')
+        .eq('item_id', postData?.item_id)
+        .single()
+
+      if (itemError) {
+        console.error('Error fetching item name:', itemError)
+      }
+
+      const oldStatus = postData?.post_status
+      const itemName = itemData?.item_name || 'Unknown Item'
+
       const { error } = await supabase
         .from('post_table')
         .update({ post_status: newStatus })
@@ -146,14 +171,20 @@ export function usePostStaffServices () {
         return false
       }
 
-      // Log the action
+      // Log the action with correct structure
       await insertAuditLog({
         user_id: currentUser?.user_id || 'unknown',
-        action_type: 'Change Post Status',
+        action_type: 'post_status_updated',
         target_entity_type: 'post',
         target_entity_id: postId,
         details: {
-          action: 'Change Post Status',
+          message: `${
+            currentUser?.user_name || 'Staff'
+          } set the status of ${itemName} as ${
+            newStatus.charAt(0).toUpperCase() + newStatus.slice(1)
+          }`,
+          post_title: itemName,
+          old_status: oldStatus,
           new_status: newStatus
         }
       })

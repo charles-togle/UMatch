@@ -14,7 +14,7 @@ import {
   IonSpinner
 } from '@ionic/react'
 import { ellipsisVertical, personCircle } from 'ionicons/icons'
-import { usePost } from '@/features/user/hooks/usePost'
+import { usePostActions } from '@/features/user/hooks/usePostActions'
 
 export type CatalogPostProps = {
   username?: string
@@ -57,7 +57,7 @@ const CatalogPost: React.FC<CatalogPostProps> = ({
       ? 'text-green-600'
       : ''
 
-  const { acceptPost, rejectPost } = usePost()
+  const { acceptPost, rejectPost } = usePostActions()
   const [isProcessing, setIsProcessing] = useState(false)
   const [toast, setToast] = useState<{
     show: boolean
@@ -75,7 +75,7 @@ const CatalogPost: React.FC<CatalogPostProps> = ({
     if (!postId || isProcessing) return
 
     setIsProcessing(true)
-    const result = await rejectPost(postId)
+    const result = await rejectPost(postId, itemName)
     setIsProcessing(false)
     if (result.success) {
       setToast({
@@ -103,7 +103,7 @@ const CatalogPost: React.FC<CatalogPostProps> = ({
     if (!postId || isProcessing) return
 
     setIsProcessing(true)
-    const result = await acceptPost(postId)
+    const result = await acceptPost(postId, itemName)
     setIsProcessing(false)
     if (result.success) {
       setToast({

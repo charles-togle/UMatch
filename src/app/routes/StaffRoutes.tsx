@@ -7,6 +7,7 @@ import ExpandedFraudReport from '../../features/staff/components/ExpandedFraudRe
 import Settings from '../../features/staff/pages/Settings'
 import Toolbar from '@/shared/components/Toolbar'
 import { home, create, documentText, settings } from 'ionicons/icons'
+import Notifications from '@/features/user/pages/Notifications'
 
 export default function StaffRoutes () {
   return (
@@ -15,6 +16,7 @@ export default function StaffRoutes () {
         <Route exact path='/staff'>
           <Redirect to='/staff/home' />
         </Route>
+        <Route path='/staff/notifications' render={() => <Notifications />} />
         <Route exact path='/staff/home' render={() => <Home />} />
         <Route
           exact

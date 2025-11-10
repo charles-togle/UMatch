@@ -2,6 +2,7 @@ import { useState, useRef, useCallback } from 'react'
 import { Network } from '@capacitor/network'
 import { supabase } from '@/shared/lib/supabase'
 import createCache from '@/shared/lib/cache'
+import { useAuditLogs } from '@/shared/hooks/useAuditLogs'
 
 export interface FraudReportPublic {
   // fraud report
@@ -84,6 +85,7 @@ export function useFraudReports ({
   const isFetchingRef = useRef(false)
   const loadedIdsRef = useRef<Set<string>>(new Set())
   const hasRefreshedCacheRef = useRef(false)
+  const { insertAuditLog } = useAuditLogs()
 
   // Create cache instance with idSelector
   const cache = useRef(
@@ -456,6 +458,30 @@ export function useFraudReports ({
       } = await supabase.auth.getUser()
       if (!user) throw new Error('User not authenticated')
 
+      // Get user details for audit log
+      const { data: userData, error: userError } = await supabase
+        .from('user_table')
+        .select('user_name')
+        .eq('user_id', user.id)
+        .single()
+
+      if (userError) {
+        console.error('Error fetching user data:', userError)
+      }
+
+      // Get old report status before update
+      const { data: reportData, error: reportFetchError } = await supabase
+        .from('fraud_reports_table')
+        .select('report_status')
+        .eq('report_id', reportId)
+        .single()
+
+      if (reportFetchError) {
+        console.error('Error fetching report status:', reportFetchError)
+      }
+
+      const oldStatus = reportData?.report_status || 'under_review'
+
       const { error: reportError } = await supabase
         .from('fraud_reports_table')
         .update({ report_status: 'verified' })
@@ -463,7 +489,7 @@ export function useFraudReports ({
 
       if (reportError) throw reportError
 
-      // Update post status to archived
+      // Update post status to fraud
       const { error: postError } = await supabase
         .from('post_table')
         .update({ status: 'fraud' })
@@ -471,15 +497,20 @@ export function useFraudReports ({
 
       if (postError) throw postError
 
-      // Add audit trail
-      await supabase.from('audit_table').insert({
-        staff_id: user.id,
-        action: 'verify_fraud_report',
+      // Add audit trail with correct structure
+
+      await insertAuditLog({
+        user_id: user.id,
+        action_type: 'fraud_report_processed',
         target_entity_type: 'fraud_report',
-        target_id: reportId,
+        target_entity_id: reportId,
         details: {
-          postTitle: postTitle,
-          message: `Verified fraud report ${reportId} and archived post ${postId}`
+          message: `${
+            userData?.user_name || 'Staff'
+          } set the status of report on ${postTitle} as Verified`,
+          post_title: postTitle,
+          old_status: oldStatus,
+          new_status: 'verified'
         }
       })
 
@@ -523,6 +554,30 @@ export function useFraudReports ({
       } = await supabase.auth.getUser()
       if (!user) throw new Error('User not authenticated')
 
+      // Get user details for audit log
+      const { data: userData, error: userError } = await supabase
+        .from('user_table')
+        .select('user_name')
+        .eq('user_id', user.id)
+        .single()
+
+      if (userError) {
+        console.error('Error fetching user data:', userError)
+      }
+
+      // Get old report status before update
+      const { data: reportData, error: reportFetchError } = await supabase
+        .from('fraud_reports_table')
+        .select('report_status')
+        .eq('report_id', reportId)
+        .single()
+
+      if (reportFetchError) {
+        console.error('Error fetching report status:', reportFetchError)
+      }
+
+      const oldStatus = reportData?.report_status || 'under_review'
+
       // Update report status to rejected
       const { error: reportError } = await supabase
         .from('fraud_reports_table')
@@ -538,14 +593,19 @@ export function useFraudReports ({
 
       if (reportError) throw reportError
 
-      // Add audit trail
-      await supabase.from('audit_table').insert({
-        staff_id: user.id,
-        action: 'reject_fraud_report',
+      // Add audit trail with correct structure
+      await insertAuditLog({
+        user_id: user.id,
+        action_type: 'fraud_report_processed',
         target_entity_type: 'fraud_report',
-        target_id: reportId,
+        target_entity_id: reportId,
         details: {
+          message: `${
+            userData?.user_name || 'Staff'
+          } set the status of report on ${postTitle} as Rejected`,
           post_title: postTitle,
+          old_status: oldStatus,
+          new_status: 'rejected',
           reason_for_rejecting: reason
         }
       })

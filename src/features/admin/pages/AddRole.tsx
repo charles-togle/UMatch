@@ -84,7 +84,7 @@ export default function AddRole () {
   const [selectedRole, setSelectedRole] = useState<'Staff' | 'Admin'>('Staff')
 
   const { results, loading, error, search, clearResults } = useStaffSearch()
-  const { addStaffMember } = useAdminServices()
+  const { updateUserRole } = useAdminServices()
 
   const handleSearchChange = (e: CustomEvent) => {
     const value = e.detail.value || ''
@@ -130,7 +130,7 @@ export default function AddRole () {
     try {
       // Add each user one by one
       for (const user of selectedUsers) {
-        const success = await addStaffMember(user.id, user.email, selectedRole)
+        const success = await updateUserRole(user.id, user.email, selectedRole)
         if (success) {
           successCount++
         } else {

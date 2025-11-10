@@ -148,8 +148,7 @@ export async function refreshOwnPosts (
       is_anonymous,
       submission_date,
       item_type,
-      post_status,
-      user_id
+      post_status
     `
     )
     .in('post_id', includeIds)

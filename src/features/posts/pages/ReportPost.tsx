@@ -16,10 +16,11 @@ import { useEffect, useState, useRef } from 'react'
 import ReportContents from '../components/ReportContents'
 import ReportPostSkeleton from '../components/ReportPostSkeleton'
 import Header from '@/shared/components/Header'
-import { usePost } from '@/features/user/hooks/usePost'
+import { usePostActions } from '@/features/user/hooks/usePostActions'
 import { Network } from '@capacitor/network'
 import { useNavigation } from '@/shared/hooks/useNavigation'
 import useNotifications from '@/features/user/hooks/useNotifications'
+import { useUser } from '@/features/auth/contexts/UserContext'
 
 export default function ReportPost () {
   const [post, setPost] = useState<PublicPost | null | undefined>(undefined)
@@ -32,8 +33,9 @@ export default function ReportPost () {
   const [showToast, setShowToast] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
   const [toastColor, setToastColor] = useState<'danger' | 'success'>('danger')
-  const { reportPost } = usePost()
-  const { sendNotificationToSelf } = useNotifications()
+  const { reportPost } = usePostActions()
+  const { getUser } = useUser()
+  const { sendNotification } = useNotifications()
   const { postId } = useParams<{ postId: string }>()
   const { navigate } = useNavigation()
   const submitTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -90,6 +92,15 @@ export default function ReportPost () {
       setSubmitting(true)
 
       try {
+        const user = await getUser()
+        if (!user) {
+          setToastMessage('User not authenticated')
+          setToastColor('danger')
+          setShowToast(true)
+          setSubmitting(false)
+          return
+        }
+
         const result = await reportPost({
           postId,
           concern: concern === 'Others' ? customConcernText : concern,
@@ -104,11 +115,13 @@ export default function ReportPost () {
           setSubmitting(false)
           return
         }
+
         // Send notification to self
-        sendNotificationToSelf({
+        sendNotification({
           title: 'Report Submitted',
           message: `Greetings! Your report for post "${post?.item_name}" has been submitted successfully. Thank you for helping us keep the community safe.`,
-          type: 'progress'
+          type: 'progress',
+          userId: user.user_id
         })
         // Success
         setToastMessage('Report submitted successfully!')

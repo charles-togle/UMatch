@@ -8,6 +8,7 @@ import {
   mailOutline,
   ellipsisVertical
 } from 'ionicons/icons'
+import { useNavigation } from '@/shared/hooks/useNavigation'
 
 export type NotificationType = 'info' | 'found' | 'resolved' | 'progress'
 
@@ -27,6 +28,7 @@ interface NotificationItemProps {
   actionSheetHeader?: string
   notificationId?: string
   handleMarkAsRead?: (notificationId: string) => void
+  href?: string
 }
 
 const iconForType = (type: NotificationType) => {
@@ -52,7 +54,8 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
   actions = [],
   actionSheetHeader = 'Actions',
   notificationId,
-  handleMarkAsRead
+  handleMarkAsRead,
+  href
 }) => {
   const [open, setOpen] = useState(false)
   const { icon, colorClass } = iconForType(type)
@@ -63,6 +66,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
   const longPressTriggered = useRef(false)
   const [holding, setHolding] = useState(false)
 
+  const { navigate } = useNavigation()
   useEffect(() => {
     return () => {
       if (longPressTimeout.current) {
@@ -128,8 +132,22 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
         onPointerCancel={handlePointerUp}
         onPointerLeave={handlePointerLeave}
         onClick={() => {
-          handleClick();
-          handleMarkAsRead && handleMarkAsRead(notificationId!);
+          if (longPressTriggered.current) {
+            // ignore click if it was a long-press
+            longPressTriggered.current = false
+            return
+          }
+
+          // If href is provided, navigate to it
+          if (href) {
+            handleMarkAsRead && handleMarkAsRead(notificationId!)
+            navigate(href)
+            return
+          }
+
+          // default toggle expand
+          handleClick()
+          handleMarkAsRead && handleMarkAsRead(notificationId!)
         }}
         className={`flex items-start gap-3 px-3 py-3 border-b border-slate-200 ${
           read ? 'bg-slate-50 opacity-70' : ''

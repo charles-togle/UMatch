@@ -14,6 +14,7 @@ export function useAdminServices () {
       .from('user_table')
       .select('user_id, user_name, email, profile_picture_url, user_type')
       .in('user_type', ['Admin', 'Staff'])
+
     if (error) {
       console.error('Error fetching staff and admin users:', error)
       return null
@@ -22,17 +23,26 @@ export function useAdminServices () {
     return data || null
   }
 
-  const removeAdminOrStaffMember = async (
-    email: string,
-    userId: string,
+  const removeAdminOrStaffMember = async ({
+    userId,
+    email,
+    name,
+    previousRole
+  }: {
+    userId: string
+    email: string
+    name: string
     previousRole: 'Staff' | 'Admin'
-  ): Promise<boolean> => {
+  }): Promise<boolean> => {
     let currentUser = user
 
     if (!user) {
       currentUser = await getUser()
       setUser(currentUser)
     }
+
+    // We have the target user's email available as a parameter. To avoid
+    // an extra DB call, use the email as the display name in audit logs.
 
     const { error } = await supabase
       .from('user_table')
@@ -46,24 +56,33 @@ export function useAdminServices () {
 
     await insertAuditLog({
       user_id: currentUser?.user_id || 'unknown',
-      action_type: `remove_${previousRole.toLowerCase()}`,
+      action_type: 'role_updated',
       target_entity_type: 'user',
       target_entity_id: userId,
       details: {
-        action: `Remove ${previousRole}`,
-        email: email,
-        user_type: 'User'
+        message: `${
+          currentUser?.user_name || 'Admin'
+        } set the role for ${name} as User`,
+        target_user: email,
+        old_role: previousRole,
+        new_role: 'User'
       }
     })
 
     return true
   }
 
-  const addStaffMember = async (
-    userId: string,
-    email: string,
+  const updateUserRole = async ({
+    userId,
+    email,
+    name,
+    role
+  }: {
+    userId: string
+    email: string
+    name: string
     role: 'Staff' | 'Admin'
-  ): Promise<boolean> => {
+  }): Promise<boolean> => {
     try {
       let currentUser = user
 
@@ -71,6 +90,10 @@ export function useAdminServices () {
         currentUser = await getUser()
         setUser(currentUser)
       }
+
+      // Use provided email as the display name for the target user to avoid
+      // an extra DB query. If a nicer display name is needed later, enrich
+      // the caller or fetch in a non-blocking path.
 
       const { error } = await supabase
         .from('user_table')
@@ -85,13 +108,16 @@ export function useAdminServices () {
 
       await insertAuditLog({
         user_id: currentUser?.user_id || 'unknown',
-        action_type: `Add ${role}`,
+        action_type: 'role_updated',
         target_entity_type: 'user',
         target_entity_id: userId,
         details: {
-          action: `add_${role.toLowerCase()}`,
-          email: email,
-          user_type: role
+          message: `${
+            currentUser?.user_name || 'Admin'
+          } set the role for ${name} as ${role}`,
+          target_user: email,
+          old_role: 'User',
+          new_role: role
         }
       })
 
@@ -102,5 +128,5 @@ export function useAdminServices () {
     }
   }
 
-  return { getAllStaffAndAdmin, removeAdminOrStaffMember, addStaffMember }
+  return { getAllStaffAndAdmin, removeAdminOrStaffMember, updateUserRole }
 }

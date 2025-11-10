@@ -15,7 +15,7 @@ import {
 } from 'ionicons/icons'
 import { useNavigation } from '@/shared/hooks/useNavigation'
 import { IonToast } from '@ionic/react'
-import { usePost } from '../hooks/usePost'
+import { usePostActions } from '../hooks/usePostActions'
 import CategorySelection from '@/features/user/components/shared/CategorySelection'
 import CategorySelectionTrigger from '@/features/user/components/shared/CategorySelectionTrigger'
 import TextArea from '@/shared/components/TextArea'
@@ -70,7 +70,7 @@ export default function NewPost () {
   })
   const [loading, setLoading] = useState(false)
   const { navigate } = useNavigation()
-  const { createPost } = usePost()
+  const { createPost } = usePostActions()
   const [showFinalizeModal, setShowFinalizeModal] = useState(false)
   const [showCancelModal, setShowCancelModal] = useState(false)
   const submitTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)

@@ -1,12 +1,12 @@
-# usePost Hook - Usage Guide
+# usePostActions Hook - Usage Guide
 
 ## Overview
-The `usePost` hook provides a clean interface for post operations with automatic user authentication handling. It abstracts away the complexity of user context management and provides ready-to-use functions for components.
+The `usePostActions` hook provides a clean interface for post operations with automatic user authentication handling. It abstracts away the complexity of user context management and provides ready-to-use functions for components.
 
 ## Import
 
 ```typescript
-import { usePost } from '@/features/user/hooks/usePost'
+import { usePostActions } from '@/features/user/hooks/usePostActions'
 ```
 
 ## API Reference
@@ -23,7 +23,7 @@ Creates a new post for the currently authenticated user.
 
 **Example:**
 ```typescript
-const { createPost } = usePost()
+const { createPost } = usePostActions()
 
 const handleSubmit = async (formData) => {
   const { post, error } = await createPost({
@@ -53,7 +53,7 @@ Gets all posts created by the current user.
 
 **Example:**
 ```typescript
-const { getUserPosts } = usePost()
+const { getUserPosts } = usePostActions()
 
 useEffect(() => {
   const loadMyPosts = async () => {
@@ -80,7 +80,7 @@ Updates an existing post. User must be authenticated.
 
 **Example:**
 ```typescript
-const { updatePost } = usePost()
+const { updatePost } = usePostActions()
 
 const handleStatusChange = async (postId: string) => {
   const { post, error } = await updatePost({
@@ -109,7 +109,7 @@ Deletes a post. User must be authenticated.
 
 **Example:**
 ```typescript
-const { deletePost } = usePost()
+const { deletePost } = usePostActions()
 
 const handleDelete = async (postId: string) => {
   const { success, error } = await deletePost(postId)
@@ -137,7 +137,7 @@ Gets a single post by ID. No authentication required.
 
 **Example:**
 ```typescript
-const { getPost } = usePost()
+const { getPost } = usePostActions()
 
 const loadPost = async (id: string) => {
   const { post, error } = await getPost(id)
@@ -161,7 +161,7 @@ Gets all posts with optional filters. No authentication required.
 
 **Example:**
 ```typescript
-const { getPosts } = usePost()
+const { getPosts } = usePostActions()
 
 // Get all lost items
 const { posts, error } = await getPosts({ 
@@ -194,7 +194,7 @@ Searches posts by item name or description. No authentication required.
 
 **Example:**
 ```typescript
-const { searchPosts } = usePost()
+const { searchPosts } = usePostActions()
 
 const handleSearch = async (query: string) => {
   const { posts, error } = await searchPosts(query, {
@@ -217,11 +217,11 @@ const handleSearch = async (query: string) => {
 
 ```typescript
 import { useState } from 'react'
-import { usePost } from '@/features/user/hooks/usePost'
+import { usePostActions } from '@/features/user/hooks/usePostActions'
 import type { Post } from '@/features/auth/services/postServices'
 
 export function CreatePostPage() {
-  const { createPost } = usePost()
+  const { createPost } = usePostActions()
   const [loading, setLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -261,11 +261,11 @@ export function CreatePostPage() {
 
 ```typescript
 import { useState, useEffect } from 'react'
-import { usePost } from '@/features/user/hooks/usePost'
+import { usePostActions } from '@/features/user/hooks/usePostActions'
 import type { Post } from '@/features/auth/services/postServices'
 
 export function MyPostsPage() {
-  const { getUserPosts, deletePost } = usePost()
+  const { getUserPosts, deletePost } = usePostActions()
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -326,7 +326,7 @@ export function MyPostsPage() {
 The hook automatically catches authentication errors and other exceptions:
 
 ```typescript
-const { createPost } = usePost()
+const { createPost } = usePostActions()
 
 const { post, error } = await createPost(data)
 

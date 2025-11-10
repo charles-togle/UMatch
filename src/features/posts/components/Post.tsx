@@ -15,15 +15,15 @@ import { ellipsisVertical, personCircle } from 'ionicons/icons'
 import ExpandableImage from '@/shared/components/ExpandableImage'
 
 export type CatalogPostProps = {
-  username?: string
+  username?: string | null
   user_profile_picture_url?: string | null
-  itemName?: string
-  description?: string
-  category?: string
-  lastSeen?: string
-  imageUrl?: string
-  locationLastSeenAt?: string
-  className?: string
+  itemName?: string | null
+  description?: string | null
+  category?: string | null
+  lastSeen?: string | null
+  imageUrl?: string | null
+  locationLastSeenAt?: string | null
+  className?: string | null
   onKebabButtonlick?: () => void | undefined
   itemStatus?: string | null
 }
@@ -58,7 +58,7 @@ const Post: React.FC<CatalogPostProps> = ({
           {user_profile_picture_url ? (
             <img
               src={user_profile_picture_url}
-              alt={username}
+              alt={username ?? 'Profile Picture'}
               className='w-full h-full object-cover'
             />
           ) : (
@@ -107,8 +107,8 @@ const Post: React.FC<CatalogPostProps> = ({
           {imageUrl && (
             <ExpandableImage
               src={imageUrl}
-              alt={itemName}
-              className='justify-center items-center overflow-hidden  rounded-xl'
+              alt={itemName ?? 'Post Image'}
+              className='justify-center w-full! h-100! items-center overflow-hidden  rounded-xl'
             />
           )}
         </React.Suspense>

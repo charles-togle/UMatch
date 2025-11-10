@@ -15,6 +15,14 @@
   @apply text-umak-red;
 }
 
+ion-datetime-button::part(native) {
+  background-color: transparent !important;
+  color: var(--color-umak-blue) !important;
+  border: 2px solid var(--color-umak-blue) !important;
+  margin-right: 5px !important;
+  border-radius: 0.25rem;
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;

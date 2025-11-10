@@ -80,7 +80,7 @@ export default function ExpandableImage ({ src, alt, className }: Props) {
               className='absolute top-3 right-3 z-10 bg-white/90 hover:bg-white rounded-full shadow-lg w-10 h-10 flex items-center justify-center focus:outline-none border-none'
               onClick={() => setOpen(false)}
             >
-              <IonIcon icon={closeIcon} size='large' color='dark' />
+              <IonIcon icon={closeIcon} className='text-[24px]' color='dark' />
             </IonButton>
 
             <img

@@ -176,8 +176,12 @@ export default function Notifications () {
         ) : (
           (notificationsList ?? []).map(n => {
             // Construct title/description from available fields
-            const title =
-              (n.data as any)?.title ?? n.description ?? 'Notification'
+            const title = n.description ?? 'Notification'
+            const data = n.data ?? {}
+            let link;
+            if(data['link'] && data['postId']) {
+              link = data['link']
+            }
             const description = n.description ?? JSON.stringify(n.data ?? '')
 
             const actions: ActionItem[] = [
@@ -199,6 +203,7 @@ export default function Notifications () {
                 key={n.notification_id}
                 type={(n.type as any) || 'info'}
                 title={title}
+                href={link}
                 description={description}
                 read={Boolean(n.is_read)}
                 actions={actions}

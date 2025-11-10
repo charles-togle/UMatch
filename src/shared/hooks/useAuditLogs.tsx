@@ -4,11 +4,15 @@ import { supabase } from '@/shared/lib/supabase'
 export interface AuditLog {
   log_id: string
   user_id: string | null
+  user_name: string | null
+  email: string | null
+  profile_picture_url: string | null
   action_type: string | null
-  target_entity_type: 'post' | 'item' | 'user' | 'fraud_report'
+  target_entity_type: string | null
   target_entity_id: string | null
-  details: any // jsonb type
-  timestamp: string | null
+  details: Record<string, any> | null
+  timestamp: string | null // ISO timestamp with timezone
+  timestamp_local: string | null
 }
 
 export interface CreateAuditLogInput {
@@ -88,7 +92,7 @@ export function useAuditLogs () {
   ): Promise<AuditLog[]> => {
     try {
       const { data, error } = await supabase
-        .from('audit_table')
+        .from('view_audit_logs_with_user_details')
         .select('*')
         .order('timestamp', { ascending: false })
         .range(offset, offset + limit - 1)

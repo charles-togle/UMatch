@@ -6,7 +6,8 @@ import {
   IonInfiniteScroll,
   IonInfiniteScrollContent,
   IonLoading,
-  IonActionSheet
+  IonActionSheet,
+  IonToast
 } from '@ionic/react'
 import { useState, useEffect } from 'react'
 import CatalogPost from '@/features/user/components/home/CatalogPost'
@@ -14,6 +15,7 @@ import CatalogPostSkeleton from '@/features/user/components/home/CatalogPostSkel
 import { useCallback } from 'react'
 import { type PostCacheKeys } from '@/features/posts/data/postsCache'
 import { useNavigation } from '@/shared/hooks/useNavigation'
+import { sharePost } from '@/shared/utils/shareUtils'
 
 export default function PostList ({
   posts,
@@ -49,6 +51,9 @@ export default function PostList ({
   const [showActions, setShowActions] = useState(false)
   const [activePostId, setActivePostId] = useState<string | null>(null)
   const [loading, setLoading] = useState<boolean>(false)
+  const [showToast, setShowToast] = useState(false)
+  const [toastMessage, setToastMessage] = useState('')
+  const [toastColor, setToastColor] = useState<'success' | 'danger'>('success')
 
   const { navigate } = useNavigation()
   const handleActionSheetClick = (postId: string) => {
@@ -161,13 +166,18 @@ export default function PostList ({
           {
             text: 'Share',
             handler: async () => {
-              try {
-                if (!activePostId) return
-                await navigator.clipboard.writeText(
-                  `${window.location.origin}/user/post/view/${activePostId}`
-                )
-              } catch (e) {
-                console.warn('Share copy failed', e)
+              if (!activePostId) return
+              const result = await sharePost(activePostId, variant)
+              if (result.success) {
+                if (result.method === 'clipboard') {
+                  setToastMessage('Link copied to clipboard')
+                  setToastColor('success')
+                  setShowToast(true)
+                }
+              } else {
+                setToastMessage('Failed to share post')
+                setToastColor('danger')
+                setShowToast(true)
               }
             }
           },
@@ -184,6 +194,16 @@ export default function PostList ({
             role: 'cancel'
           }
         ]}
+      />
+
+      {/* Toast for share feedback */}
+      <IonToast
+        isOpen={showToast}
+        onDidDismiss={() => setShowToast(false)}
+        message={toastMessage}
+        duration={2000}
+        position='top'
+        color={toastColor}
       />
     </IonContent>
   )

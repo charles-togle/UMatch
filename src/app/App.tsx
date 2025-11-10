@@ -12,7 +12,6 @@ import HomeSkeleton from '@/features/user/components/skeletons/HomeSkeleton'
 import { usePushRedirect } from './hooks/usePushRedirect'
 import AdminRoutes from './routes/AdminRoutes'
 import StaffRoutes from '@/app/routes/StaffRoutes'
-import Notifications from '@/features/user/pages/Notifications'
 import AccountPage from '@/features/user/pages/AccountPage'
 
 import '@ionic/react/css/core.css'
@@ -44,7 +43,6 @@ const App: React.FC = () => {
             <Route exact path='/' render={() => <Redirect to='/preload' />} />
             <Route path='/preload' render={() => <StartupLoading />} />
             <Route path='/auth' render={() => <Auth />} />
-            <Route path='/notifications' render={() => <Notifications />} />
             <Route path='/account' render={() => <AccountPage />} />
             <Route
               path='/user/*'

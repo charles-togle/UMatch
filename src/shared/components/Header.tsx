@@ -104,8 +104,20 @@ function Header ({
     getProfilePicture()
   }, [])
   const handleNotificationClick = useCallback(() => {
-    navigate('/notifications')
-  }, [navigate])
+    if (!user?.user_type) {
+      navigate('/notifications')
+      return
+    }
+
+    const userType = user.user_type.toLowerCase()
+    if (userType === 'staff') {
+      navigate('/staff/notifications')
+    } else if (userType === 'admin') {
+      navigate('/admin/notifications')
+    } else {
+      navigate('/user/notifications')
+    }
+  }, [navigate, user?.user_type])
   const handleProfileClick = useCallback(() => {
     navigate('/account')
   }, [navigate])

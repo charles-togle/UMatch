@@ -9,11 +9,6 @@ import {
   IonSearchbar,
   IonToast,
   IonContent,
-  IonButton,
-  IonIcon,
-  IonModal,
-  IonChip,
-  IonLabel,
   IonCard,
   IonCardContent,
   IonSkeletonText,
@@ -23,20 +18,22 @@ import {
   IonInfiniteScrollContent,
   IonActionSheet
 } from '@ionic/react'
-import {
-  funnelOutline,
-  timeOutline,
-  documentTextOutline,
-  listOutline
-} from 'ionicons/icons'
+import { listOutline, documentTextOutline } from 'ionicons/icons'
 import { Keyboard } from '@capacitor/keyboard'
 import { useNavigation } from '@/shared/hooks/useNavigation'
 import Header from '@/shared/components/Header'
+import FilterSortBar from '@/shared/components/FilterSortBar'
+import type {
+  FilterCategory,
+  SortOption
+} from '@/shared/components/FilterSortBar'
 import { listStaffPosts } from '@/features/posts/data/posts'
 import { refreshStaffPosts } from '@/features/posts/data/postsRefresh'
 import { usePostFetching } from '@/shared/hooks/usePostFetching'
-import type { PublicPost } from '@/features/posts/types/post'
 import CatalogPost from '@/features/user/components/home/CatalogPost'
+import { useFilterAndSortPosts } from '@/shared/hooks/useFilterAndSortPosts'
+import { type PostStatus, type SortDirection } from '@/shared/utils/postFilters'
+import { sharePost } from '@/shared/utils/shareUtils'
 
 // Header Component
 const PostRecordsHeader = memo(
@@ -60,139 +57,92 @@ const PostRecordsHeader = memo(
   }
 )
 
-// Status filter types
-type PostStatus =
-  | 'All'
-  | 'Missing'
-  | 'Found'
-  | 'Unclaimed'
-  | 'Pending'
-  | 'Accepted'
-  | 'Rejected'
-  | 'Claimed'
-  | 'Fraud'
-  | 'Declined'
-
-const ALL_FILTERS: PostStatus[] = [
-  'All',
-  'Missing',
-  'Found',
-  'Unclaimed',
-  'Pending',
-  'Accepted',
-  'Rejected',
-  'Claimed',
-  'Fraud',
-  'Declined'
-]
-
-const STATUS_MAP: Record<Exclude<PostStatus, 'All'>, string> = {
-  Missing: 'missing',
-  Found: 'found',
-  Unclaimed: 'unclaimed',
-  Pending: 'pending',
-  Accepted: 'accepted',
-  Rejected: 'rejected',
-  Claimed: 'claimed',
-  Fraud: 'fraud',
-  Declined: 'declined'
-}
-
-type SortDirection = 'asc' | 'desc'
-
 export default function PostRecords () {
   const PAGE_SIZE = 5
   const [showToast, setShowToast] = useState(false)
   const [toastMessage, setToastMessage] = useState('')
   const [toastColor, setToastColor] = useState<'success' | 'danger'>('success')
-  const [isFilterOpen, setIsFilterOpen] = useState(false)
-  const [isSortOpen, setIsSortOpen] = useState(false)
   const [activeFilters, setActiveFilters] = useState<Set<PostStatus>>(
     new Set(['Accepted', 'Found'])
   )
   const [sortDir, setSortDir] = useState<SortDirection>('desc')
-  const [allPosts, setAllPosts] = useState<PublicPost[]>([])
-  const [filteredPosts, setFilteredPosts] = useState<PublicPost[]>([])
   const [showActions, setShowActions] = useState(false)
   const [activePostId, setActivePostId] = useState<string | null>(null)
   const contentRef = useRef<HTMLIonContentElement | null>(null)
   const { navigate } = useNavigation()
 
-  // Use the reusable hook
-  const {
-    posts,
-    hasMore,
-    fetchPosts,
-    loadMorePosts: hookLoadMorePosts,
-    refreshPosts,
-    loading
-  } = usePostFetching({
-    fetchFunction: listStaffPosts,
-    refreshPostFunction: refreshStaffPosts,
-    cacheKeys: {
-      loadedKey: 'LoadedPosts:staff:records',
-      cacheKey: 'CachedPublicPosts:staff:records'
+  // Filter categories for FilterSortBar
+  const filterCategories: FilterCategory<PostStatus>[] = [
+    {
+      categoryName: 'Post Status',
+      options: [
+        { value: 'Pending', label: 'Pending' },
+        { value: 'Accepted', label: 'Accepted' },
+        { value: 'Rejected', label: 'Rejected' },
+        { value: 'Fraud', label: 'Fraud' },
+        { value: 'Declined', label: 'Declined' }
+      ]
     },
-    pageSize: PAGE_SIZE,
-    sortDirection: sortDir,
-    onOffline: () => {
-      setToastMessage(
-        'Getting updated posts failed — not connected to the internet'
-      )
-      setToastColor('danger')
-      setShowToast(true)
+    {
+      categoryName: 'Item Status',
+      options: [
+        { value: 'Claimed', label: 'Claimed' },
+        { value: 'Unclaimed', label: 'Unclaimed' }
+      ]
+    },
+    {
+      categoryName: 'Item Type',
+      options: [
+        { value: 'Missing', label: 'Missing' },
+        { value: 'Found', label: 'Found' }
+      ]
     }
+  ]
+
+  const sortOptions: SortOption[] = [
+    {
+      value: 'desc',
+      label: 'Latest Upload (Desc)',
+      icon: documentTextOutline
+    },
+    {
+      value: 'asc',
+      label: 'Oldest Upload (Asc)',
+      icon: documentTextOutline
+    }
+  ]
+
+  // Use the reusable hook
+  const { posts, hasMore, fetchPosts, loadMorePosts, refreshPosts, loading } =
+    usePostFetching({
+      fetchFunction: listStaffPosts,
+      refreshPostFunction: refreshStaffPosts,
+      cacheKeys: {
+        loadedKey: 'LoadedPosts:staff:records',
+        cacheKey: 'CachedPublicPosts:staff:records'
+      },
+      pageSize: PAGE_SIZE,
+      sortDirection: sortDir,
+      onOffline: () => {
+        setToastMessage(
+          'Getting updated posts failed — not connected to the internet'
+        )
+        setToastColor('danger')
+        setShowToast(true)
+      }
+    })
+
+  // Use custom hook for filtering and sorting
+  const filteredPosts = useFilterAndSortPosts({
+    posts,
+    activeFilters,
+    sortDirection: sortDir,
+    filterMode: 'intersection'
   })
 
   useEffect(() => {
     fetchPosts()
   }, [])
-
-  useEffect(() => {
-    setAllPosts(posts)
-  }, [posts])
-
-  useEffect(() => {
-    setFilteredPosts(applySort(applyFilter(allPosts)))
-  }, [activeFilters, sortDir, allPosts])
-
-  const applyFilter = (items: PublicPost[]): PublicPost[] => {
-    if (activeFilters.has('All')) return items
-
-    // Convert filters to expected values
-    const expectedValues = Array.from(activeFilters)
-      .filter(f => f !== 'All')
-      .map(f => STATUS_MAP[f as Exclude<PostStatus, 'All'>].toLowerCase())
-
-    // Filter items that match ALL selected filters (AND logic)
-    return items.filter(post => {
-      const postStatus = (post.post_status || '').toLowerCase()
-      const itemStatus = (post.item_status || '').toLowerCase()
-      const itemType = (post.item_type || '').toLowerCase()
-
-      // Check if the post matches ALL active filters
-      return expectedValues.every(expectedValue => {
-        return (
-          postStatus === expectedValue ||
-          itemStatus === expectedValue ||
-          itemType === expectedValue
-        )
-      })
-    })
-  }
-
-  const applySort = (items: PublicPost[]): PublicPost[] => {
-    return [...items].sort((a, b) => {
-      const as = a.submission_date || ''
-      const bs = b.submission_date || ''
-      if (!as && !bs) return 0
-      if (!as) return 1
-      if (!bs) return -1
-      return sortDir === 'desc'
-        ? (bs as string).localeCompare(as as string)
-        : (as as string).localeCompare(bs as string)
-    })
-  }
 
   useEffect(() => {
     const handler = (_ev?: Event) => {
@@ -205,7 +155,7 @@ export default function PostRecords () {
   }, [])
 
   const handleLoadMore = async (event: CustomEvent<void>) => {
-    await hookLoadMorePosts()
+    await loadMorePosts()
     const target = event.target as HTMLIonInfiniteScrollElement | null
     if (target) target.complete()
   }
@@ -225,7 +175,7 @@ export default function PostRecords () {
     setShowActions(true)
   }
 
-  const handleActionSheetClick = (action: string) => {
+  const handleActionSheetClick = async (action: string) => {
     if (!activePostId) return
 
     switch (action) {
@@ -233,17 +183,16 @@ export default function PostRecords () {
         navigate(`/staff/post/view/${activePostId}`)
         break
       case 'share':
-        // Share URL with user domain
-        const shareUrl = `${window.location.origin}/user/post/view/${activePostId}`
-        if (navigator.share) {
-          navigator.share({
-            title: 'Check out this post',
-            url: shareUrl
-          })
+        const result = await sharePost(activePostId, 'user')
+        if (result.success) {
+          if (result.method === 'clipboard') {
+            setToastMessage('Link copied to clipboard')
+            setToastColor('success')
+            setShowToast(true)
+          }
         } else {
-          navigator.clipboard.writeText(shareUrl)
-          setToastMessage('Link copied to clipboard')
-          setToastColor('success')
+          setToastMessage('Failed to share post')
+          setToastColor('danger')
           setShowToast(true)
         }
         break
@@ -298,46 +247,6 @@ export default function PostRecords () {
       </IonCardContent>
     </IonCard>
   )
-
-  // UI bits
-  const FilterChip = ({ label }: { label: PostStatus }) => {
-    const isActive = activeFilters.has(label)
-
-    const handleClick = () => {
-      if (label === 'All') {
-        setActiveFilters(new Set(['All']))
-      } else {
-        const newFilters = new Set(activeFilters)
-        newFilters.delete('All')
-
-        if (isActive) {
-          newFilters.delete(label)
-          if (newFilters.size === 0) {
-            newFilters.add('All')
-          }
-        } else {
-          newFilters.add(label)
-        }
-
-        setActiveFilters(newFilters)
-      }
-    }
-
-    return (
-      <IonChip
-        onClick={handleClick}
-        outline={!isActive}
-        className='m-1 px-4'
-        style={{
-          '--background': isActive ? 'var(--color-umak-blue)' : 'transparent',
-          '--color': isActive ? 'white' : 'var(--color-umak-blue)',
-          border: '2px solid var(--color-umak-blue)'
-        }}
-      >
-        <IonLabel>{label}</IonLabel>
-      </IonChip>
-    )
-  }
 
   return (
     <>
@@ -397,234 +306,82 @@ export default function PostRecords () {
             ))}
           </div>
         </IonContent>
-      ) : filteredPosts.length === 0 ? (
-        <IonContent ref={contentRef} className='mb-16 bg-default-bg'>
-          <div>
-            {/* Top action row */}
-            <IonCard className='px-4 mb-3'>
-              <IonCardContent className='flex items-center justify-between gap-3'>
-                <div className='flex items-center mb-2 gap-2 text-umak-blue'>
-                  <IonIcon icon={listOutline} style={{ fontSize: '32px' }} />
-                  <span className='font-medium'>Post Records</span>
-                </div>
-                <div className='flex items-center gap-2'>
-                  <IonButton
-                    fill='outline'
-                    onClick={() => setIsFilterOpen(true)}
-                    className='rounded-full'
-                    style={{
-                      '--border-color': 'var(--color-umak-blue)',
-                      '--color': 'var(--color-umak-blue)'
-                    }}
-                  >
-                    <IonIcon
-                      icon={funnelOutline}
-                      slot='start'
-                      className='mr-2'
-                    />
-                    Filter
-                  </IonButton>
-                  <IonButton
-                    fill='outline'
-                    onClick={() => setIsSortOpen(true)}
-                    className='rounded-full'
-                    style={{
-                      '--border-color': 'var(--color-umak-blue)',
-                      '--color': 'var(--color-umak-blue)'
-                    }}
-                  >
-                    <IonIcon icon={timeOutline} slot='start' className='mr-2' />
-                    {sortDir === 'desc' ? 'Recent Upload' : 'Oldest Upload'}
-                  </IonButton>
-                </div>
-              </IonCardContent>
-            </IonCard>
-
-            <div className='flex justify-center items-center h-64 text-gray-400'>
-              <p>No posts match the selected filters</p>
-            </div>
-          </div>
-        </IonContent>
       ) : (
         <IonContent ref={contentRef} className='mb-16 bg-default-bg'>
-          <IonRefresher slot='fixed' onIonRefresh={handleRefresh}>
-            <IonRefresherContent />
-          </IonRefresher>
+          {!loading && (
+            <IonRefresher slot='fixed' onIonRefresh={handleRefresh}>
+              <IonRefresherContent />
+            </IonRefresher>
+          )}
 
           <div>
-            {/* Top action row */}
-            <IonCard className='px-4 mb-3'>
-              <IonCardContent className='flex items-center justify-between gap-3'>
-                <div className='flex items-center mb-2 gap-2 text-umak-blue'>
-                  <IonIcon icon={listOutline} style={{ fontSize: '32px' }} />
-                  <span className='font-medium'>Post Records</span>
-                </div>
-                <div className='flex items-center gap-2'>
-                  <IonButton
-                    fill='outline'
-                    onClick={() => setIsFilterOpen(true)}
-                    className='rounded-full'
-                    style={{
-                      '--border-color': 'var(--color-umak-blue)',
-                      '--color': 'var(--color-umak-blue)'
-                    }}
-                  >
-                    <IonIcon
-                      icon={funnelOutline}
-                      slot='start'
-                      className='mr-2'
+            {/* FilterSortBar component */}
+            <FilterSortBar
+              title='Post Records'
+              icon={listOutline}
+              filterCategories={filterCategories}
+              activeFilters={activeFilters}
+              onFilterChange={setActiveFilters}
+              filterSelectionType='single-per-category'
+              filterModalTitle='Filter Posts'
+              filterModalSubtitle='Select multiple post statuses to be displayed.'
+              hasFilterClear={true}
+              hasFilterEnter={true}
+              sortOptions={sortOptions}
+              activeSort={sortDir}
+              onSortChange={value => setSortDir(value as SortDirection)}
+              sortModalTitle='Sort display order by'
+              sortButtonLabel={
+                sortDir === 'desc' ? 'Recent Upload' : 'Oldest Upload'
+              }
+            />
+
+            {filteredPosts.length === 0 ? (
+              <div className='flex justify-center items-center h-64 text-gray-400'>
+                <p>No posts match the selected filters</p>
+              </div>
+            ) : (
+              <>
+                {/* Posts */}
+                {filteredPosts.map(post => (
+                  <div className='w-full h-full mb-4' key={post.post_id}>
+                    <CatalogPost
+                      postId={post.post_id}
+                      username={post.username}
+                      user_profile_picture_url={post.profilepicture_url}
+                      itemName={post.item_name}
+                      description={post.item_description || ''}
+                      lastSeen={post.submission_date || ''}
+                      imageUrl={post.item_image_url || ''}
+                      locationLastSeenAt={post.last_seen_location || ''}
+                      itemStatus={post.item_status}
+                      onClick={() => handlePostClick(post.post_id)}
+                      is_anonymous={post.is_anonymous}
+                      onKebabButtonlick={() => setShowActions(true)}
                     />
-                    Filter
-                  </IonButton>
-                  <IonButton
-                    fill='outline'
-                    onClick={() => setIsSortOpen(true)}
-                    className='rounded-full'
-                    style={{
-                      '--border-color': 'var(--color-umak-blue)',
-                      '--color': 'var(--color-umak-blue)'
-                    }}
+                  </div>
+                ))}
+
+                {hasMore && (
+                  <IonInfiniteScroll
+                    onIonInfinite={handleLoadMore}
+                    threshold='100px'
+                    className='my-2'
                   >
-                    <IonIcon icon={timeOutline} slot='start' className='mr-2' />
-                    {sortDir === 'desc' ? 'Recent Upload' : 'Oldest Upload'}
-                  </IonButton>
-                </div>
-              </IonCardContent>
-            </IonCard>
+                    <IonInfiniteScrollContent loadingSpinner='crescent' />
+                  </IonInfiniteScroll>
+                )}
 
-            {/* Posts */}
-            {filteredPosts.map(post => (
-              <div className='w-full h-full mb-4'>
-                <CatalogPost
-                  key={post.post_id}
-                  postId={post.post_id}
-                  username={post.username}
-                  user_profile_picture_url={post.profilepicture_url}
-                  itemName={post.item_name}
-                  description={post.item_description || ''}
-                  lastSeen={post.submission_date || ''}
-                  imageUrl={post.item_image_url || ''}
-                  locationLastSeenAt={post.last_seen_location || ''}
-                  itemStatus={post.item_status}
-                  onClick={() => handlePostClick(post.post_id)}
-                  is_anonymous={post.is_anonymous}
-                  onKebabButtonlick={() => setShowActions(true)}
-                />
-              </div>
-            ))}
-
-            {hasMore && (
-              <IonInfiniteScroll
-                onIonInfinite={handleLoadMore}
-                threshold='100px'
-                className='my-2'
-              >
-                <IonInfiniteScrollContent loadingSpinner='crescent' />
-              </IonInfiniteScroll>
-            )}
-
-            {!hasMore && !loading && filteredPosts.length > 0 && (
-              <div className='text-center text-gray-500 py-4'>
-                You're all caught up!
-              </div>
+                {!hasMore && !loading && filteredPosts.length > 0 && (
+                  <div className='text-center text-gray-500 py-4'>
+                    You're all caught up!
+                  </div>
+                )}
+              </>
             )}
           </div>
         </IonContent>
       )}
-
-      {/* Filter Modal */}
-      <IonModal
-        isOpen={isFilterOpen}
-        onDidDismiss={() => setIsFilterOpen(false)}
-        backdropDismiss={true}
-        initialBreakpoint={0.5}
-        breakpoints={[0, 0.5, 0.75]}
-        className='font-default-font'
-        style={{ '--border-radius': '2rem' }}
-      >
-        <div className='flex flex-col items-center pb-6'>
-          <p className='my-4 text-base font-medium'>Filter Posts</p>
-          <p className='-mt-2 mb-4 text-sm text-gray-500'>
-            Select multiple post statuses to be displayed.
-          </p>
-          <div className='flex flex-wrap justify-center px-4'>
-            {ALL_FILTERS.map(f => (
-              <FilterChip key={f} label={f} />
-            ))}
-          </div>
-          <div className='mt-4 flex gap-2'>
-            <IonButton
-              fill='clear'
-              onClick={() => {
-                setActiveFilters(new Set(['All']))
-              }}
-              style={{ '--color': 'var(--color-umak-blue)' }}
-            >
-              Clear filters
-            </IonButton>
-            <IonButton
-              onClick={() => {
-                setIsFilterOpen(false)
-              }}
-              style={{
-                '--background': 'var(--color-umak-blue)',
-                '--color': 'white'
-              }}
-            >
-              Apply
-            </IonButton>
-          </div>
-        </div>
-      </IonModal>
-
-      {/* Sort Modal */}
-      <IonModal
-        isOpen={isSortOpen}
-        onDidDismiss={() => setIsSortOpen(false)}
-        backdropDismiss={true}
-        initialBreakpoint={0.2}
-        breakpoints={[0, 0.2, 0.35]}
-        className='font-default-font'
-        style={{ '--border-radius': '2rem' }}
-      >
-        <div className='flex flex-col items-center pb-4'>
-          <p className='my-4 text-base font-medium'>Sort display order by</p>
-          <div className='flex w-full'>
-            <button
-              className='flex flex-col items-center justify-center w-full gap-2 py-6'
-              onClick={() => {
-                setSortDir('desc')
-                setIsSortOpen(false)
-              }}
-            >
-              <IonIcon
-                icon={documentTextOutline}
-                size='large'
-                className='text-umak-blue'
-              />
-              <IonLabel className={sortDir === 'desc' ? 'font-semibold' : ''}>
-                Latest Upload (Desc)
-              </IonLabel>
-            </button>
-            <button
-              className='flex flex-col items-center justify-center w-full gap-2 py-6'
-              onClick={() => {
-                setSortDir('asc')
-                setIsSortOpen(false)
-              }}
-            >
-              <IonIcon
-                icon={documentTextOutline}
-                size='large'
-                className='text-umak-blue'
-              />
-              <IonLabel className={sortDir === 'asc' ? 'font-semibold' : ''}>
-                Oldest Upload (Asc)
-              </IonLabel>
-            </button>
-          </div>
-        </div>
-      </IonModal>
 
       {/* Custom Action Sheet for Post Records */}
       <IonActionSheet
