@@ -37,7 +37,6 @@
     "apexcharts": "^5.3.6",
     "axios": "^1.11.0",
     "blockhash-core": "^0.1.0",
-    
     "cors": "^2.8.5",
     "express": "^5.1.0",
     "firebase": "^12.4.0",
@@ -46,7 +45,6 @@
     "jwt-decode": "^4.0.0",
     "path": "^0.12.7",
     "react": "^19.1.1",
-    
     "react-dom": "^19.1.1",
     "react-router-dom": "^5.3.4",
     "tailwindcss": "^4.1.12"

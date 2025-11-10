@@ -18,7 +18,7 @@ import {
   IonDatetimeButton,
   IonModal
 } from '@ionic/react'
-import { personOutline, funnelOutline, chevronUp } from 'ionicons/icons'
+import { personOutline, funnelOutline, chevronDown } from 'ionicons/icons'
 import { newspaper, refresh } from 'ionicons/icons'
 import Header from '@/shared/components/Header'
 import FilterSortBar from '@/shared/components/FilterSortBar'
@@ -187,7 +187,7 @@ export default function AuditTrail () {
                             </h2>
                           </IonLabel>
                           <IonIcon
-                            icon={chevronUp}
+                            icon={chevronDown}
                             className={`min-w-12 text-[20px] text-umak-blue transition-transform duration-300 ml-auto ${
                               isOpen ? 'rotate-180' : 'rotate-0'
                             }`}
