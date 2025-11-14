@@ -501,9 +501,7 @@ export function useFraudReports ({
 
       await insertAuditLog({
         user_id: user.id,
-        action_type: 'fraud_report_processed',
-        target_entity_type: 'fraud_report',
-        target_entity_id: reportId,
+        action_type: 'verified_report',
         details: {
           message: `${
             userData?.user_name || 'Staff'
@@ -596,9 +594,7 @@ export function useFraudReports ({
       // Add audit trail with correct structure
       await insertAuditLog({
         user_id: user.id,
-        action_type: 'fraud_report_processed',
-        target_entity_type: 'fraud_report',
-        target_entity_id: reportId,
+        action_type: 'rejected_report',
         details: {
           message: `${
             userData?.user_name || 'Staff'

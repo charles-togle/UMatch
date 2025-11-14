@@ -1,17 +1,77 @@
 import { useState, useEffect, useRef } from 'react'
 import ApexCharts from 'apexcharts'
 import { supabase } from '@/shared/lib/supabase'
-import { IonSpinner } from '@ionic/react'
+import { IonIcon } from '@ionic/react'
+import { downloadOutline } from 'ionicons/icons'
 
 interface ChartData {
   labels: string[]
-  series: number[][]
+  series: number[][] // [missing, found, claimed]
+}
+
+// Skeleton loader component
+function ChartSkeleton () {
+  return (
+    <div className='w-full rounded-3xl p-4 animate-pulse'>
+      <div className='mb-2 flex items-center justify-between'>
+        <div className='h-4 w-24 bg-gray-300 rounded' />
+      </div>
+
+      <div className='w-full bg-white rounded-xl p-4 border border-gray-200'>
+        {/* Y-axis labels */}
+        <div className='flex gap-4'>
+          <div className='flex flex-col justify-between py-4'>
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className='h-3 w-8 bg-gray-200 rounded' />
+            ))}
+          </div>
+
+          {/* Chart area */}
+          <div className='flex-1 flex flex-col'>
+            {/* Grid lines with fake data points */}
+            <div className='flex-1 flex items-end gap-2 pb-8'>
+              {[...Array(8)].map((_, i) => (
+                <div key={i} className='flex-1 flex flex-col justify-end gap-2'>
+                  <div
+                    className='w-full bg-gray-200 rounded-t'
+                    style={{ height: `${Math.random() * 100 + 20}px` }}
+                  />
+                </div>
+              ))}
+            </div>
+
+            {/* X-axis labels */}
+            <div className='flex justify-between px-2 mt-2'>
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className='h-3 w-12 bg-gray-200 rounded' />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Legend */}
+        <div className='flex justify-center gap-4 mt-4'>
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className='flex items-center gap-2'>
+              <div className='h-3 w-3 bg-gray-300 rounded-full' />
+              <div className='h-3 w-16 bg-gray-200 rounded' />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className='mt-3 flex justify-end'>
+        <div className='h-9 w-9 bg-gray-200 rounded-full' />
+      </div>
+    </div>
+  )
 }
 
 export default function SystemStatsChart () {
   const [chartData, setChartData] = useState<ChartData | null>(null)
   const [loading, setLoading] = useState(true)
   const chartRef = useRef<HTMLDivElement>(null)
+  const chartInstance = useRef<ApexCharts | null>(null)
 
   useEffect(() => {
     fetchSystemStats()
@@ -21,13 +81,15 @@ export default function SystemStatsChart () {
     try {
       setLoading(true)
 
-      // Get last 12 weeks of data
       const weeks: string[] = []
       const missingData: number[] = []
       const foundData: number[] = []
       const claimedData: number[] = []
 
       const today = new Date()
+
+      // Optimize: Fetch all data in parallel instead of sequentially
+      const promises = []
 
       for (let i = 11; i >= 0; i--) {
         const weekStart = new Date(today)
@@ -38,41 +100,88 @@ export default function SystemStatsChart () {
         weekEnd.setDate(weekEnd.getDate() + 6)
         weekEnd.setHours(23, 59, 59, 999)
 
-        const weekLabel = `W${Math.floor(i / 4) + 1}`
+        const monthNames = [
+          'Jan',
+          'Feb',
+          'Mar',
+          'Apr',
+          'May',
+          'Jun',
+          'Jul',
+          'Aug',
+          'Sep',
+          'Oct',
+          'Nov',
+          'Dec'
+        ]
+        const weekLabel = `${
+          monthNames[weekStart.getMonth()]
+        } ${weekStart.getDate()}`
         weeks.push(weekLabel)
 
-        // Fetch missing posts for this week
-        const { count: missingCount } = await supabase
-          .from('item_table')
-          .select('*', { count: 'exact', head: true })
-          .eq('type', 'missing')
-          .gte('created_at', weekStart.toISOString())
-          .lte('created_at', weekEnd.toISOString())
+        // Push all three queries for this week into promises array
+        promises.push(
+          Promise.all([
+            supabase
+              .from('post_public_view')
+              .select('*', { count: 'exact', head: true })
+              .eq('item_type', 'missing')
+              .gte('submission_date', weekStart.toISOString())
+              .lte('submission_date', weekEnd.toISOString()),
+            supabase
+              .from('post_public_view')
+              .select('*', { count: 'exact', head: true })
+              .eq('item_type', 'found')
+              .gte('submission_date', weekStart.toISOString())
+              .lte('submission_date', weekEnd.toISOString()),
+            supabase
+              .from('post_public_view')
+              .select('*', { count: 'exact', head: true })
+              .eq('item_status', 'claimed')
+              .gte('submission_date', weekStart.toISOString())
+              .lte('submission_date', weekEnd.toISOString())
+          ])
+        )
+      }
 
-        // Fetch found posts for this week
-        const { count: foundCount } = await supabase
-          .from('item_table')
-          .select('*', { count: 'exact', head: true })
-          .eq('type', 'found')
-          .gte('created_at', weekStart.toISOString())
-          .lte('created_at', weekEnd.toISOString())
+      // Wait for all queries to complete
+      const results = await Promise.all(promises)
 
-        // Fetch claimed posts for this week
-        const { count: claimedCount } = await supabase
-          .from('item_table')
-          .select('*', { count: 'exact', head: true })
-          .eq('status', 'claimed')
-          .gte('created_at', weekStart.toISOString())
-          .lte('created_at', weekEnd.toISOString())
+      // Process results
+      results.forEach(([missingResult, foundResult, claimedResult]) => {
+        missingData.push(missingResult.count || 0)
+        foundData.push(foundResult.count || 0)
+        claimedData.push(claimedResult.count || 0)
+      })
 
-        missingData.push(missingCount || 0)
-        foundData.push(foundCount || 0)
-        claimedData.push(claimedCount || 0)
+      // Trim leading zero weeks
+      let firstNonZeroIndex = -1
+      for (let idx = 0; idx < weeks.length; idx++) {
+        const anyNonZero =
+          (missingData[idx] ?? 0) !== 0 ||
+          (foundData[idx] ?? 0) !== 0 ||
+          (claimedData[idx] ?? 0) !== 0
+        if (anyNonZero) {
+          firstNonZeroIndex = idx
+          break
+        }
+      }
+
+      let finalLabels = weeks
+      let finalMissing = missingData
+      let finalFound = foundData
+      let finalClaimed = claimedData
+
+      if (firstNonZeroIndex > 0) {
+        finalLabels = weeks.slice(firstNonZeroIndex)
+        finalMissing = missingData.slice(firstNonZeroIndex)
+        finalFound = foundData.slice(firstNonZeroIndex)
+        finalClaimed = claimedData.slice(firstNonZeroIndex)
       }
 
       setChartData({
-        labels: weeks,
-        series: [missingData, foundData, claimedData]
+        labels: finalLabels,
+        series: [finalMissing, finalFound, finalClaimed]
       })
     } catch (error) {
       console.error('Error fetching system stats:', error)
@@ -81,57 +190,150 @@ export default function SystemStatsChart () {
     }
   }
 
+  const handleDownloadCsv = () => {
+    if (!chartData) return
+
+    const header = 'Week Start,Missing,Found,Claimed'
+    const rows = chartData.labels.map((label, i) => {
+      const missing = chartData.series[0][i] ?? 0
+      const found = chartData.series[1][i] ?? 0
+      const claimed = chartData.series[2][i] ?? 0
+      return `${label},${missing},${found},${claimed}`
+    })
+
+    const csv = [header, ...rows].join('\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+
+    const link = document.createElement('a')
+    link.href = url
+    link.setAttribute(
+      'download',
+      `system-stats-${new Date().toISOString().slice(0, 10)}.csv`
+    )
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
+  }
+
   // Render chart when data changes
   useEffect(() => {
     if (!chartData || !chartRef.current) return
 
+    if (chartInstance.current) {
+      chartInstance.current.destroy()
+    }
+
     const options: ApexCharts.ApexOptions = {
       chart: {
         type: 'line',
-        height: 320,
+        height: 260,
         stacked: false,
-        zoom: {
-          enabled: true
+        toolbar: { show: false },
+        zoom: { enabled: false },
+        fontFamily: 'inherit',
+        animations: {
+          enabled: true,
+          speed: 700
         }
       },
       stroke: {
         curve: 'smooth',
         width: 3
       },
-      colors: ['#ef4444', '#10b981', '#3b82f6'],
+      colors: ['#00c950', '#fe9a00', '#df0020'],
       xaxis: {
         categories: chartData.labels,
-        title: {
-          text: 'Weeks'
+        labels: {
+          style: {
+            fontSize: '11px',
+            colors: '#6b7280'
+          }
+        },
+        axisBorder: {
+          show: true,
+          color: '#9ca3af'
+        },
+        axisTicks: {
+          show: true,
+          color: '#9ca3af'
         }
       },
       yaxis: {
         title: {
-          text: 'Number of Items'
+          text: 'Number of Posts',
+          style: {
+            fontSize: '11px',
+            fontWeight: 500,
+            color: '#6b7280'
+          }
         },
-        min: 0
+        min: 0,
+        labels: {
+          style: {
+            fontSize: '11px',
+            colors: '#6b7280'
+          },
+          formatter: (value: number) => Math.floor(value).toString()
+        }
       },
-      legend: {
-        position: 'top',
-        horizontalAlign: 'left'
-      },
+      // Legend moved outside the chart for custom layout
+      legend: { show: false },
       dataLabels: {
         enabled: false
+      },
+      grid: {
+        borderColor: '#e5edf9',
+        strokeDashArray: 0,
+        row: {
+          colors: ['#f4f8ff', 'transparent'],
+          opacity: 1
+        },
+        xaxis: {
+          lines: { show: false }
+        },
+        yaxis: {
+          lines: { show: true }
+        },
+        padding: {
+          top: 10,
+          right: 10,
+          bottom: 0,
+          left: 10
+        }
+      },
+      tooltip: {
+        enabled: true,
+        shared: true,
+        intersect: false,
+        style: {
+          fontSize: '11px'
+        },
+        y: {
+          formatter: (value: number) => `${value} posts`
+        }
+      },
+      markers: {
+        size: 0,
+        hover: {
+          size: 5
+        }
       }
     }
 
     const series = [
       {
-        name: 'Missing Posts',
-        data: chartData.series[0]
+        name: 'Claimed',
+        data: chartData.series[2]
       },
       {
-        name: 'Found Posts',
+        name: 'Found',
         data: chartData.series[1]
       },
       {
-        name: 'Claimed Items',
-        data: chartData.series[2]
+        name: 'Missing',
+        data: chartData.series[0]
       }
     ]
 
@@ -141,29 +343,80 @@ export default function SystemStatsChart () {
     })
 
     chart.render()
+    chartInstance.current = chart
 
     return () => {
-      chart.destroy()
+      if (chartInstance.current) {
+        chartInstance.current.destroy()
+        chartInstance.current = null
+      }
     }
   }, [chartData])
 
   if (loading) {
+    return <ChartSkeleton />
+  }
+
+  if (!chartData || chartData.labels.length === 0) {
     return (
-      <div className='flex items-center justify-center h-80'>
-        <IonSpinner name='crescent' />
+      <div className='w-full rounded-3xl p-4'>
+        <div className='bg-white rounded-xl border border-gray-200 p-8'>
+          <div className='text-gray-500 text-center py-8'>
+            No data available yet
+          </div>
+        </div>
       </div>
     )
   }
 
-  if (!chartData) {
-    return (
-      <div className='text-gray-500 text-center py-8'>No data available</div>
-    )
-  }
-
   return (
-    <div className='w-full'>
-      <div ref={chartRef} className='w-full' />
+    <div className='w-full rounded-3xl'>
+      {/* Header */}
+      <div className='mb-2 flex items-center justify-between'>
+        <span className='text-sm font-semibold text-[#1f2a66]'>
+          System Activity
+        </span>
+      </div>
+
+      <div className='w-full rounded-xl'>
+        <div ref={chartRef} className='w-full' />
+      </div>
+
+      {/* Custom legend - separated and left-aligned */}
+      <div className='mt-3 flex justify-start gap-4 items-center'>
+        <div className='flex items-center gap-2'>
+          <span
+            className='inline-block h-3 w-3 rounded-full'
+            style={{ backgroundColor: '#00c950' }}
+          />
+          <span className='text-sm text-gray-800'>Claimed</span>
+        </div>
+        <div className='flex items-center gap-2'>
+          <span
+            className='inline-block h-3 w-3 rounded-full'
+            style={{ backgroundColor: '#fe9a00' }}
+          />
+          <span className='text-sm text-gray-800'>Found</span>
+        </div>
+        <div className='flex items-center gap-2'>
+          <span
+            className='inline-block h-3 w-3 rounded-full'
+            style={{ backgroundColor: '#df0020' }}
+          />
+          <span className='text-sm text-gray-800'>Missing</span>
+        </div>
+      </div>
+
+      {/* CSV download button */}
+      <div className='mt-3 flex justify-end'>
+        <button
+          onClick={handleDownloadCsv}
+          className='rounded-full border border-[#1f2a66]/20 p-1.5 text-xl text-[#1f2a66] hover:bg-[#1f2a66]/5 transition-colors'
+          aria-label='Download CSV'
+        >
+          <IonIcon icon={downloadOutline} />
+        </button>
+      </div>
     </div>
   )
 }

@@ -20,6 +20,7 @@ import CategorySelection from '@/features/user/components/shared/CategorySelecti
 import CategorySelectionTrigger from '@/features/user/components/shared/CategorySelectionTrigger'
 import TextArea from '@/shared/components/TextArea'
 import { Network } from '@capacitor/network'
+import { generateAndAutofillFields } from '@/features/user/utils/aiAutofill'
 
 /** ---------- Helpers ---------- */
 const toISODate = (date: string, time: string, meridian: 'AM' | 'PM') => {
@@ -69,6 +70,13 @@ export default function NewPost () {
     level3: ''
   })
   const [loading, setLoading] = useState(false)
+  const [aiGenerating, setAiGenerating] = useState(false)
+  const [showAiConfirmModal, setShowAiConfirmModal] = useState(false)
+  const [aiGeneratedContent, setAiGeneratedContent] = useState<{
+    itemName?: string
+    itemDescription?: string
+    itemCategory?: string
+  } | null>(null)
   const { navigate } = useNavigation()
   const { createPost } = usePostActions()
   const [showFinalizeModal, setShowFinalizeModal] = useState(false)
@@ -96,6 +104,79 @@ export default function NewPost () {
 
   const handleCancel = () => {
     navigate('/user/home')
+  }
+
+  /**
+   * UI handler: Handle image upload and trigger AI autofill
+   */
+  const handleImageChange = async (file: File | null) => {
+    setImage(file)
+
+    // Guard: only trigger AI generation if image is uploaded (not null/removed)
+    if (!file) return
+
+    // Set generating state
+    setAiGenerating(true)
+
+    try {
+      // Trigger AI generation - always generate regardless of field state
+      const result = await generateAndAutofillFields({
+        imageFile: file,
+        currentTitle: '',
+        currentDesc: '',
+        currentCategory: null
+      })
+
+      // Handle rate limit
+      if (result.rateLimitExceeded) {
+        setErrorMessage('Autogeneration is limited to 10 times per 5 minutes')
+        setToastColor('danger')
+        setShowToast(true)
+        return
+      }
+
+      // Handle success
+      if (result.success && result.content) {
+        // Store generated content and show confirmation modal
+        setAiGeneratedContent(result.content)
+        setShowAiConfirmModal(true)
+        return
+      }
+
+      // Handle failure
+      if (!result.success) {
+        if (result.error === 'ai_timeout') {
+          setErrorMessage(
+            'AI autofill took too long. Please fill in the fields manually.'
+          )
+        } else {
+          setErrorMessage(
+            'AI autofill failed. Please fill in the fields manually.'
+          )
+        }
+        setToastColor('danger')
+        setShowToast(true)
+      }
+    } finally {
+      setAiGenerating(false)
+    }
+  }
+
+  const handleAiConfirm = () => {
+    if (aiGeneratedContent) {
+      if (aiGeneratedContent.itemName) setTitle(aiGeneratedContent.itemName)
+      if (aiGeneratedContent.itemDescription)
+        setDesc(aiGeneratedContent.itemDescription)
+      if (aiGeneratedContent.itemCategory)
+        setCategory(aiGeneratedContent.itemCategory)
+    }
+    setShowAiConfirmModal(false)
+    setAiGeneratedContent(null)
+  }
+
+  const handleAiCancel = () => {
+    setShowAiConfirmModal(false)
+    setAiGeneratedContent(null)
   }
 
   const handleSubmit = async () => {
@@ -246,7 +327,7 @@ export default function NewPost () {
                   <>
                     <span>Upload as anonymous?</span>
                     <span className='text-umak-red font-default-font text-sm font-normal ml-3'>
-                      (for reporters only)
+                      (found items only)
                     </span>
                   </>
                 }
@@ -272,6 +353,37 @@ export default function NewPost () {
                 </label>
               </div>
             </div>
+            <div className='font-default-font font-extralight text-sm text-[#0F172B] opacity-60'>
+              Notice: Items marked as{' '}
+              <span className='font-semibold'>Missing</span> will not be
+              published publicly.
+            </div>
+            <div className='pr-5'>
+              <ItemStatusSelector
+                value={type}
+                onChange={value => setType(value as 'missing' | 'found')}
+                isRequired={true}
+              />
+            </div>
+            <div className='mb-4'>
+              <ImageUpload
+                label='Image'
+                image={image}
+                onImageChange={handleImageChange}
+                isRequired={true}
+              />
+            </div>
+            <div className='flex items-start gap-2 p-2 bg-blue-100 mb-4 -mt-4 rounded-md'>
+              <IonIcon
+                icon={informationCircle}
+                className='text-umak-blue text-lg mt-0.5 flex-shrink-0'
+              />
+              <div className='text-sm text-gray-700'>
+                <span className='font-medium'>Tip:</span> Uploading an image
+                will automatically generate content for title, description, and
+                category using AI.
+              </div>
+            </div>
             {/* ITEM NAME */}
             <div className='mb-4'>
               <FormSectionHeader header='Item Name/Title' isRequired />
@@ -282,6 +394,7 @@ export default function NewPost () {
                 placeholder='Max 32 characters'
                 maxLength={32}
                 onChange={e => setTitle(e.target.value)}
+                disabled={aiGenerating}
                 required
               />
             </div>
@@ -293,20 +406,9 @@ export default function NewPost () {
                 setValue={setDesc}
                 maxLength={150}
                 placeholder='Provide additional details about the item (e.g., color, brand, unique features). Max 150 characters.'
+                disabled={aiGenerating}
               />
             </div>
-            <div className='pr-5'>
-              <ItemStatusSelector
-                value={type}
-                onChange={value => setType(value as 'missing' | 'found')}
-                isRequired={true}
-              />
-            </div>
-            <LastSeenModal
-              handleDateChange={handleDateChange}
-              date={toISODate(date, time, meridian)}
-              isRequired={true}
-            />
             <div className='mb-4'>
               <FormSectionHeader header='Category' isRequired />
               <div>
@@ -317,15 +419,14 @@ export default function NewPost () {
                 />
               </div>
             </div>
+            <LastSeenModal
+              handleDateChange={handleDateChange}
+              date={toISODate(date, time, meridian)}
+              isRequired={true}
+            />
             <LocationDetailsSelector
               locationDetails={locationDetails}
               setLocationDetails={setLocationDetails}
-              isRequired={true}
-            />
-            <ImageUpload
-              label='Image'
-              image={image}
-              onImageChange={setImage}
               isRequired={true}
             />
             <div className='rounded-md overflow-hidden'>
@@ -333,9 +434,13 @@ export default function NewPost () {
                 style={{ '--background': 'var(--color-umak-blue)' }}
                 expand='full'
                 onClick={() => setShowFinalizeModal(true)}
-                disabled={loading}
+                disabled={loading || aiGenerating}
               >
-                {loading ? <IonSpinner name='crescent' /> : 'Submit'}
+                {loading || aiGenerating ? (
+                  <IonSpinner name='crescent' />
+                ) : (
+                  'Submit'
+                )}
               </IonButton>
             </div>
           </div>
@@ -413,7 +518,7 @@ export default function NewPost () {
               setShowCancelModal(false)
             },
             icon: create,
-            iconColor: 'text-lime-600'
+            iconColor: 'text-green-500'
           }
         ]}
       />
@@ -434,6 +539,91 @@ export default function NewPost () {
           setShowCategorySheet(false)
         }}
       />
+
+      {/* AI generating overlay */}
+      {aiGenerating && (
+        <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/30 bg-opacity-50'>
+          <div className='bg-white rounded-md p-6 flex flex-col items-center'>
+            <IonSpinner name='crescent' />
+            <div className='mt-3 text-base font-medium text-gray-800'>
+              Generating suggestions…
+            </div>
+            <div className='mt-1 text-sm text-gray-600'>
+              This may take a few seconds.
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* AI Confirmation Popover */}
+      {showAiConfirmModal && (
+        <div
+          className='fixed inset-0 z-50 flex items-center justify-center bg-black/50'
+          onClick={handleAiCancel}
+        >
+          <div
+            className='bg-white rounded-lg shadow-xl max-w-md w-11/12 mx-4 overflow-hidden'
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className='bg-umak-blue text-white p-4 flex items-center justify-center'>
+              <IonIcon icon={informationCircle} className='text-2xl mr-2' />
+              <div className='text-lg font-semibold'>Generated Content</div>
+            </div>
+
+            {/* Content */}
+            <div className='p-4 space-y-4 max-h-96 overflow-y-auto'>
+              {aiGeneratedContent?.itemName && (
+                <div>
+                  <div className='font-semibold text-sm text-gray-700 mb-1'>
+                    Item Name:
+                  </div>
+                  <div className='text-base text-gray-900 bg-gray-50 p-2 rounded border border-gray-200'>
+                    {aiGeneratedContent.itemName}
+                  </div>
+                </div>
+              )}
+              {aiGeneratedContent?.itemDescription && (
+                <div>
+                  <div className='font-semibold text-sm text-gray-700 mb-1'>
+                    Description:
+                  </div>
+                  <div className='text-base text-gray-900 bg-gray-50 p-2 rounded border border-gray-200'>
+                    {aiGeneratedContent.itemDescription}
+                  </div>
+                </div>
+              )}
+              {aiGeneratedContent?.itemCategory && (
+                <div>
+                  <div className='font-semibold text-sm text-gray-700 mb-1'>
+                    Category:
+                  </div>
+                  <div className='text-base text-gray-900 bg-gray-50 p-2 rounded border border-gray-200'>
+                    {aiGeneratedContent.itemCategory}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div className='flex border-t border-gray-200 py-4'>
+              <button
+                onClick={handleAiCancel}
+                className='flex-1 py-3 text-center font-medium text-gray-600 hover:bg-gray-50 transition-colors'
+              >
+                Cancel
+              </button>
+              <div className='w-px bg-gray-200' />
+              <button
+                onClick={handleAiConfirm}
+                className='flex-1 py-3 text-center font-medium text-umak-blue hover:bg-blue-50 transition-colors'
+              >
+                Apply Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </IonContent>
   )
 }

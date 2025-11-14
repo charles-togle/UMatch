@@ -14,6 +14,8 @@ import {
 import { ellipsisVertical, personCircle } from 'ionicons/icons'
 import ExpandableImage from '@/shared/components/ExpandableImage'
 
+import { IonActionSheet } from '@ionic/react'
+
 export type CatalogPostProps = {
   username?: string | null
   user_profile_picture_url?: string | null
@@ -26,6 +28,11 @@ export type CatalogPostProps = {
   className?: string | null
   onKebabButtonlick?: () => void | undefined
   itemStatus?: string | null
+  showAnonIndicator?: boolean
+  // New props for external action sheet control
+  actionSheetOpen?: boolean
+  onActionSheetDismiss?: () => void
+  actionSheetButtons?: any[]
 }
 
 const Post: React.FC<CatalogPostProps> = ({
@@ -39,7 +46,11 @@ const Post: React.FC<CatalogPostProps> = ({
   category,
   locationLastSeenAt = 'Location where item was last seen',
   onKebabButtonlick = undefined,
-  itemStatus = null
+  itemStatus = null,
+  showAnonIndicator = false,
+  actionSheetOpen = false,
+  onActionSheetDismiss,
+  actionSheetButtons
 }) => {
   const normalizedStatus = (itemStatus || '').toLowerCase()
   const statusColorClass =
@@ -69,8 +80,13 @@ const Post: React.FC<CatalogPostProps> = ({
           )}
         </IonAvatar>
         <IonLabel>
-          <div className='font-semibold text-umak-blue pl-3'>
+          <div className='font-semibold text-umak-blue pl-3 flex items-center gap-2'>
             <p>{username}</p>
+            {showAnonIndicator && (
+              <IonChip color='medium' className='ml-2 text-xs px-2 py-0 h-6'>
+                Anonymous
+              </IonChip>
+            )}
           </div>
         </IonLabel>
         <IonButtons slot='end'>
@@ -121,7 +137,7 @@ const Post: React.FC<CatalogPostProps> = ({
         {category && (
           <div className='flex flex-col my-3 text-xl text-slate-900'>
             <IonText class='font-extrabold'>
-              <strong>Last seen:</strong>
+              <strong>Categories:</strong>
             </IonText>
             <IonChip className='w-fit bg-umak-blue text-white px-10 mt-1'>
               {category}
@@ -135,6 +151,15 @@ const Post: React.FC<CatalogPostProps> = ({
           <IonText className='text-base'>{locationLastSeenAt}</IonText>
         </div>
       </IonCardContent>
+      {/* Render ActionSheet if props provided */}
+      {typeof actionSheetOpen !== 'undefined' && actionSheetButtons && (
+        <IonActionSheet
+          isOpen={actionSheetOpen}
+          onDidDismiss={onActionSheetDismiss}
+          header='Post actions'
+          buttons={actionSheetButtons}
+        />
+      )}
     </IonCard>
   )
 }

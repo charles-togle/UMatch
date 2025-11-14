@@ -66,7 +66,7 @@ export default function CustomRadioGroup ({
         className={`flex ${
           direction === 'horizontal'
             ? 'flex-col space-y-2 sm:flex-row sm:justify-between sm:gap-2 sm:space-y-0'
-            : 'flex-col space-y-2'
+            : 'flex-row space-x-2 gap-5'
         }`}
       >
         {options.map((opt, index) =>

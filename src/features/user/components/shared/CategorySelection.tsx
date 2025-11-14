@@ -1,4 +1,3 @@
-import { useMemo, useState } from 'react'
 import {
   IonModal,
   IonHeader,
@@ -6,14 +5,17 @@ import {
   IonTitle,
   IonContent,
   IonChip,
-  IonButton,
-  IonSearchbar
+  IonButton
 } from '@ionic/react'
 import { POST_CATEGORIES } from '@/features/user/configs/postCategories'
 
 interface CategorySelectionProps {
   isOpen: boolean
-  selected: string | null
+  mode?: 'single' | 'multi'
+  // For single-select mode
+  selected?: string | null
+  // For multi-select mode
+  selectedCategories?: string[]
   onClose: () => void
   onSelect: (category: string) => void
 }
@@ -21,16 +23,19 @@ interface CategorySelectionProps {
 // Bottom-sheet style category selector covering ~1/3 of the screen
 export default function CategorySelection ({
   isOpen,
+  mode = 'single',
+  selected,
+  selectedCategories = [],
   onClose,
   onSelect
 }: CategorySelectionProps) {
-  const [q, setQ] = useState('')
-
-  const filtered = useMemo(() => {
-    const term = q.trim().toLowerCase()
-    if (!term) return POST_CATEGORIES
-    return POST_CATEGORIES.filter(c => c.type.toLowerCase().includes(term))
-  }, [q])
+  // Determine if a category is selected based on mode
+  const isCategorySelected = (categoryType: string) => {
+    if (mode === 'multi') {
+      return selectedCategories.includes(categoryType)
+    }
+    return selected === categoryType
+  }
 
   return (
     <IonModal
@@ -53,21 +58,11 @@ export default function CategorySelection ({
         <div className='text-sm text-gray-600 mb-3'>
           State which category the item belongs in.
         </div>
-        <IonSearchbar
-          debounce={0}
-          onIonInput={e => setQ(e.detail.value || '')}
-          placeholder='search'
-          showClearButton='focus'
-          style={
-            {
-              ['--border-radius']: '0.5rem'
-            } as React.CSSProperties
-          }
-        />
 
         {/* Chips grid */}
         <div className='flex flex-wrap justify-center gap-2 mt-2'>
-          {filtered.map(cat => {
+          {POST_CATEGORIES.map(cat => {
+            const isSelected = isCategorySelected(cat.type)
             return (
               <IonChip
                 key={cat.type}
@@ -75,8 +70,10 @@ export default function CategorySelection ({
                 className='py-1 px-5'
                 style={
                   {
-                    '--background': 'transparent',
-                    '--color': 'var(--color-umak-blue)',
+                    '--background': isSelected
+                      ? 'var(--color-umak-blue)'
+                      : 'transparent',
+                    '--color': isSelected ? 'white' : 'var(--color-umak-blue)',
                     border: '2px solid var(--color-umak-blue)'
                   } as any
                 }

@@ -29,8 +29,9 @@ export type CatalogPostProps = {
   itemStatus?: string | null
   onClick?: (postId: string) => void | undefined
   postId?: string
-  variant?: 'user' | 'staff'
+  variant?: 'user' | 'staff' | 'search'
   is_anonymous?: boolean
+  showAnonIndicator?: boolean
 }
 
 const CatalogPost: React.FC<CatalogPostProps> = ({
@@ -47,7 +48,8 @@ const CatalogPost: React.FC<CatalogPostProps> = ({
   onClick,
   postId,
   variant = 'user',
-  is_anonymous = false
+  is_anonymous = false,
+  showAnonIndicator = false
 }) => {
   const normalizedStatus = (itemStatus || '').toLowerCase()
   const statusColorClass =
@@ -150,7 +152,7 @@ const CatalogPost: React.FC<CatalogPostProps> = ({
         <IonLabel>
           <div className='font-semibold text-umak-blue pl-3 flex items-center gap-2'>
             <p>{is_anonymous ? 'Anonymous' : username}</p>
-            {variant === 'staff' && is_anonymous && (
+            {showAnonIndicator && (
               <span className='text-xs font-normal bg-gray-200 text-gray-700 px-2 py-0.5 rounded'>
                 Anonymous
               </span>
@@ -228,7 +230,7 @@ const CatalogPost: React.FC<CatalogPostProps> = ({
             <button
               onClick={handleAccept}
               disabled={isProcessing}
-              className='flex-1 bg-lime-600 text-white py-4 px-4 rounded-sm! hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center'
+              className='flex-1 bg-green-500 text-white py-4 px-4 rounded-sm! hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center'
             >
               {isProcessing ? (
                 <IonSpinner name='crescent' className='w-5 h-5' />

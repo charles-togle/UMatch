@@ -13,12 +13,14 @@ interface LastSeenModalProps {
   date?: string
   handleDateChange: (e: CustomEvent) => void
   isRequired?: boolean
+  showTime?: boolean
 }
 
 const LastSeenModal: React.FC<LastSeenModalProps> = ({
   date,
   handleDateChange,
-  isRequired = false
+  isRequired = false,
+  showTime = true
 }) => {
   const datetime = useRef<null | HTMLIonDatetimeElement>(null)
   const modalRef = useRef<null | HTMLIonModalElement>(null)
@@ -45,21 +47,20 @@ const LastSeenModal: React.FC<LastSeenModalProps> = ({
           <IonModal keepContentsMounted={true} ref={modalRef}>
             <IonDatetime
               id='datetime'
-              presentation='date-time'
+              presentation={showTime ? 'date-time' : 'date'}
               value={date}
               onIonChange={handleDateChange}
               ref={datetime}
-              formatOptions={{
-                date: {
-                  month: 'short',
-                  day: '2-digit',
-                  year: 'numeric'
-                },
-                time: {
-                  hour: '2-digit',
-                  minute: '2-digit'
-                }
-              }}
+              formatOptions={
+                showTime
+                  ? {
+                      date: { month: 'short', day: '2-digit', year: 'numeric' },
+                      time: { hour: '2-digit', minute: '2-digit' }
+                    }
+                  : {
+                      date: { month: 'short', day: '2-digit', year: 'numeric' }
+                    }
+              }
             >
               <IonButtons slot='buttons'>
                 <IonButton color='danger' onClick={reset}>

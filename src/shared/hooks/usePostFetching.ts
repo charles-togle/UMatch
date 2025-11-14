@@ -157,7 +157,7 @@ export function usePostFetching (config: usePostFetchingConfig) {
       // 4. If no cached posts, fetch initial batch
       if (cachedPosts.length === 0) {
         let initialPosts = await config.fetchFunction([], config.pageSize ?? 5)
-
+        console.log('Fetched initial posts:', initialPosts)
         // Apply filter if provided
         if (config.filterPosts) {
           initialPosts = config.filterPosts(initialPosts)
@@ -302,7 +302,6 @@ export function usePostFetching (config: usePostFetchingConfig) {
         await cacheRef.current.saveLoadedPostIds(loadedIdsRef.current)
       } else {
         // No refreshed posts available
-        console.log('wala na')
         await cacheRef.current.clearPostsCache()
         loadedIdsRef.current.clear()
         setPosts(sortPosts([]))

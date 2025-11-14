@@ -44,7 +44,7 @@ export default function PostList ({
   sortDirection?: 'asc' | 'desc'
   pageSize: number
   onClick?: (postId: string) => void | undefined
-  variant?: 'user' | 'staff'
+  variant?: 'user' | 'staff' | 'search'
   handleRefresh?: (event: CustomEvent) => Promise<void>
 }) {
   const [isRefreshingContent, setRefreshingContent] = useState<boolean>(false)
@@ -95,7 +95,7 @@ export default function PostList ({
           <IonRefresherContent />
         </IonRefresher>
 
-        {children}
+        {typeof children !== 'undefined' ? children : null}
 
         {loading ? (
           <div className='flex flex-col gap-4 animate-pulse'>
@@ -105,25 +105,39 @@ export default function PostList ({
           </div>
         ) : (
           <div className='flex flex-col gap-4'>
-            {posts.map((post, idx) => (
-              <CatalogPost
-                key={post.post_id}
-                itemName={post.item_name}
-                description={post.item_description || ''}
-                lastSeen={post.last_seen_at || ''}
-                imageUrl={post.item_image_url || ''}
-                locationLastSeenAt={post.last_seen_location || ''}
-                user_profile_picture_url={post.profilepicture_url}
-                username={post.username}
-                className={!hasMore && idx === posts.length - 1 ? '' : ''}
-                onKebabButtonlick={() => handleActionSheetClick(post.post_id)}
-                itemStatus={post.item_status}
-                onClick={() => onClick?.(post.post_id)}
-                postId={post.post_id}
-                variant={variant}
-                is_anonymous={post.is_anonymous}
-              />
-            ))}
+            {posts.map((post, idx) => {
+              let displayUsername = post.username
+              let showAnonIndicator = false
+              if (post.is_anonymous) {
+                if (variant === 'staff') {
+                  // Staff: show real username + anon indicator
+                  showAnonIndicator = true
+                } else {
+                  // User: show only 'Anonymous'
+                  displayUsername = 'Anonymous'
+                }
+              }
+              return (
+                <CatalogPost
+                  key={post.post_id}
+                  itemName={post.item_name}
+                  description={post.item_description || ''}
+                  lastSeen={post.last_seen_at || ''}
+                  imageUrl={post.item_image_url || ''}
+                  locationLastSeenAt={post.last_seen_location || ''}
+                  user_profile_picture_url={post.profilepicture_url}
+                  username={displayUsername}
+                  className={!hasMore && idx === posts.length - 1 ? '' : ''}
+                  onKebabButtonlick={() => handleActionSheetClick(post.post_id)}
+                  itemStatus={post.item_status}
+                  onClick={() => onClick?.(post.post_id)}
+                  postId={post.post_id}
+                  variant={variant}
+                  is_anonymous={post.is_anonymous}
+                  showAnonIndicator={showAnonIndicator}
+                />
+              )
+            })}
           </div>
         )}
 
@@ -156,18 +170,49 @@ export default function PostList ({
         isOpen={showActions}
         onDidDismiss={() => setShowActions(false)}
         header='Post actions'
-        buttons={[
-          {
+        buttons={(() => {
+          const post = posts.find(p => p.post_id === activePostId)
+          const buttons = []
+          // Delete: only for item_status 'unclaimed' or 'lost'
+          if (
+            post &&
+            (post.item_status === 'unclaimed' || post.item_status === 'lost')
+          ) {
+            buttons.push({
+              text: 'Delete',
+              role: 'destructive',
+              handler: () => {
+                /* TODO: implement delete logic */
+              },
+              cssClass: 'delete-btn'
+            })
+          }
+          // Edit: only for post_status 'pending'
+          if (post && post.post_status === 'pending') {
+            buttons.push({
+              text: 'Edit',
+              handler: () => {
+                if (activePostId) navigate(`/user/post/edit/${activePostId}`)
+              },
+              cssClass: 'edit-btn'
+            })
+          }
+          // View details: always
+          buttons.push({
             text: 'View details',
             handler: () => {
               if (activePostId) navigate(`/user/post/view/${activePostId}`)
             }
-          },
-          {
+          })
+          // Share and Report (existing logic)
+          buttons.push({
             text: 'Share',
             handler: async () => {
               if (!activePostId) return
-              const result = await sharePost(activePostId, variant)
+              const result = await sharePost(
+                activePostId,
+                variant === 'staff' ? 'staff' : 'user'
+              )
               if (result.success) {
                 if (result.method === 'clipboard') {
                   setToastMessage('Link copied to clipboard')
@@ -180,20 +225,21 @@ export default function PostList ({
                 setShowToast(true)
               }
             }
-          },
-          {
+          })
+          buttons.push({
             text: 'Report',
             role: 'destructive',
             handler: () => {
-              if (activePostId) navigate(`/user/post/report/${activePostId}`)
+              if (activePostId) navigate(`/user/home/report/${activePostId}`)
             },
             cssClass: 'report-btn'
-          },
-          {
+          })
+          buttons.push({
             text: 'Cancel',
             role: 'cancel'
-          }
-        ]}
+          })
+          return buttons
+        })()}
       />
 
       {/* Toast for share feedback */}

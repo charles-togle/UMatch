@@ -387,7 +387,7 @@ export default memo(function ExpandedFraudReport () {
               <button
                 onClick={handleAccept}
                 disabled={isProcessing}
-                className='flex-1 bg-lime-600 text-white py-4 px-4 rounded-sm! hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center'
+                className='flex-1 bg-green-500 text-white py-4 px-4 rounded-sm! hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center'
               >
                 {isProcessing ? (
                   <IonSpinner name='crescent' className='w-5 h-5' />

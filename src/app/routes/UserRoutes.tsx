@@ -9,6 +9,7 @@ import FAQs from '@/features/user/pages/FAQs'
 import History from '@/features/user/pages/History'
 import NewPost from '@/features/user/pages/NewPost'
 import SearchItem from '@/features/user/pages/SearchItem'
+import SearchResults from '@/features/user/pages/SearchResults'
 import Settings from '@/features/user/pages/Settings'
 import ExpandedPost from '@/features/posts/pages/ExpandedPost'
 import ReportPost from '@/features/posts/pages/ReportPost'
@@ -25,7 +26,7 @@ export default function UserRoutes () {
       <IonRouterOutlet>
         <Route path='/user/notifications' render={() => <Notifications />} />
         <Route path='/user/post/view/:postId' render={() => <ExpandedPost />} />
-        <Route path='/user/post/report/:postId' render={() => <ReportPost />} />
+        <Route path='/user/home/report/:postId' render={() => <ReportPost />} />
         <Route
           path='/user/home'
           render={() => (
@@ -43,7 +44,7 @@ export default function UserRoutes () {
           )}
         />
         <Route
-          path='/user/history/view/:postId'
+          path='/user/post/history/view/:postId'
           render={() => (
             <Suspense fallback={<DefaultFallback />}>
               <ExpandedHistoryPost />
@@ -71,6 +72,14 @@ export default function UserRoutes () {
           render={() => (
             <Suspense fallback={<DefaultFallback />}>
               <SearchItem />
+            </Suspense>
+          )}
+        />
+        <Route
+          path='/user/search/results'
+          render={() => (
+            <Suspense fallback={<DefaultFallback />}>
+              <SearchResults />
             </Suspense>
           )}
         />

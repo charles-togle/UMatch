@@ -128,7 +128,7 @@ export default function History () {
           }}
           pageSize={PAGE_SIZE}
           onClick={(postId: string) => {
-            navigate(`/user/history/view/${postId}`)
+            navigate(`/user/post/history/view/${postId}`)
           }}
           handleRefresh={async (event: CustomEvent) => {
             await refreshPosts()

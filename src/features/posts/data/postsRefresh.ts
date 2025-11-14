@@ -176,3 +176,59 @@ export async function refreshOwnPosts (
     post_status: r.post_status
   }))
 }
+
+export function refreshByIds () {
+  return async function refreshByIds (
+    includeIds: string[]
+  ): Promise<PublicPost[]> {
+    if (!includeIds || includeIds.length === 0) return []
+
+    const { data, error } = await supabase
+      .from('post_public_view')
+      .select(
+        `
+      post_id,
+      poster_name,
+      poster_id,
+      item_name,
+      profile_picture_url,
+      item_image_url,
+      item_description,
+      category,
+      last_seen_at,
+      item_status,
+      last_seen_location,
+      is_anonymous,
+      submission_date,
+      item_type,
+      post_status,
+      accepted_on_date
+    `
+      )
+      .in('post_id', includeIds)
+
+    if (error) {
+      console.error('Error refreshing search result posts:', error)
+      return []
+    }
+
+    return (data ?? []).map((r: any) => ({
+      user_id: r.poster_id,
+      username: r.poster_name,
+      item_name: r.item_name,
+      profilepicture_url: r.profile_picture_url,
+      item_image_url: r.item_image_url,
+      item_description: r.item_description,
+      accepted_on_date: r.accepted_on_date,
+      item_status: r.item_status,
+      category: r.category,
+      last_seen_at: fmtManila(r.last_seen_at),
+      last_seen_location: r.last_seen_location,
+      is_anonymous: r.is_anonymous,
+      post_id: r.post_id,
+      submission_date: r.submission_date,
+      item_type: r.item_type,
+      post_status: r.post_status
+    }))
+  }
+}

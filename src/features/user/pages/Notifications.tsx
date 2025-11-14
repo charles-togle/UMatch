@@ -178,8 +178,8 @@ export default function Notifications () {
             // Construct title/description from available fields
             const title = n.description ?? 'Notification'
             const data = n.data ?? {}
-            let link;
-            if(data['link'] && data['postId']) {
+            let link
+            if (data['link'] && data['postId']) {
               link = data['link']
             }
             const description = n.description ?? JSON.stringify(n.data ?? '')
@@ -190,14 +190,16 @@ export default function Notifications () {
                 type: 'Delete notification',
                 onClick: () => handleNotificationDelete(n.notification_id),
                 icon: trashOutline
-              },
-              {
+              }
+            ]
+            if (!n.is_read) {
+              actions.push({
                 color: 'primary',
                 type: 'Mark as read',
                 onClick: () => handleMarkAsRead(n.notification_id),
                 icon: checkmarkOutline
-              }
-            ]
+              })
+            }
             return (
               <NotificationItem
                 key={n.notification_id}

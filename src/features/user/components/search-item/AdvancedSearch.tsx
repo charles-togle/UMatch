@@ -1,94 +1,62 @@
 import { useState } from 'react'
-import { IonButton } from '@ionic/react'
+import type { Dispatch, SetStateAction } from 'react'
+import { IonButton, IonChip } from '@ionic/react'
 import { searchOutline } from 'ionicons/icons'
-import ItemStatusSelector from '../shared/ItemStatusSelector'
 import LastSeenModal from '../shared/LastSeenModal'
 import LocationDetailsSelector from '../shared/LocationDetailsSelector'
 import ImageUpload from '@/shared/components/ImageUpload'
 import CardHeader from '@/shared/components/CardHeader'
+import CategorySelection from '../shared/CategorySelection'
+import FormSectionHeader from '@/shared/components/FormSectionHeader'
 
-const toISODate = (date: string, time: string, meridian: 'AM' | 'PM') => {
-  const [month, day, year] = date.split('/')
-  let [hours, minutes] = time.split(':').map(Number)
-  if (meridian === 'PM' && hours < 12) hours += 12
-  if (meridian === 'AM' && hours === 12) hours = 0
-
-  // Create a date string that represents UTC+8 time
-  const paddedMonth = month.padStart(2, '0')
-  const paddedDay = day.padStart(2, '0')
-  const paddedHours = hours.toString().padStart(2, '0')
-  const paddedMinutes = minutes.toString().padStart(2, '0')
-
-  // Return ISO string with +08:00 offset
-  return `${year}-${paddedMonth}-${paddedDay}T${paddedHours}:${paddedMinutes}:00+08:00`
+interface LocationDetails {
+  level1: string
+  level2: string
+  level3: string
 }
 
-export default function AdvancedSearch () {
-  // ------------------ STATES ------------------
-  const now = new Date()
-  // Convert to UTC+8 (Philippine Time)
-  const utcTime = now.getTime() + now.getTimezoneOffset() * 60000
-  const utc8Time = utcTime + 8 * 3600000
-  const local = new Date(utc8Time)
-  let hours = local.getHours()
-  const minutes = local.getMinutes().toString().padStart(2, '0')
-  const [date, setDate] = useState(
-    local.toLocaleDateString('en-US', {
-      month: '2-digit',
-      day: '2-digit',
-      year: 'numeric'
-    })
-  )
+interface AdvancedSearchProps {
+  searchValue?: string
+  setSearchValue?: (v: string) => void
+  date: string
+  time: string
+  meridian: 'AM' | 'PM'
+  toISODate: (date: string, time: string, meridian: 'AM' | 'PM') => string
+  handleDateChange: (e: CustomEvent) => void
+  locationDetails: LocationDetails
+  setLocationDetails: Dispatch<SetStateAction<LocationDetails>>
+  image: File | null
+  setImage: (file: File | null) => void
+  selectedCategories: string[]
+  setSelectedCategories: (categories: string[]) => void
+  handleSearch: () => void
+}
 
-  const meridianVal = hours >= 12 ? 'PM' : 'AM'
-  hours = hours % 12 || 12
+export default function AdvancedSearch ({
 
-  const [status, setStatus] = useState<'missing' | 'found'>('found')
-  const [time, setTime] = useState(`${hours}:${minutes}`)
-  const [meridian, setMeridian] = useState(meridianVal as 'AM' | 'PM')
-  const [locationDetails, setLocationDetails] = useState({
-    level1: '',
-    level2: '',
-    level3: ''
-  })
-
-  const [image, setImage] = useState<File | null>(null)
-  const [result, setResult] = useState<any>(null)
-
-  const handleDateChange = (e: CustomEvent) => {
-    const iso = e.detail.value as string
-    if (iso) {
-      // Parse the ISO string and treat it as UTC+8
-      const d = new Date(iso)
-
-      const formattedDate = d.toLocaleDateString('en-US', {
-        month: '2-digit',
-        day: '2-digit',
-        year: 'numeric',
-        timeZone: 'Asia/Manila'
-      })
-      let hours = d.getHours()
-      const minutes = d.getMinutes().toString().padStart(2, '0')
-      const meridianVal = hours >= 12 ? 'PM' : 'AM'
-      hours = hours % 12 || 12
-      const formattedTime = `${hours}:${minutes}`
-
-      setDate(formattedDate)
-      setTime(formattedTime)
-      setMeridian(meridianVal as 'AM' | 'PM')
+  date,
+  time,
+  meridian,
+  toISODate,
+  handleDateChange,
+  locationDetails,
+  setLocationDetails,
+  image,
+  setImage,
+  selectedCategories,
+  setSelectedCategories,
+  handleSearch,
+}: AdvancedSearchProps) {
+  const [showCategoryModal, setShowCategoryModal] = useState(false)
+  const handleCategorySelect = (category: string) => {
+    if (selectedCategories.includes(category)) {
+      setSelectedCategories(selectedCategories.filter(c => c !== category))
+    } else {
+      setSelectedCategories([...selectedCategories, category])
     }
   }
-
-  // ------------------ FORM SUBMIT ------------------
-  const handleSearch = () => {
-    const searchResult = {
-      status,
-      lastSeen: { date, time, meridian },
-      locationDetails,
-      image: image ? image.name : null
-    }
-    setResult(searchResult)
-    console.log('Search Object:', searchResult)
+  const removeCategory = (category: string) => {
+    setSelectedCategories(selectedCategories.filter(c => c !== category))
   }
 
   // ------------------ UI ------------------
@@ -96,10 +64,6 @@ export default function AdvancedSearch () {
     <div className=' bg-gray-50 mb-5 w-full'>
       <div className='mx-5 mt-3 rounded-xl shadow-md p-4 border border-gray-200'>
         <CardHeader title='Advanced Search' icon={searchOutline} />
-
-        <div className='max-w-2/3'>
-          <ItemStatusSelector value={status} onChange={setStatus} />
-        </div>
         <LastSeenModal
           date={toISODate(date, time, meridian)}
           handleDateChange={handleDateChange}
@@ -108,6 +72,35 @@ export default function AdvancedSearch () {
           locationDetails={locationDetails}
           setLocationDetails={setLocationDetails}
         />
+
+        {/* CATEGORY SELECTOR (Multi-select) */}
+        <div className='mb-4'>
+          <FormSectionHeader header='Categories' />
+          <IonButton
+            expand='block'
+            fill='outline'
+            onClick={() => setShowCategoryModal(true)}
+            className='text-left'
+          >
+            {selectedCategories.length > 0
+              ? `${selectedCategories.length} selected`
+              : 'Select categories'}
+          </IonButton>
+          {selectedCategories.length > 0 && (
+            <div className='flex flex-wrap gap-2 mt-2'>
+              {selectedCategories.map(cat => (
+                <IonChip
+                  key={cat}
+                  onClick={() => removeCategory(cat)}
+                  className='cursor-pointer px-3 bg-transparent border-1 border-umak-blue text-black'
+                  color='primary'
+                >
+                  {cat} ×
+                </IonChip>
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* IMAGE UPLOAD */}
         <ImageUpload
@@ -129,13 +122,16 @@ export default function AdvancedSearch () {
         >
           SEARCH
         </IonButton>
-        {/* RESULT JSON */}
-        {result && (
-          <pre className='mt-4 text-xs mb-15 bg-gray-100 p-2 rounded-md overflow-x-auto'>
-            {JSON.stringify(result, null, 2)}
-          </pre>
-        )}
       </div>
+
+      {/* Category Selection Modal */}
+      <CategorySelection
+        isOpen={showCategoryModal}
+        mode='multi'
+        selectedCategories={selectedCategories}
+        onClose={() => setShowCategoryModal(false)}
+        onSelect={handleCategorySelect}
+      />
     </div>
   )
 }

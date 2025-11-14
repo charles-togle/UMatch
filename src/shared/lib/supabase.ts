@@ -4,7 +4,7 @@ import { Capacitor } from '@capacitor/core'
 import { Preferences } from '@capacitor/preferences'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON as string
 
 // Custom hybrid storage adapter
 const hybridStorage = {

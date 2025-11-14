@@ -5,7 +5,8 @@ import {
   refreshOutline,
   camera,
   images,
-  informationCircle
+  informationCircle,
+  trashOutline
 } from 'ionicons/icons'
 import ActionModal from './ActionModal'
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera'
@@ -40,6 +41,10 @@ const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
 
   const handleReplaceClick = () => {
     openModal()
+  }
+
+  const handleRemoveImage = () => {
+    onImageChange(null)
   }
 
   const handlePickFile = () => {
@@ -93,17 +98,30 @@ const ImageUploadSection: React.FC<ImageUploadSectionProps> = ({
             <p className='font-default-font text-base font-regular mb-2 truncate w-48'>
               {image.name}
             </p>
-            <IonButton
-              type='button'
-              onClick={handleReplaceClick}
-              className='flex items-center gap-1 text-xs font-default-font hover:underline bg-umak'
-              style={{
-                '--background': 'var(--color-umak-blue)'
-              }}
-            >
-              <IonIcon icon={refreshOutline} className='text-base mr-2' />
-              Replace
-            </IonButton>
+            <div className='flex gap-2'>
+              <IonButton
+                type='button'
+                onClick={handleReplaceClick}
+                className='flex items-center gap-1 text-xs font-default-font hover:underline bg-umak'
+                style={{
+                  '--background': 'var(--color-umak-blue)'
+                }}
+              >
+                <IonIcon icon={refreshOutline} className='text-base mr-2' />
+                Replace
+              </IonButton>
+              <IonButton
+                type='button'
+                onClick={handleRemoveImage}
+                className='flex items-center gap-1 text-xs font-default-font hover:underline'
+                style={{
+                  '--background': 'var(--color-umak-red)'
+                }}
+              >
+                <IonIcon icon={trashOutline} className='text-base mr-2' />
+                Remove
+              </IonButton>
+            </div>
           </div>
         )}
 

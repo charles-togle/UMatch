@@ -57,10 +57,9 @@ export function usePostActionsStaffServices () {
       await insertAuditLog({
         user_id: currentUser?.user_id || 'unknown',
         action_type: 'Create Post',
-        target_entity_type: 'post',
-        target_entity_id: data,
         details: {
           action: 'Create Post',
+          post_id: data,
           poster_id: postData.p_poster_id,
           item_name: postData.p_item_name,
           item_type: postData.p_item_type,
@@ -103,10 +102,9 @@ export function usePostActionsStaffServices () {
       await insertAuditLog({
         user_id: currentUser?.user_id || 'unknown',
         action_type: 'Remove Post',
-        target_entity_type: 'post',
-        target_entity_id: postId,
         details: {
           action: 'Remove Post',
+          post_id: postId,
           post_status: 'deleted'
         }
       })
@@ -175,8 +173,6 @@ export function usePostActionsStaffServices () {
       await insertAuditLog({
         user_id: currentUser?.user_id || 'unknown',
         action_type: 'post_status_updated',
-        target_entity_type: 'post',
-        target_entity_id: postId,
         details: {
           message: `${
             currentUser?.user_name || 'Staff'

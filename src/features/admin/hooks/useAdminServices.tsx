@@ -57,12 +57,11 @@ export function useAdminServices () {
     await insertAuditLog({
       user_id: currentUser?.user_id || 'unknown',
       action_type: 'role_updated',
-      target_entity_type: 'user',
-      target_entity_id: userId,
       details: {
         message: `${
           currentUser?.user_name || 'Admin'
         } set the role for ${name} as User`,
+        target_user_id: userId,
         target_user: email,
         old_role: previousRole,
         new_role: 'User'
@@ -109,8 +108,6 @@ export function useAdminServices () {
       await insertAuditLog({
         user_id: currentUser?.user_id || 'unknown',
         action_type: 'role_updated',
-        target_entity_type: 'user',
-        target_entity_id: userId,
         details: {
           message: `${
             currentUser?.user_name || 'Admin'

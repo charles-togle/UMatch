@@ -32,7 +32,7 @@ export function usePostActions () {
         userId: user.user_id,
         data: {
           postId: result.post.post_id,
-          link: `/user/history/view/${result.post.post_id}`
+          link: `/user/post/history/view/${result.post.post_id}`
         }
       })
     }
@@ -98,6 +98,31 @@ export function usePostActions () {
     const result = await postServices.updatePostStatus(postId, 'accepted')
 
     if (result.success) {
+      // Check if metadata exists before generating
+      const { data: itemData } = await supabase
+        .from('item_table')
+        .select('item_metadata')
+        .eq('item_id', postData.item_id)
+        .single()
+
+      if (itemData && itemData.item_metadata === null) {
+        // Attempt immediate generation with rate limiting (10 req/min)
+        const metadataResult =
+          await postServices.generateMetadataForAcceptedPost(postId)
+
+        if (metadataResult.queued) {
+          console.log(
+            '[acceptPost] Metadata generation queued due to rate limit. Cron job will process it.'
+          )
+        } else if (metadataResult.success) {
+          console.log(
+            '[acceptPost] Metadata generation initiated successfully.'
+          )
+        }
+      } else {
+        console.log('[acceptPost] Metadata already exists, skipping generation')
+      }
+
       sendNotification({
         title: 'Post Accepted',
         message: `Your post about "${itemName}" has been accepted and is now live on the platform.`,
@@ -105,16 +130,13 @@ export function usePostActions () {
         userId: user.user_id,
         data: {
           postId: String(postId),
-          link: String(`/user/history/view/${postId}`)
+          link: String(`/user/post/history/view/${postId}`)
         }
       })
 
-      // Create audit log with correct structure
       await insertAuditLog({
         user_id: user.user_id,
         action_type: 'post_status_updated',
-        target_entity_type: 'post',
-        target_entity_id: postId,
         details: {
           message: `${user.user_name} set the status of ${itemName} as Accepted`,
           post_title: itemName,
@@ -160,7 +182,7 @@ export function usePostActions () {
         userId: user.user_id,
         data: {
           postId: String(postId),
-          link: String(`/user/history/view/${postId}`)
+          link: String(`/user/post/history/view/${postId}`)
         }
       })
 
@@ -168,10 +190,9 @@ export function usePostActions () {
       await insertAuditLog({
         user_id: user.user_id,
         action_type: 'post_status_updated',
-        target_entity_type: 'post',
-        target_entity_id: postId,
         details: {
           message: `${user.user_name} set the status of ${itemName} as Rejected`,
+          post_id: postId,
           post_title: itemName,
           old_status: oldStatus,
           new_status: 'rejected'

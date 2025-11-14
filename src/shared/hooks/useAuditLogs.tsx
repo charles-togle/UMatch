@@ -8,8 +8,6 @@ export interface AuditLog {
   email: string | null
   profile_picture_url: string | null
   action_type: string | null
-  target_entity_type: string | null
-  target_entity_id: string | null
   details: Record<string, any> | null
   timestamp: string | null // ISO timestamp with timezone
   timestamp_local: string | null
@@ -18,8 +16,6 @@ export interface AuditLog {
 export interface CreateAuditLogInput {
   user_id: string
   action_type: string
-  target_entity_type: 'post' | 'item' | 'user' | 'fraud_report'
-  target_entity_id: string
   details?: any
 }
 
@@ -38,8 +34,6 @@ export function useAuditLogs () {
       const { data, error } = await supabase.rpc(INSERT_AUDIT_LOG_RPC, {
         p_user_id: logData.user_id,
         p_action_type: logData.action_type,
-        p_target_entity_type: logData.target_entity_type,
-        p_target_entity_id: logData.target_entity_id,
         p_details: logData.details || null
       })
 

@@ -9,9 +9,51 @@ import {
 import { useNavigation } from '@/shared/hooks/useNavigation'
 import Header from '@/shared/components/Header'
 import PostList from '@/shared/components/PostList'
-import { listStaffPosts } from '@/features/posts/data/posts'
 import { refreshStaffPosts } from '@/features/posts/data/postsRefresh'
 import { usePostFetching } from '@/shared/hooks/usePostFetching'
+import { listPendingPosts } from '@/features/posts/data/posts'
+
+const PostSkeleton = () => (
+  <IonCard className='mb-3'>
+    <IonCardContent>
+      <div className='flex items-start gap-3'>
+        {/* Image skeleton */}
+        <div className='w-24 h-24 rounded-lg overflow-hidden flex-shrink-0'>
+          <IonSkeletonText animated style={{ width: '100%', height: '100%' }} />
+        </div>
+
+        {/* Content skeleton */}
+        <div className='flex-1'>
+          <IonSkeletonText
+            animated
+            style={{ width: '60%', height: '20px', marginBottom: '8px' }}
+          />
+          <IonSkeletonText
+            animated
+            style={{ width: '40%', height: '16px', marginBottom: '8px' }}
+          />
+          <IonSkeletonText
+            animated
+            style={{ width: '80%', height: '14px', marginBottom: '4px' }}
+          />
+          <IonSkeletonText animated style={{ width: '70%', height: '14px' }} />
+        </div>
+      </div>
+
+      {/* Action buttons skeleton */}
+      <div className='flex gap-2 mt-3'>
+        <IonSkeletonText
+          animated
+          style={{ width: '100px', height: '36px', borderRadius: '8px' }}
+        />
+        <IonSkeletonText
+          animated
+          style={{ width: '100px', height: '36px', borderRadius: '8px' }}
+        />
+      </div>
+    </IonCardContent>
+  </IonCard>
+)
 
 export default function Home () {
   const PAGE_SIZE = 5
@@ -33,7 +75,7 @@ export default function Home () {
     loadedIdsRef,
     loading
   } = usePostFetching({
-    fetchFunction: listStaffPosts,
+    fetchFunction: listPendingPosts,
     refreshPostFunction: refreshStaffPosts,
     cacheKeys: {
       loadedKey: 'LoadedPosts:staff:home',
@@ -62,54 +104,6 @@ export default function Home () {
   useEffect(() => {
     fetchPosts()
   }, [])
-  // Skeleton component
-  const PostSkeleton = () => (
-    <IonCard className='mb-3'>
-      <IonCardContent>
-        <div className='flex items-start gap-3'>
-          {/* Image skeleton */}
-          <div className='w-24 h-24 rounded-lg overflow-hidden flex-shrink-0'>
-            <IonSkeletonText
-              animated
-              style={{ width: '100%', height: '100%' }}
-            />
-          </div>
-
-          {/* Content skeleton */}
-          <div className='flex-1'>
-            <IonSkeletonText
-              animated
-              style={{ width: '60%', height: '20px', marginBottom: '8px' }}
-            />
-            <IonSkeletonText
-              animated
-              style={{ width: '40%', height: '16px', marginBottom: '8px' }}
-            />
-            <IonSkeletonText
-              animated
-              style={{ width: '80%', height: '14px', marginBottom: '4px' }}
-            />
-            <IonSkeletonText
-              animated
-              style={{ width: '70%', height: '14px' }}
-            />
-          </div>
-        </div>
-
-        {/* Action buttons skeleton */}
-        <div className='flex gap-2 mt-3'>
-          <IonSkeletonText
-            animated
-            style={{ width: '100px', height: '36px', borderRadius: '8px' }}
-          />
-          <IonSkeletonText
-            animated
-            style={{ width: '100px', height: '36px', borderRadius: '8px' }}
-          />
-        </div>
-      </IonCardContent>
-    </IonCard>
-  )
 
   // infinite scroll handler
   const handleLoadMore = async (event: CustomEvent<void>) => {

@@ -50,7 +50,7 @@ export default function ExpandedPost () {
 
   const handleReport = useCallback(() => {
     if (!postId) return
-    navigate(`/user/post/report/${postId}`)
+    navigate(`/user/home/report/${postId}`)
   }, [navigate, postId])
 
   if (!loading && post === null) {

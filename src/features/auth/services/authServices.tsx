@@ -1,10 +1,11 @@
 import { googleLogout } from '@react-oauth/google'
 import { SocialLogin } from '@capgo/capacitor-social-login'
 import { supabase } from '@/shared/lib/supabase'
-import type { User  } from '@/features/auth/contexts/UserContext'
+import type { User } from '@/features/auth/contexts/UserContext'
 import { saveCachedImage } from '@/shared/utils/fileUtils'
 import { makeThumb } from '@/shared/utils/imageUtils'
 import { registerForPushNotifications } from '@/features/auth/services/registerForPushNotifications'
+import { useUser } from '@/features/auth/contexts/UserContext'
 
 export interface GoogleProfile {
   googleIdToken: string
@@ -19,10 +20,28 @@ interface LoginResponse {
   error: string | null
 }
 
+async function withRetries<T> (
+  fn: () => Promise<T>,
+  retries = 3,
+  delay = 500
+): Promise<T> {
+  let lastError: any
+  for (let i = 0; i < retries; i++) {
+    try {
+      return await fn()
+    } catch (err) {
+      lastError = err
+      if (i < retries - 1) await new Promise(res => setTimeout(res, delay))
+    }
+  }
+  throw lastError
+}
+
 export const authServices = {
   /**
    * Sign in an existing user with email and password
    */
+
   GetOrRegisterAccount: async (
     profile: GoogleProfile
   ): Promise<LoginResponse> => {
@@ -63,7 +82,9 @@ export const authServices = {
       if (profile?.profile_picture_url) {
         try {
           const userId = supabaseUser.id
-          const res = await fetch(profile.profile_picture_url)
+          // Retry fetch up to 3 times
+          const url = String(profile.profile_picture_url)
+          const res = await withRetries(() => fetch(url), 3, 500)
           const srcBlob = await res.blob()
 
           const basePath = `users/${userId}/${Date.now()}`
@@ -132,6 +153,8 @@ export const authServices = {
     try {
       // 1. Sign out from Supabase
       const { error: supabaseError } = await supabase.auth.signOut()
+      const { clearUser } = useUser()
+      clearUser()
 
       if (supabaseError) {
         console.error('[authServices] Logout supabase error:', supabaseError)

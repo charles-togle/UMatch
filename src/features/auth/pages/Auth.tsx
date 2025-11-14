@@ -82,6 +82,15 @@ const Auth: React.FC = () => {
         if ('profile' in result && 'idToken' in result) {
           const { name, email, imageUrl } = result.profile
 
+          // Only allow org emails (e.g., must contain '@umak.edu.ph')
+          if (!email || !/@umak\.edu\.ph$/i.test(email)) {
+            setToastMessage(
+              'Access Denied. Please use your organization email to sign in.'
+            )
+            setShowToast(true)
+            setSocialLoginLoading(false)
+            return
+          }
           const { user, error } = await getOrRegisterAccount({
             googleIdToken: result.idToken || '',
             email: email || '',
@@ -89,8 +98,12 @@ const Auth: React.FC = () => {
             profile_picture_url: imageUrl || ''
           })
           if (error || !user) {
-            console.log(error)
-            throw new Error(error || 'Authentication failed')
+            setToastMessage(
+              'Login Failed. Authentication with Google was unsuccessful.'
+            )
+            setShowToast(true)
+            setSocialLoginLoading(false)
+            return
           }
           await refreshUser(user?.user_id || '')
           const redirect = sessionStorage.getItem('redirect_after_login')
@@ -131,20 +144,35 @@ const Auth: React.FC = () => {
       setGoogleLoading(true)
       const token = credentialResponse.credential
       const googleResponse = jwtDecode<GoogleJwtPayload>(token)
+      // Only allow org emails (e.g., must contain '@umak.edu.ph')
+      if (
+        !googleResponse.email ||
+        !/@umak\.edu\.ph$/i.test(googleResponse.email)
+      ) {
+        setToastMessage(
+          'Access Denied. Please use your organization email to sign in.'
+        )
+        setShowToast(true)
+        setGoogleLoading(false)
+        return
+      }
       const { user, error } = await getOrRegisterAccount({
         googleIdToken: token,
         email: googleResponse.email,
         user_name: toSentenceCaseFull(googleResponse.name),
         profile_picture_url: googleResponse.picture
       })
+      if (error || !user) {
+        setToastMessage(
+          'Login Failed. Authentication with Google was unsuccessful.'
+        )
+        setShowToast(true)
+        setGoogleLoading(false)
+        return
+      }
       await refreshUser(user?.user_id || '')
       navigate('/user/home', 'auth')
       setGoogleLoading(false)
-
-      if (error || !user) {
-        console.log(error)
-        throw new Error(error || 'Authentication failed')
-      }
     } catch (error) {
       console.error('Google sign-in error:', error)
       setToastMessage(
@@ -194,7 +222,7 @@ const Auth: React.FC = () => {
             {/* TEXT CONTAINER */}
             <div className='text-center'>
               <p className='font-default-default text-5xl font-bold tracking-tight text-umak-blue'>
-                UMatch
+                UMak LINK
               </p>
               <IonText className='font-default-default text-lg leading-snug font-default-font text-slate-900'>
                 <p className='mt-2'>

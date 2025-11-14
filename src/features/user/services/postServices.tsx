@@ -2,6 +2,7 @@ import { supabase } from '@/shared/lib/supabase'
 import { computeBlockHash64 } from '@/shared/utils/hashUtils'
 import { makeDisplay } from '@/shared/utils/imageUtils'
 import { uploadAndGetPublicUrl } from '@/shared/utils/supabaseStorageUtils'
+import { generateItemMetadata } from '@/shared/lib/geminiApi'
 
 // Post type enum
 export type PostType = 'missing' | 'found'
@@ -70,6 +71,131 @@ interface PostResponse {
 //   posts: Post[] | null
 //   error: string | null
 // }
+
+// ============================================
+// Rate Limiting for Metadata Generation
+// ============================================
+const MAX_METADATA_REQUESTS_PER_MINUTE = Number(
+  import.meta.env.VITE_MAX_METADATA_REQUESTS_PER_MINUTE
+) // Gemini free tier limit
+const metadataRequestQueue: number[] = [] // Timestamps of recent requests
+
+/**
+ * Check if we can make a metadata generation request without hitting rate limit
+ * Removes timestamps older than 1 minute from the queue
+ */
+function canMakeMetadataRequest (): boolean {
+  const now = Date.now()
+  const oneMinuteAgo = now - 60000
+
+  // Remove old timestamps
+  while (
+    metadataRequestQueue.length > 0 &&
+    metadataRequestQueue[0] < oneMinuteAgo
+  ) {
+    metadataRequestQueue.shift()
+  }
+
+  return metadataRequestQueue.length < MAX_METADATA_REQUESTS_PER_MINUTE
+}
+
+/**
+ * Record a metadata generation request
+ */
+function recordMetadataRequest (): void {
+  metadataRequestQueue.push(Date.now())
+}
+
+/**
+ * Get time until next request slot is available (in seconds)
+ */
+function getTimeUntilNextSlot (): number {
+  if (canMakeMetadataRequest()) return 0
+
+  const oldestRequest = metadataRequestQueue[0]
+  const oneMinuteFromOldest = oldestRequest + 60000
+  const timeUntilSlot = Math.ceil((oneMinuteFromOldest - Date.now()) / 1000)
+
+  return Math.max(0, timeUntilSlot)
+}
+
+/**
+ * Generate item metadata with retry logic (exponential backoff)
+ * Used when post is accepted by admin
+ */
+async function generateItemMetadataWithRetry (
+  itemId: string,
+  itemName: string,
+  itemDescription: string,
+  imageUrl: string,
+  maxRetries = 5
+): Promise<{ success: boolean; error?: string }> {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(
+        `[Metadata] Attempt ${attempt}/${maxRetries} for item:`,
+        itemId
+      )
+
+      // Fetch image from Supabase URL
+      const response = await fetch(imageUrl)
+      if (!response.ok) {
+        throw new Error(`Failed to fetch image: ${response.statusText}`)
+      }
+      const blob = await response.blob()
+
+      // Convert blob to base64
+      const reader = new FileReader()
+      const base64Promise = new Promise<string>((resolve, reject) => {
+        reader.onloadend = () => resolve(reader.result as string)
+        reader.onerror = reject
+        reader.readAsDataURL(blob)
+      })
+      const base64Image = await base64Promise
+
+      // Call Gemini AI to generate metadata
+      const metadataResult = await generateItemMetadata({
+        itemName,
+        itemDescription,
+        image: base64Image
+      })
+
+      if (metadataResult.success && metadataResult.metadata) {
+        // Update item with generated metadata
+        const { error } = await supabase
+          .from('item_table')
+          .update({ item_metadata: metadataResult.metadata })
+          .eq('item_id', itemId)
+
+        if (error) {
+          console.error('[Metadata] Failed to update item:', error)
+          throw error
+        }
+
+        console.log(
+          '[Metadata] ✅ Successfully added metadata for item:',
+          itemId
+        )
+        return { success: true }
+      } else {
+        throw new Error(metadataResult.error || 'Metadata generation failed')
+      }
+    } catch (error) {
+      console.error(`[Metadata] Attempt ${attempt} failed:`, error)
+
+      if (attempt < maxRetries) {
+        // Exponential backoff: 2s, 4s, 8s, 16s, 32s
+        const delay = Math.pow(2, attempt) * 1000
+        console.log(`[Metadata] Waiting ${delay}ms before retry...`)
+        await new Promise(resolve => setTimeout(resolve, delay))
+      }
+    }
+  }
+
+  const errorMsg = `Failed to generate metadata after ${maxRetries} attempts`
+  console.error('[Metadata] ❌', errorMsg)
+  return { success: false, error: errorMsg }
+}
 
 export const postServices = {
   /**
@@ -152,6 +278,7 @@ export const postServices = {
       }
 
       console.log('[postServices] Post created successfully:', data)
+
       return { post: data as Post, error: null }
     } catch (error) {
       console.error('[postServices] Exception creating post:', error)
@@ -206,6 +333,107 @@ export const postServices = {
     } catch (err) {
       console.error('[postServices] Exception reporting post:', err)
       return { success: false, error: 'Failed to report post' }
+    }
+  },
+
+  /**
+   * Generate metadata for an accepted post (called from acceptPost)
+   * This is a non-blocking operation that happens after post acceptance
+   * Rate limited to 10 requests per minute (Gemini free tier)
+   * @param postId - The ID of the post
+   * @returns Success boolean and optional error
+   */
+  generateMetadataForAcceptedPost: async (
+    postId: string
+  ): Promise<{ success: boolean; error: string | null; queued?: boolean }> => {
+    try {
+      // Fetch post and item details
+      const { data: postData, error: postError } = await supabase
+        .from('post_table')
+        .select('item_id')
+        .eq('post_id', postId)
+        .single()
+
+      if (postError || !postData) {
+        console.error('[Metadata] Failed to fetch post:', postError)
+        return { success: false, error: 'Post not found' }
+      }
+
+      const { data: itemData, error: itemError } = await supabase
+        .from('item_table')
+        .select('item_id, item_name, item_description, item_metadata, image_id')
+        .eq('item_id', postData.item_id)
+        .single()
+
+      if (itemError || !itemData) {
+        console.error('[Metadata] Failed to fetch item:', itemError)
+        return { success: false, error: 'Item not found' }
+      }
+
+      const { data: imageUrl, error: imageError } = await supabase
+        .from('item_image_table')
+        .select('image_link')
+        .eq('item_image_id', itemData.image_id)
+        .single()
+
+      if (imageError || !imageUrl) {
+        console.error('[Metadata] Failed to fetch item image link:', imageError)
+        return { success: false, error: 'Item image not found' }
+      }
+
+      // Check if metadata already exists
+      if (itemData.item_metadata) {
+        console.log(
+          '[Metadata] Metadata already exists for item:',
+          itemData.item_id
+        )
+        return { success: true, error: null }
+      }
+
+      // Check rate limit before making request
+      if (!canMakeMetadataRequest()) {
+        const waitTime = getTimeUntilNextSlot()
+        console.warn(
+          `[Metadata] Rate limit reached. Item ${itemData.item_id} queued. Will be picked up by cron job or retry in ${waitTime}s`
+        )
+        return {
+          success: true,
+          error: null,
+          queued: true
+        }
+      }
+
+      // Record this request
+      recordMetadataRequest()
+
+      // Generate metadata in background (non-blocking)
+      generateItemMetadataWithRetry(
+        itemData.item_id,
+        itemData.item_name,
+        itemData.item_description,
+        imageUrl.image_link
+      ).then(result => {
+        if (result.success) {
+          console.log(
+            '[Metadata] ✅ Background generation completed for:',
+            itemData.item_id
+          )
+        } else {
+          console.error(
+            '[Metadata] ❌ Background generation failed:',
+            result.error,
+            '(will be retried by cron job)'
+          )
+        }
+      })
+
+      return { success: true, error: null }
+    } catch (err) {
+      console.error(
+        '[Metadata] Exception in generateMetadataForAcceptedPost:',
+        err
+      )
+      return { success: false, error: 'Failed to initiate metadata generation' }
     }
   },
 

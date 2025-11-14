@@ -20,11 +20,11 @@ const ItemStatusSelector: React.FC<ItemStatusSelectorProps> = ({
           label='Item Status'
           value={value}
           options={[
-            { label: 'Found (Surrendered)', value: 'found' },
-            { label: 'Missing (Looking for)', value: 'missing' }
+            { label: 'Found', value: 'found' },
+            { label: 'Missing', value: 'missing' }
           ]}
           onChange={val => onChange(val as 'missing' | 'found')}
-          direction='horizontal'
+          direction='vertical'
           isRequired={isRequired}
         />
       </div>

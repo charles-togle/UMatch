@@ -231,6 +231,65 @@ export async function listPublicPosts (
  * List posts for staff view with custom filtering conditions
  * Similar to listPublicPosts but with different eq conditions for staff management
  */
+export async function listPendingPosts (
+  excludeIds: string[] = [],
+  limit: number = 5
+): Promise<PublicPost[]> {
+  let query = supabase
+    .from('post_public_view')
+    .select(
+      `
+      post_id,
+      poster_name,
+      poster_id,
+      item_name,
+      profile_picture_url,
+      item_image_url,
+      item_description,
+      category,
+      last_seen_at,
+      item_status,
+      last_seen_location,
+      is_anonymous,
+      submission_date,
+      item_type,
+      post_status
+    `
+    )
+    .order('submission_date', { ascending: false })
+    .eq('item_type', 'found')
+    .eq('post_status', 'pending')
+
+  if (excludeIds && excludeIds.length > 0) {
+    // Use single-quoted string literals for UUIDs in the IN list
+    const inList = `(${excludeIds.map(id => `${id}`).join(',')})`
+    query = query.not('post_id', 'in', inList)
+  }
+
+  const { data, error } = await query.limit(limit)
+
+  if (error) throw error
+
+  return (data ?? []).map((r: any) => ({
+    user_id: r.poster_id,
+    username: r.poster_name,
+    item_name: r.item_name,
+    profilepicture_url: r.profile_picture_url,
+    item_image_url: r.item_image_url,
+    item_description: r.item_description,
+    item_status: r.item_status,
+    accepted_on_date: r.accepted_on_date,
+    category: r.category,
+    last_seen_at: fmtManila(r.last_seen_at),
+    last_seen_location: r.last_seen_location,
+    is_anonymous: r.is_anonymous,
+    post_id: r.post_id,
+    submission_date: r.submission_date,
+    item_type: r.item_type,
+    post_status: r.post_status
+  }))
+}
+
 export async function listStaffPosts (
   excludeIds: string[] = [],
   limit: number = 5
@@ -286,4 +345,76 @@ export async function listStaffPosts (
     item_type: r.item_type,
     post_status: r.post_status
   }))
+}
+
+export function listPostsByIds (getPostIds: () => string[]) {
+  return async function listPostsByIds (
+    excludeIds: string[] = [],
+    limit: number = 5
+  ): Promise<PublicPost[]> {
+    const postIds = getPostIds()
+    if (!postIds || postIds.length === 0) return []
+
+    // Filter out excluded ids
+    const remaining = postIds.filter(id => !excludeIds.includes(id))
+    if (remaining.length === 0) return []
+
+    const idsToFetch = remaining.slice(0, limit)
+
+    const { data, error } = await supabase
+      .from('post_public_view')
+      .select(
+        `
+      post_id,
+      poster_name,
+      poster_id,
+      item_name,
+      profile_picture_url,
+      item_image_url,
+      item_description,
+      category,
+      last_seen_at,
+      item_status,
+      last_seen_location,
+      is_anonymous,
+      submission_date,
+      item_type,
+      post_status,
+      accepted_on_date
+    `
+      )
+      .in('post_id', idsToFetch)
+
+    if (error) {
+      console.error('Error fetching search result posts:', error)
+      return []
+    }
+
+    // Order results to match idsToFetch order
+    const mapById: Record<string, any> = {}
+    ;(data ?? []).forEach((r: any) => (mapById[r.post_id] = r))
+
+    const ordered = idsToFetch
+      .map(id => mapById[id])
+      .filter(Boolean)
+      .map((r: any) => ({
+        user_id: r.poster_id,
+        username: r.poster_name,
+        item_name: r.item_name,
+        profilepicture_url: r.profile_picture_url,
+        item_image_url: r.item_image_url,
+        item_description: r.item_description,
+        accepted_on_date: r.accepted_on_date,
+        item_status: r.item_status,
+        category: r.category,
+        last_seen_at: fmtManila(r.last_seen_at),
+        last_seen_location: r.last_seen_location,
+        is_anonymous: r.is_anonymous,
+        post_id: r.post_id,
+        submission_date: r.submission_date,
+        item_type: r.item_type,
+        post_status: r.post_status
+      }))
+    return ordered
+  }
 }

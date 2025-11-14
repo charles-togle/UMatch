@@ -7,10 +7,14 @@ import type { PublicPost } from '@/features/posts/types/post'
 import Header from '@/shared/components/Header'
 import { IonCard, IonCardContent, IonContent } from '@ionic/react'
 
+import { useNavigation } from '@/shared/hooks/useNavigation'
+
 export default function ExpandedHistoryPost () {
   const { postId } = useParams<{ postId: string }>()
   const [post, setPost] = useState<PublicPost | null>(null)
   const [loading, setLoading] = useState(true)
+  const [showActions, setShowActions] = useState(false)
+  const { navigate } = useNavigation()
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -82,8 +86,52 @@ export default function ExpandedHistoryPost () {
           user_profile_picture_url={post?.profilepicture_url ?? ''}
           username={post?.username ?? ''}
           className={'min-h-[400px]!'}
+          onKebabButtonlick={() => setShowActions(true)}
+          actionSheetOpen={showActions}
+          onActionSheetDismiss={() => setShowActions(false)}
+          actionSheetButtons={(() => {
+            const buttons = []
+            // Delete: only for item_status 'unclaimed' or 'lost'
+            if (
+              post &&
+              (post.item_status === 'unclaimed' || post.item_status === 'lost')
+            ) {
+              buttons.push({
+                text: 'Delete',
+                role: 'destructive',
+                handler: () => {
+                  /* TODO: implement delete logic */
+                },
+                cssClass: 'delete-btn'
+              })
+            }
+            // Edit: only for post_status 'pending'
+            if (post && post.post_status === 'pending') {
+              buttons.push({
+                text: 'Edit',
+                handler: () => {
+                  if (postId) navigate(`/user/post/edit/${postId}`)
+                },
+                cssClass: 'edit-btn'
+              })
+            }
+            // View details: always
+            buttons.push({
+              text: 'View details',
+              handler: () => {
+                if (postId) navigate(`/user/post/view/${postId}`)
+              }
+            })
+            buttons.push({
+              text: 'Cancel',
+              role: 'cancel'
+            })
+            return buttons
+          })()}
         />
       )}
+
+      {/* Action Sheet now handled by Post component */}
     </IonContent>
   )
 }

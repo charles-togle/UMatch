@@ -49,7 +49,7 @@ const LocationDetailsSelector: React.FC<LocationDetailsSelectorProps> = ({
   // ------------------ UI ------------------
   return (
     <div className={`mb-4 ${className}`}>
-      <FormSectionHeader header='Details' isRequired={isRequired} />
+      <FormSectionHeader header='Location' isRequired={isRequired} />
       {/* Building / Area */}
       <IonSelect
         placeholder='Building/Area'

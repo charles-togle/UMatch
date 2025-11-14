@@ -137,9 +137,6 @@ export default function Dashboard () {
           {/* System Stats Chart Card */}
           <IonCard className='mx-4 mb-4'>
             <IonCardContent className='py-6'>
-              <h3 className='text-lg font-semibold mb-4 text-slate-800'>
-                System Statistics
-              </h3>
               <SystemStatsChart />
             </IonCardContent>
           </IonCard>
