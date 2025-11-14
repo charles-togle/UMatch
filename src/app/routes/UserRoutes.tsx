@@ -26,7 +26,7 @@ export default function UserRoutes () {
       <IonRouterOutlet>
         <Route path='/user/notifications' render={() => <Notifications />} />
         <Route path='/user/post/view/:postId' render={() => <ExpandedPost />} />
-        <Route path='/user/home/report/:postId' render={() => <ReportPost />} />
+        <Route path='/user/post/report/:postId' render={() => <ReportPost />} />
         <Route
           path='/user/home'
           render={() => (

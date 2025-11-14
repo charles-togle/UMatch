@@ -4,7 +4,9 @@ import {
   IonItem,
   IonLabel,
   IonList,
-  IonIcon
+  IonIcon,
+  IonPopover,
+  IonButton
 } from '@ionic/react'
 import { useNavigation } from '@/shared/hooks/useNavigation'
 import { useAuth } from '@/features/auth/hooks/useAuth'
@@ -12,12 +14,14 @@ import { logOut } from 'ionicons/icons'
 import Header from '@/shared/components/Header'
 import SettingsList from '@/shared/components/SettingsList'
 
-import { useRef, useEffect } from 'react'
+import { useRef, useEffect, useState } from 'react'
 
 export default function Settings () {
   const { navigate } = useNavigation()
   const { logout } = useAuth()
   const isMounted = useRef(true)
+  const [showLogoutPopover, setShowLogoutPopover] = useState(false)
+  const [popoverEvent, setPopoverEvent] = useState<any>(undefined)
 
   useEffect(() => {
     isMounted.current = true
@@ -26,9 +30,15 @@ export default function Settings () {
     }
   }, [])
 
-  const handleLogout = async () => {
+  const handleLogoutClick = (e: React.MouseEvent) => {
+    setPopoverEvent(e.nativeEvent)
+    setShowLogoutPopover(true)
+  }
+
+  const handleConfirmLogout = async () => {
+    setShowLogoutPopover(false)
     await logout()
-    navigate('/auth')
+    if (isMounted.current) navigate('/auth')
   }
 
   return (
@@ -43,7 +53,7 @@ export default function Settings () {
                 button
                 style={{ '--background': 'var(--color-umak-red)' }}
                 className='text-white font-default-font rounded-lg'
-                onClick={handleLogout}
+                onClick={handleLogoutClick}
               >
                 <IonIcon icon={logOut} className='mr-3 text-white' />
                 <IonLabel className='text-red-600'>Log out</IonLabel>
@@ -52,6 +62,24 @@ export default function Settings () {
           </IonCardContent>
         </IonCard>
       </div>
+      {/* Logout confirmation popover */}
+      <IonPopover
+        isOpen={showLogoutPopover}
+        event={popoverEvent}
+        onDidDismiss={() => setShowLogoutPopover(false)}
+      >
+        <div className='p-4 max-w-xs'>
+          <div className='mb-3 text-sm'>Are you sure you want to logout?</div>
+          <div className='flex justify-end gap-2'>
+            <IonButton onClick={() => setShowLogoutPopover(false)} fill='clear'>
+              Cancel
+            </IonButton>
+            <IonButton color='danger' onClick={handleConfirmLogout}>
+              Logout
+            </IonButton>
+          </div>
+        </div>
+      </IonPopover>
     </>
   )
 }

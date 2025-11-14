@@ -1,7 +1,6 @@
 import { supabase } from '@/shared/lib/supabase'
 import { generateImageSearchQuery } from '@/features/user/utils/imageSearchUtil'
-import { useSearchStore } from '@/shared/stores/useSearchStore'
-
+import { useSearchContext } from '@/shared/contexts/SearchContext'
 
 interface LocationDetails {
   level1: string
@@ -35,6 +34,10 @@ interface SearchResponse {
 }
 
 export default function useSearch () {
+  // Obtain the search context at the top-level of this custom hook
+  // (calling context hooks inside nested functions causes invalid hook calls)
+  const searchCtx = useSearchContext()
+
   /**
    * Convert date/time/meridian to ISO Date string
    */
@@ -73,7 +76,8 @@ export default function useSearch () {
       onProgress
     } = params
 
-    useSearchStore.getState().clearSearchResults()
+    // Use the context methods from the top-level context reference
+    searchCtx.clearSearchResults()
 
     // Validation: return null if search value is not provided
     if (!searchValue || searchValue.trim() === '') {
@@ -165,15 +169,14 @@ export default function useSearch () {
             .map(String)
         : []
 
-      // Save to global store
-      useSearchStore.getState().setSearchResults(postIds)
+      searchCtx.setSearchResults(postIds)
     } catch (dbErr) {
       console.error(
         'Error running DB search or saving results from hook:',
         dbErr
       )
       // Clear any previous results to avoid stale data
-      useSearchStore.getState().setSearchResults([])
+      searchCtx.setSearchResults([])
     }
 
     console.log('Advanced Search Result:', searchResult)

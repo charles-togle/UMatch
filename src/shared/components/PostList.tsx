@@ -16,6 +16,7 @@ import { useCallback } from 'react'
 import { type PostCacheKeys } from '@/features/posts/data/postsCache'
 import { useNavigation } from '@/shared/hooks/useNavigation'
 import { sharePost } from '@/shared/utils/shareUtils'
+import { useUser } from '@/features/auth/contexts/UserContext'
 
 export default function PostList ({
   posts,
@@ -56,6 +57,23 @@ export default function PostList ({
   const [toastColor, setToastColor] = useState<'success' | 'danger'>('success')
 
   const { navigate } = useNavigation()
+  const { getUser } = useUser()
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+
+  useEffect(() => {
+    let mounted = true
+    ;(async () => {
+      try {
+        const u = await getUser()
+        if (mounted && u) setCurrentUserId(u.user_id)
+      } catch (err) {
+        console.warn('PostList: failed to get current user', err)
+      }
+    })()
+    return () => {
+      mounted = false
+    }
+  }, [getUser])
   const handleActionSheetClick = (postId: string) => {
     console.log('Handling action sheet click for post ID:', postId)
     setActivePostId(postId)
@@ -226,14 +244,24 @@ export default function PostList ({
               }
             }
           })
-          buttons.push({
-            text: 'Report',
-            role: 'destructive',
-            handler: () => {
-              if (activePostId) navigate(`/user/home/report/${activePostId}`)
-            },
-            cssClass: 'report-btn'
-          })
+          // Only show "Report" if the post is not owned by the current user
+          if (
+            !(
+              post &&
+              post.user_id &&
+              currentUserId &&
+              post.user_id === currentUserId
+            )
+          ) {
+            buttons.push({
+              text: 'Report',
+              role: 'destructive',
+              handler: () => {
+                if (activePostId) navigate(`/user/post/report/${activePostId}`)
+              },
+              cssClass: 'report-btn'
+            })
+          }
           buttons.push({
             text: 'Cancel',
             role: 'cancel'

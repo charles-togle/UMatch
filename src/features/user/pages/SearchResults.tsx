@@ -9,7 +9,7 @@ import {
 import { IonSearchbar } from '@ionic/react'
 import { Keyboard } from '@capacitor/keyboard'
 import { usePostFetching } from '@/shared/hooks/usePostFetching'
-import { useSearchStore } from '@/shared/stores/useSearchStore'
+import { useSearchContext } from '@/shared/contexts/SearchContext'
 import { useNavigation } from '@/shared/hooks/useNavigation'
 import { refreshByIds } from '@/features/posts/data/postsRefresh'
 import { listPostsByIds } from '@/features/posts/data/posts'
@@ -41,7 +41,7 @@ const CatalogHeader = memo(
 )
 
 export default function SearchResults () {
-  const postIds = useSearchStore(state => state.searchResultPostIds)
+  const { searchResultPostIds: postIds, setSearchResults } = useSearchContext()
   const { navigate } = useNavigation()
   const [loading, setLoading] = useState(true)
   const listFn = async (
@@ -58,7 +58,7 @@ export default function SearchResults () {
     )
 
     if (cleaned.length !== postIds.length) {
-      useSearchStore.getState().setSearchResults(cleaned)
+      setSearchResults(cleaned)
     }
 
     return posts
