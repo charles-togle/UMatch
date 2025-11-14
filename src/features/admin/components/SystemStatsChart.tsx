@@ -3,6 +3,7 @@ import ApexCharts from 'apexcharts'
 import { supabase } from '@/shared/lib/supabase'
 import { IonIcon } from '@ionic/react'
 import { downloadOutline } from 'ionicons/icons'
+import { IonButton } from '@ionic/react'
 
 interface ChartData {
   labels: string[]
@@ -193,28 +194,89 @@ export default function SystemStatsChart () {
   const handleDownloadCsv = () => {
     if (!chartData) return
 
-    const header = 'Week Start,Missing,Found,Claimed'
-    const rows = chartData.labels.map((label, i) => {
-      const missing = chartData.series[0][i] ?? 0
-      const found = chartData.series[1][i] ?? 0
-      const claimed = chartData.series[2][i] ?? 0
-      return `${label},${missing},${found},${claimed}`
-    })
+    // Compute a conservative start/end range covering the displayed weeks
+    const end = new Date()
+    const weeksShown = chartData.labels.length
+    const start = new Date()
+    start.setDate(end.getDate() - weeksShown * 7)
+    start.setHours(0, 0, 0, 0)
+    ;(async () => {
+      try {
+        const { data: rows, error } = await supabase
+          .from('post_public_view')
+          .select(
+            'poster_name,item_name,item_description,last_seen_location,accepted_by_staff_name,submission_date,claimed_by_name,claimed_by_email,accepted_on_date'
+          )
+          .gte('submission_date', start.toISOString())
+          .lte('submission_date', end.toISOString())
 
-    const csv = [header, ...rows].join('\n')
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
+        if (error) {
+          console.error('Failed to fetch detailed CSV rows', error)
+          return
+        }
 
-    const link = document.createElement('a')
-    link.href = url
-    link.setAttribute(
-      'download',
-      `system-stats-${new Date().toISOString().slice(0, 10)}.csv`
-    )
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    URL.revokeObjectURL(url)
+        const header = [
+          'poster_name',
+          'item_name',
+          'item_description',
+          'last_seen_location',
+          'accepted_by_staff_name',
+          'submission_date',
+          'claimed_by_name',
+          'claimed_by_email',
+          'accepted_on_date'
+        ].join(',')
+
+        const csvRows: string[] = []
+        if (Array.isArray(rows)) {
+          for (const r of rows) {
+            const poster_name = (r as any).poster_name ?? ''
+            const item_name = (r as any).item_name ?? ''
+            const item_description = (r as any).item_description ?? ''
+            const last_seen_location = (r as any).last_seen_location ?? ''
+            const accepted_by_staff_name =
+              (r as any).accepted_by_staff_name ?? ''
+            const submission_date = (r as any).submission_date ?? ''
+            const claimed_by_name = (r as any).claimed_by_name ?? ''
+            const claimed_by_email = (r as any).claimed_by_email ?? ''
+            const accepted_on_date = (r as any).accepted_on_date ?? ''
+
+            const escaped = [
+              poster_name,
+              item_name,
+              item_description,
+              last_seen_location,
+              accepted_by_staff_name,
+              submission_date,
+              claimed_by_name,
+              claimed_by_email,
+              accepted_on_date
+            ]
+              .map((c: any) => `"${String(c).replace(/"/g, '""')}"`)
+              .join(',')
+
+            csvRows.push(escaped)
+          }
+        }
+
+        const csv = [header, ...csvRows].join('\n')
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+        const url = URL.createObjectURL(blob)
+
+        const link = document.createElement('a')
+        link.href = url
+        link.setAttribute(
+          'download',
+          `system-stats-detailed-${new Date().toISOString().slice(0, 10)}.csv`
+        )
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        URL.revokeObjectURL(url)
+      } catch (e) {
+        console.error('Error generating detailed CSV', e)
+      }
+    })()
   }
 
   // Render chart when data changes
@@ -408,14 +470,15 @@ export default function SystemStatsChart () {
       </div>
 
       {/* CSV download button */}
-      <div className='mt-3 flex justify-end'>
-        <button
+      <div className='flex justify-end mt-4'>
+        <IonButton
           onClick={handleDownloadCsv}
-          className='rounded-full border border-[#1f2a66]/20 p-1.5 text-xl text-[#1f2a66] hover:bg-[#1f2a66]/5 transition-colors'
+          className='w-20 flex text-base text-[#1f2a66] hover:bg-[#1f2a66]/5 transition-colors'
           aria-label='Download CSV'
+          fill='clear'
         >
-          <IonIcon icon={downloadOutline} />
-        </button>
+          <IonIcon icon={downloadOutline} slot='icon-only' />
+        </IonButton>
       </div>
     </div>
   )

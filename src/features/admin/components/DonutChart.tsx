@@ -1,8 +1,9 @@
 import ApexCharts from 'apexcharts'
 import { useEffect, useRef, useState } from 'react'
 import { supabase } from '@/shared/lib/supabase'
+import fetchPaginatedRows from '@/shared/lib/supabasePaginatedFetch'
 import { downloadOutline } from 'ionicons/icons'
-import { IonIcon } from '@ionic/react'
+import { IonIcon, IonButton } from '@ionic/react'
 
 interface DonutChartProps {
   data: {
@@ -48,8 +49,18 @@ export default function DonutChart ({ data }: DonutChartProps) {
       colors: ['#16a34a', '#ef4444', '#f59e0b'],
       dataLabels: {
         enabled: true,
-        formatter: function (val: number) {
-          return `${Math.round(val)}%`
+        formatter: function (opts?: any) {
+          const series = opts?.w?.globals?.series ?? []
+          const total = series.reduce(
+            (s: number, v: any) => s + Number(v || 0),
+            0
+          )
+          const idx = opts?.seriesIndex ?? 0
+          const pct =
+            total > 0
+              ? ((Number(series[idx] || 0) / total) * 100).toFixed(1)
+              : '0.0'
+          return `${pct}%`
         },
         style: {
           fontSize: '11px',
@@ -197,47 +208,108 @@ export default function DonutChart ({ data }: DonutChartProps) {
 
   // CSV download
   const handleDownload = () => {
-    const current = fetched ?? data
-    const total = current.claimed + current.unclaimed + current.toReview
-    const rows = [
-      ['Category', 'Count', 'Percent'],
-      [
-        'Claimed',
-        String(current.claimed),
-        `${((current.claimed / Math.max(total, 1)) * 100).toFixed(1)}%`
-      ],
-      [
-        'Unclaimed',
-        String(current.unclaimed),
-        `${((current.unclaimed / Math.max(total, 1)) * 100).toFixed(1)}%`
-      ],
-      [
-        'To Review',
-        String(current.toReview),
-        `${((current.toReview / Math.max(total, 1)) * 100).toFixed(1)}%`
-      ]
-    ]
-    if (current.reported !== undefined)
-      rows.push([
-        'Reported',
-        String(current.reported),
-        `${((current.reported / Math.max(total, 1)) * 100).toFixed(1)}%`
-      ])
+    // Determine start/end for the selected range
+    const end = new Date()
+    let start = new Date()
+    switch (range) {
+      case 'this_week': {
+        const d = new Date()
+        start = new Date(d)
+        start.setDate(d.getDate() - d.getDay())
+        start.setHours(0, 0, 0, 0)
+        break
+      }
+      case 'this_month': {
+        start = new Date(end.getFullYear(), end.getMonth(), 1)
+        start.setHours(0, 0, 0, 0)
+        break
+      }
+      case 'last_5_months': {
+        start = new Date(end.getFullYear(), end.getMonth() - 4, 1)
+        start.setHours(0, 0, 0, 0)
+        break
+      }
+      case 'last_year': {
+        start = new Date(end.getFullYear() - 1, end.getMonth(), end.getDate())
+        start.setHours(0, 0, 0, 0)
+        break
+      }
+    }
 
-    const csv = rows
-      .map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(','))
-      .join('\n')
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `status-summary-${range}-${new Date()
-      .toISOString()
-      .slice(0, 10)}.csv`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
+    ;(async () => {
+      try {
+        const header = [
+          'poster_name',
+          'item_name',
+          'item_description',
+          'last_seen_location',
+          'accepted_by_staff_name',
+          'submission_date',
+          'claimed_by_name',
+          'claimed_by_email',
+          'accepted_on_date'
+        ].join(',')
+
+        const parts: string[] = []
+        parts.push(header)
+
+        await fetchPaginatedRows({
+          supabase,
+          table: 'post_public_view',
+          select:
+            'poster_name,item_name,item_description,last_seen_location,accepted_by_staff_name,submission_date,claimed_by_name,claimed_by_email,accepted_on_date',
+          dateField: 'submission_date',
+          gte: start.toISOString(),
+          lte: end.toISOString(),
+          batchSize: 10000,
+          onBatch: async rows => {
+            for (const r of rows) {
+              const poster_name = (r as any).poster_name ?? ''
+              const item_name = (r as any).item_name ?? ''
+              const item_description = (r as any).item_description ?? ''
+              const last_seen_location = (r as any).last_seen_location ?? ''
+              const accepted_by_staff_name =
+                (r as any).accepted_by_staff_name ?? ''
+              const submission_date = (r as any).submission_date ?? ''
+              const claimed_by_name = (r as any).claimed_by_name ?? ''
+              const claimed_by_email = (r as any).claimed_by_email ?? ''
+              const accepted_on_date = (r as any).accepted_on_date ?? ''
+
+              const escaped = [
+                poster_name,
+                item_name,
+                item_description,
+                last_seen_location,
+                accepted_by_staff_name,
+                submission_date,
+                claimed_by_name,
+                claimed_by_email,
+                accepted_on_date
+              ]
+                .map((c: any) => `"${String(c).replace(/"/g, '""')}"`)
+                .join(',')
+
+              parts.push(escaped)
+            }
+          }
+        })
+
+        const csv = parts.join('\n')
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `status-summary-detailed-${range}-${new Date()
+          .toISOString()
+          .slice(0, 10)}.csv`
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        URL.revokeObjectURL(url)
+      } catch (e) {
+        console.error('Error generating donut detailed CSV', e)
+      }
+    })()
   }
 
   return (
@@ -276,14 +348,15 @@ export default function DonutChart ({ data }: DonutChartProps) {
       </div>
 
       {/* Bottom-right icon */}
-      <div className='mt-3 flex justify-end'>
-        <button
+      <div className='flex justify-end mt-4'>
+        <IonButton
           onClick={handleDownload}
-          className='rounded-full border border-[#1f2a66]/20 p-1.5 text-xl text-[#1f2a66]'
+          className='w-20 flex text-base text-[#1f2a66] hover:bg-[#1f2a66]/5 transition-colors'
           aria-label='Download CSV'
+          fill='clear'
         >
-          <IonIcon icon={downloadOutline} />
-        </button>
+          <IonIcon icon={downloadOutline} slot='icon-only' />
+        </IonButton>
       </div>
     </div>
   )
