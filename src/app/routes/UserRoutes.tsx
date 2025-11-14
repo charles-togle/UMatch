@@ -68,18 +68,19 @@ export default function UserRoutes () {
           )}
         />
         <Route
-          path='/user/search'
-          render={() => (
-            <Suspense fallback={<DefaultFallback />}>
-              <SearchItem />
-            </Suspense>
-          )}
-        />
-        <Route
           path='/user/search/results'
           render={() => (
             <Suspense fallback={<DefaultFallback />}>
               <SearchResults />
+            </Suspense>
+          )}
+        />
+        <Route
+          exact
+          path='/user/search'
+          render={() => (
+            <Suspense fallback={<DefaultFallback />}>
+              <SearchItem />
             </Suspense>
           )}
         />

@@ -125,7 +125,7 @@ export default function SearchItem () {
       }
     })
 
-    setIsSearching(false)
+    // setIsSearching(false)/
 
     if (!response.success) {
       setToastMessage(response.message || 'Search failed. Please try again.')
