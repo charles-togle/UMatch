@@ -55,3 +55,4 @@ Carthage
 /src/prompts
 capacitor.config.ts
 /android
+sendnotifs.js

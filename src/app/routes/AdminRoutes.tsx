@@ -1,11 +1,13 @@
 import { Route } from 'react-router-dom'
 import { IonTabs, IonRouterOutlet } from '@ionic/react'
 import Toolbar from '@/shared/components/Toolbar'
-import { home, settings, time, helpCircle } from 'ionicons/icons'
+import { home, settings, time, helpCircle, megaphone } from 'ionicons/icons'
 import Dashboard from '@/features/admin/pages/Dashboard'
 import StaffManagement from '@/features/admin/pages/StaffManagement'
 import AddRole from '@/features/admin/pages/AddRole'
 import AuditTrail from '@/features/admin/pages/AuditTrail'
+import Announcement from '@/features/admin/pages/Announcement'
+import GenerateAnnouncement from '@/features/admin/pages/GenerateAnnouncement'
 import Notifications from '@/features/user/pages/Notifications'
 
 export default function AdminRoutes () {
@@ -14,13 +16,17 @@ export default function AdminRoutes () {
       <IonRouterOutlet>
         <Route path='/admin/notifications' render={() => <Notifications />} />
         <Route path='/admin/dashboard' render={() => <Dashboard />} />
+        <Route path='/admin/announcement' render={() => <Announcement />} />
+        <Route
+          path='/admin/generate-announcement'
+          render={() => <GenerateAnnouncement />}
+        />
         <Route path='/admin/audit-trail' render={() => <AuditTrail />} />
         <Route
           path='/admin/staff-management'
           render={() => <StaffManagement />}
         />
         <Route path='/admin/staff/add' render={() => <AddRole />} />
-        <Route path='/admin/announce' render={() => <>Announce</>} />
       </IonRouterOutlet>
       <Toolbar
         toolbarItems={[
@@ -40,9 +46,9 @@ export default function AdminRoutes () {
             text: 'Staff Management'
           },
           {
-            icon: settings,
-            route: '/admin/announce',
-            text: 'Announce'
+            icon: megaphone,
+            route: '/admin/announcement',
+            text: 'Announcements'
           }
         ]}
       />

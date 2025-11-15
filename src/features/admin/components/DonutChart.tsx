@@ -10,7 +10,8 @@ interface DonutChartProps {
     claimed: number
     unclaimed: number
     toReview: number
-    reported?: number
+    lost: number
+    returned: number
   }
 }
 
@@ -38,7 +39,7 @@ function DonutChartSkeleton () {
         </div>
 
         <div className='flex flex-col gap-2'>
-          {[...Array(3)].map((_, i) => (
+          {[...Array(5)].map((_, i) => (
             <div key={i} className='flex items-center gap-1.5'>
               <span className='inline-block h-2.5 w-2.5 rounded-full bg-gray-300' />
               <div className='h-3 w-16 bg-gray-200 rounded' />
@@ -78,17 +79,19 @@ export default function DonutChart ({ data }: DonutChartProps) {
     const options: ApexCharts.ApexOptions = {
       chart: {
         type: 'donut',
-        height: 180,
+        height: 200,
         toolbar: { show: false },
         sparkline: { enabled: true }
       },
-      labels: ['Claimed', 'Unclaimed', 'To Review'],
+      labels: ['Claimed', 'Unclaimed', 'To Review', 'Lost', 'Returned'],
       series: [
         currentData.claimed,
         currentData.unclaimed,
-        currentData.toReview
+        currentData.toReview,
+        currentData.lost,
+        currentData.returned
       ],
-      colors: ['#16a34a', '#ef4444', '#f59e0b'],
+      colors: ['#16a34a', '#ef4444', '#f59e0b', '#6b7280', '#3b82f6'],
       dataLabels: {
         enabled: true,
         formatter: function (val: number) {
@@ -98,15 +101,18 @@ export default function DonutChart ({ data }: DonutChartProps) {
         style: {
           fontSize: '11px',
           fontWeight: 600,
-          colors: ['#ffffff']
+          colors: ['#ffffff'],
+          fontFamily: 'Helvetica, Roboto, sans-serif'
         },
+        textAnchor: 'middle',
+        offsetY: 10,
         dropShadow: { enabled: false }
       },
       stroke: { width: 0 },
       plotOptions: {
         pie: {
           donut: {
-            size: '70%',
+            size: '50%',
             labels: { show: false }
           }
         }
@@ -117,7 +123,11 @@ export default function DonutChart ({ data }: DonutChartProps) {
         y: {
           formatter: function (val: number) {
             const total =
-              currentData.claimed + currentData.unclaimed + currentData.toReview
+              currentData.claimed +
+              currentData.unclaimed +
+              currentData.toReview +
+              (currentData.lost ?? 0) +
+              (currentData.returned ?? 0)
             const percent = total > 0 ? ((val / total) * 100).toFixed(1) : '0.0'
             return `${val} (${percent}%)`
           }
@@ -132,8 +142,11 @@ export default function DonutChart ({ data }: DonutChartProps) {
             },
             dataLabels: {
               style: {
-                fontSize: '10px'
-              }
+                fontSize: '10px',
+                fontFamily: 'Helvetica, Roboto, sans-serif'
+              },
+              textAnchor: 'middle',
+              offsetY: 10
             }
           }
         }
@@ -208,28 +221,24 @@ export default function DonutChart ({ data }: DonutChartProps) {
         let claimed = 0
         let toReview = 0
         let unclaimed = 0
-        let reported = 0
+        let lost = 0
+        let returned = 0
 
         if (Array.isArray(rows)) {
           for (const r of rows) {
             const status = (r as any).status
             const post_status = (r as any).post_status
-            const isReported = Boolean(
-              (r as any).reported ||
-                (r as any).is_reported ||
-                (r as any).report_count
-            )
 
             if (status === 'claimed') claimed++
+            else if (status === 'lost') lost++
+            else if (status === 'returned') returned++
             else if (post_status === 'pending') toReview++
             else unclaimed++
-
-            if (isReported) reported++
           }
         }
 
         if (!mounted) return
-        setFetched({ claimed, unclaimed, toReview, reported })
+        setFetched({ claimed, unclaimed, toReview, lost, returned })
         setLoading(false)
       } catch (err) {
         console.error(err)
@@ -385,6 +394,8 @@ export default function DonutChart ({ data }: DonutChartProps) {
           <LegendItem color='#16a34a' label='Claimed' />
           <LegendItem color='#ef4444' label='Unclaimed' />
           <LegendItem color='#f59e0b' label='To Review' />
+          <LegendItem color='#6b7280' label='Lost' />
+          <LegendItem color='#3b82f6' label='Returned' />
         </div>
       </div>
 

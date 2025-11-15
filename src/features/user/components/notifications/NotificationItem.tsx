@@ -6,11 +6,17 @@ import {
   checkmarkCircleOutline,
   checkmarkDoneCircleOutline,
   mailOutline,
-  ellipsisVertical
+  ellipsisVertical,
+  megaphone
 } from 'ionicons/icons'
 import { useNavigation } from '@/shared/hooks/useNavigation'
 
-export type NotificationType = 'info' | 'found' | 'resolved' | 'progress'
+export type NotificationType =
+  | 'info'
+  | 'found'
+  | 'resolved'
+  | 'progress'
+  | 'announcement'
 
 export type ActionItem = {
   color: 'danger' | 'primary' // danger => umak-blue, primary => slate-900
@@ -35,6 +41,8 @@ const iconForType = (type: NotificationType) => {
   switch (type) {
     case 'info':
       return { icon: shieldOutline, colorClass: 'text-slate-700' }
+    case 'announcement':
+      return { icon: megaphone, colorClass: 'text-umak-blue' }
     case 'found':
       return { icon: checkmarkCircleOutline, colorClass: 'text-green-600' }
     case 'resolved':

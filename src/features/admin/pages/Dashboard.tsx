@@ -2,20 +2,12 @@ import { useState, useEffect } from 'react'
 import { IonContent, IonCard, IonCardContent, IonSpinner } from '@ionic/react'
 import { barChart } from 'ionicons/icons'
 import Header from '@/shared/components/Header'
-import { supabase } from '@/shared/lib/supabase'
+import { getDashboardStats } from '@/features/admin/data/dashboardStats'
+import type { DashboardStats } from '@/features/admin/data/dashboardStats'
 import AnalyticsCard from '../components/AnalyticsCard'
 import DonutChart from '../components/DonutChart'
 import SystemStatsChart from '../components/SystemStatsChart'
 import CardHeader from '@/shared/components/CardHeader'
-
-interface DashboardStats {
-  pendingVerifications: number
-  pendingFraudReports: number
-  claimedCount: number
-  unclaimedCount: number
-  toReviewCount: number
-  reportedCount: number
-}
 
 export default function Dashboard () {
   const [stats, setStats] = useState<DashboardStats | null>(null)
@@ -23,58 +15,23 @@ export default function Dashboard () {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    fetchDashboardStats()
-  }, [])
-
-  const fetchDashboardStats = async () => {
-    try {
-      setLoading(true)
-      setError(null)
-
-      // Fetch Pending Verifications (pending status from post_table)
-      const { count: pendingCount } = await supabase
-        .from('post_table')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'pending')
-
-      // Fetch Pending Fraud Reports (reported status from post_table)
-      const { count: fraudCount } = await supabase
-        .from('post_table')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'reported')
-
-      // Fetch item status counts from item_table
-      const { count: claimedCount } = await supabase
-        .from('item_table')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'claimed')
-
-      const { count: unclaimedCount } = await supabase
-        .from('item_table')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'unclaimed')
-
-      // For To Review - use Pending status from post_table
-      const { count: toReviewCount } = await supabase
-        .from('post_table')
-        .select('*', { count: 'exact', head: true })
-        .eq('status', 'pending')
-
-      setStats({
-        pendingVerifications: pendingCount || 0,
-        pendingFraudReports: fraudCount || 0,
-        claimedCount: claimedCount || 0,
-        unclaimedCount: unclaimedCount || 0,
-        toReviewCount: toReviewCount || 0,
-        reportedCount: fraudCount || 0
-      })
-    } catch (err) {
-      console.error('Error fetching dashboard stats:', err)
-      setError('Failed to load dashboard statistics')
-    } finally {
-      setLoading(false)
+    // Load dashboard stats using centralized data helper
+    const load = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+        const result: DashboardStats = await getDashboardStats()
+        setStats(result)
+      } catch (err) {
+        console.error('Error fetching dashboard stats:', err)
+        setError('Failed to load dashboard statistics')
+      } finally {
+        setLoading(false)
+      }
     }
-  }
+
+    load()
+  }, [])
 
   return (
     <IonContent>
@@ -106,15 +63,13 @@ export default function Dashboard () {
             <AnalyticsCard
               title='Pending Verifications'
               value={stats.pendingVerifications}
-              color='bg-blue-50'
-              borderColor='border-blue-200'
+              color='bg-white'
               textColor='text-blue-700'
             />
             <AnalyticsCard
               title='Pending Fraud Reports'
               value={stats.pendingFraudReports}
-              color='bg-red-50'
-              borderColor='border-red-200'
+              color='bg-white'
               textColor='text-red-700'
             />
           </div>
@@ -122,15 +77,13 @@ export default function Dashboard () {
           {/* Donut Chart Card */}
           <IonCard className='mx-4 mb-4'>
             <IonCardContent className='py-6'>
-              <h3 className='text-lg font-semibold mb-4 text-slate-800'>
-                Item Status Distribution
-              </h3>
               <DonutChart
                 data={{
                   claimed: stats.claimedCount,
                   unclaimed: stats.unclaimedCount,
                   toReview: stats.toReviewCount,
-                  reported: stats.reportedCount
+                  lost: stats.lostCount,
+                  returned: stats.returnedCount
                 }}
               />
             </IonCardContent>

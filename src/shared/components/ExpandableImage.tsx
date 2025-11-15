@@ -68,7 +68,9 @@ export default function ExpandableImage ({ src, alt, className }: Props) {
         <div
           role='dialog'
           aria-modal='true'
-          className='fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-black/70 transition-all duration-200'
+          // ensure overlay is on top of everything
+          className='fixed inset-0 flex items-center justify-center backdrop-blur-sm bg-black/70 transition-all duration-200'
+          style={{ zIndex: 9999 }}
           onClick={() => setOpen(false)}
         >
           <div

@@ -1,10 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
   IonContent,
   IonCard,
   IonCardContent,
-  IonAccordionGroup,
-  IonAccordion,
   IonLabel,
   IonAvatar,
   IonIcon,
@@ -31,6 +29,11 @@ import {
   getUniqueActionTypes,
   getUniqueUserNames
 } from '@/features/admin/utils/auditTrailUtils'
+import {
+  onAppScrollToTop,
+  scrollToTopElement
+} from '@/shared/utils/scrollToTop'
+import AccordionList from '@/shared/components/AccordionList'
 
 export default function AuditTrail () {
   // State for filter and sort
@@ -43,7 +46,21 @@ export default function AuditTrail () {
   >()
   const { auditLogs, loading, hasMore, handleRefresh, handleLoadMore } =
     useAuditLogsFetch()
+  const contentRef = useRef<HTMLIonContentElement | null>(null)
 
+  useEffect(() => {
+    const off = onAppScrollToTop(async route => {
+      try {
+        if (route === '/admin/audit-trail') {
+          scrollToTopElement(contentRef.current)
+          await handleRefresh()
+        }
+      } catch (err) {
+        console.error('app:scrollToTop handler error', err)
+      }
+    })
+    return () => off()
+  }, [handleRefresh])
   const filteredLogs = useAuditLogsFilter(
     auditLogs,
     activeFilters,
@@ -55,7 +72,7 @@ export default function AuditTrail () {
   return (
     <>
       <Header logoShown={true} />
-      <IonContent className='bg-default-bg'>
+      <IonContent ref={contentRef} className='bg-default-bg'>
         <IonRefresher
           slot='fixed'
           onIonRefresh={async (event: CustomEvent) => {
@@ -143,109 +160,103 @@ export default function AuditTrail () {
                   </IonCardContent>
                 </IonCard>
               ) : (
-                <IonAccordionGroup
+                <AccordionList
+                  items={displayLogs}
                   value={expandedAccordion}
-                  onIonChange={e => setExpandedAccordion(e.detail.value)}
-                >
-                  {displayLogs.map((log, index) => {
+                  onChange={val => setExpandedAccordion(val)}
+                  getKey={(log: any, index) => log.log_id || `log-${index}`}
+                  renderHeader={(log: any, index: number) => {
                     const accordionId = log.log_id || `log-${index}`
                     const isOpen = expandedAccordion === accordionId
                     return (
-                      <IonAccordion
-                        key={accordionId}
-                        value={accordionId}
-                        className='border-b-1 border-gray-400'
+                      <div
+                        className={`ion-padding py-4! flex flex-row items-center border-b-1 border-gray-400 shadow-none ${
+                          index === 0 && 'border-t-1'
+                        }`}
                       >
-                        <div
-                          slot='header'
-                          className={`ion-padding py-4! flex flex-row items-center border-b-1 border-gray-400 shadow-none ${
-                            index === 0 && 'border-t-1'
-                          }`}
+                        <IonAvatar
+                          slot='start'
+                          className='w-10 aspect-square flex items-center justify-center'
                         >
-                          <IonAvatar
-                            slot='start'
-                            className='w-12 aspect-square'
-                          >
-                            {log.profile_picture_url ? (
-                              <img src={log.profile_picture_url} alt='actor' />
-                            ) : (
-                              <div className='w-full h-full grid place-items-center bg-slate-100 text-slate-500'>
-                                <IonIcon
-                                  icon={personOutline}
-                                  className='text-2xl'
-                                />
-                              </div>
-                            )}
-                          </IonAvatar>
-                          <IonLabel className='ml-4'>
-                            <p className='text-sm text-gray-500'>
-                              {formatTimestamp(log.timestamp)}
-                            </p>
-                            <h2 className='font-semibold max-w-9/10'>
-                              {log.details?.message ||
-                                formatActionType(log.action_type)}
-                            </h2>
-                          </IonLabel>
-                          <IonIcon
-                            icon={chevronDown}
-                            className={`min-w-12 text-[20px] text-umak-blue transition-transform duration-300 ml-auto ${
-                              isOpen ? 'rotate-180' : 'rotate-0'
-                            }`}
-                          />
-                        </div>
-
-                        <div slot='content' className='px-4'>
-                          {/* Details */}
-                          {log.details && (
-                            <div>
-                              <div className='flex items-center gap-2 mb-1'></div>
-                              <div className='mb-2 ml-6'>
-                                <IonText className='text-sm'>
-                                  {log.details.message}
-                                </IonText>
-                              </div>
-                              <div className='ml-6'>
-                                {Object.entries(log.details).map(
-                                  ([key, value], index) => {
-                                    if (key === 'message') return null
-                                    return (
-                                      <div key={index} className='mb-2'>
-                                        <IonText className='text-sm'>
-                                          <span className='font-semibold text-slate-900'>
-                                            {key
-                                              .split('_')
-                                              .map(
-                                                word =>
-                                                  word.charAt(0).toUpperCase() +
-                                                  word.slice(1)
-                                              )
-                                              .join(' ')}{' '}
-                                          </span>
-                                          <span className='text-gray-600 ml-1'>
-                                            {String(value)}
-                                          </span>
-                                        </IonText>
-                                      </div>
-                                    )
-                                  }
-                                )}
-                              </div>
+                          {log.profile_picture_url ? (
+                            <img src={log.profile_picture_url} alt='actor' />
+                          ) : (
+                            <div className='w-full h-full grid place-items-center bg-slate-100 text-slate-500'>
+                              <IonIcon
+                                icon={personOutline}
+                                className='text-2xl'
+                              />
                             </div>
                           )}
-                          <div className='mb-2'>
-                            <IonText className='text-sm text-gray-600 ml-6'>
-                              <span className='text-sm mr-2 font-semibold text-gray-700'>
-                                Timestamp:
-                              </span>
-                              {formatTimestamp(log.timestamp)}
+                        </IonAvatar>
+                        <IonLabel className='ml-4'>
+                          <p className='text-xs! text-gray-500'>
+                            {formatTimestamp(log.timestamp)}
+                          </p>
+                          <h2 className='font-semibold text-sm! max-w-9/10'>
+                            {log.details?.message ||
+                              formatActionType(log.action_type)}
+                          </h2>
+                        </IonLabel>
+                        <IonIcon
+                          icon={chevronDown}
+                          className={`min-w-12 text-[20px] text-umak-blue transition-transform duration-300 ml-auto ${
+                            isOpen ? 'rotate-180' : 'rotate-0'
+                          }`}
+                        />
+                      </div>
+                    )
+                  }}
+                  renderContent={(log: any) => (
+                    <div className='px-4'>
+                      {log.details && (
+                        <div>
+                          <div className='flex items-center gap-2 mb-1'></div>
+                          <div className='mb-2 ml-6'>
+                            <IonText className='text-sm'>
+                              {log.details.message}
                             </IonText>
                           </div>
-                          <div className='h-px mb-4 bg-gray-400 pr-4'></div>
+                          <div className='ml-6'>
+                            {Object.entries(log.details).map(
+                              ([key, value], idx) => {
+                                if (key === 'message') return null
+                                return (
+                                  <div key={idx} className='mb-2'>
+                                    <IonText className='text-sm'>
+                                      <span className='font-semibold text-slate-900'>
+                                        {key
+                                          .split('_')
+                                          .map(
+                                            word =>
+                                              word.charAt(0).toUpperCase() +
+                                              word.slice(1)
+                                          )
+                                          .join(' ')}{' '}
+                                      </span>
+                                      <span className='text-gray-600 ml-1'>
+                                        {String(value)}
+                                      </span>
+                                    </IonText>
+                                  </div>
+                                )
+                              }
+                            )}
+                          </div>
                         </div>
-                      </IonAccordion>
-                    )
-                  })}
-                </IonAccordionGroup>
+                      )}
+                      <div className='mb-2'>
+                        <IonText className='text-sm text-gray-600 ml-6'>
+                          <span className='text-sm mr-2 font-semibold text-gray-700'>
+                            Timestamp:
+                          </span>
+                          {formatTimestamp(log.timestamp)}
+                        </IonText>
+                      </div>
+                      <div className='h-px mb-4 bg-gray-400 pr-4'></div>
+                    </div>
+                  )}
+                />
               )}
             </>
           )}

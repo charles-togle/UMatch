@@ -4,12 +4,14 @@ export default function CardHeader ({
   icon,
   title,
   iconSize = '32px',
-  hasLineBelow = true
+  hasLineBelow = true,
+  titleClass = ''
 }: {
   icon: string
   title: string
   iconSize?: string
   hasLineBelow?: boolean
+  titleClass?: string
 }) {
   return (
     <>
@@ -19,7 +21,9 @@ export default function CardHeader ({
           className='text-[#1e2b87]'
           style={{ fontSize: iconSize, ['--ionicon-stroke-width']: '40px' }}
         />
-        <div className='text-umak-blue font-default-font text-base font-light'>
+        <div
+          className={`text-umak-blue font-default-font ${titleClass} font-light`}
+        >
           {title}
         </div>
       </div>
