@@ -15,6 +15,7 @@ export interface NotificationData {
   sent_to?: string | null
   sent_by?: string | null
   item_id?: string | null
+  image_url?: string | null
 }
 
 export interface ActionItem {

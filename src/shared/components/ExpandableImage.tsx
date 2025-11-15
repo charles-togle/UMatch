@@ -51,7 +51,10 @@ export default function ExpandableImage ({ src, alt, className }: Props) {
         className={`inline-block cursor-pointer rounded-lg overflow-visible shadow-md transition-transform hover:scale-105 ${
           className || ''
         }`}
-        onClick={() => setOpen(true)}
+        onClick={e => {
+          setOpen(true)
+          e.stopPropagation()
+        }}
         onPointerDown={startHold}
         onPointerUp={clearHold}
         onPointerLeave={clearHold}
@@ -79,10 +82,15 @@ export default function ExpandableImage ({ src, alt, className }: Props) {
           >
             <IonButton
               fill='clear'
-              className='absolute top-3 right-3 z-10 bg-white/90 hover:bg-white rounded-full shadow-lg w-10 h-10 flex items-center justify-center focus:outline-none border-none'
+              className='absolute top-3 right-3 z-10 bg-white/90 hover:bg-white rounded-full shadow-lg w-8 aspect-square flex items-center justify-center focus:outline-none border-none'
               onClick={() => setOpen(false)}
             >
-              <IonIcon icon={closeIcon} className='text-[24px]' color='dark' />
+              <IonIcon
+                icon={closeIcon}
+                className='text-[16px]'
+                color='dark'
+                slot='icon-only'
+              />
             </IonButton>
 
             <img

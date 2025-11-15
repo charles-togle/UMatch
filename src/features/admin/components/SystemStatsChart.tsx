@@ -104,7 +104,9 @@ function ChartSkeleton () {
   )
 }
 
-export default function SystemStatsChart () {
+export default function SystemStatsChart ({
+  onLoad
+}: { onLoad?: () => void } = {}) {
   const [chartData, setChartData] = useState<ChartData | null>(null)
   const [loading, setLoading] = useState(true)
   const chartRef = useRef<HTMLDivElement>(null)
@@ -220,6 +222,12 @@ export default function SystemStatsChart () {
         labels: finalLabels,
         series: [finalMissing, finalFound, finalClaimed]
       })
+      // notify parent that the system stats finished loading
+      try {
+        onLoad && onLoad()
+      } catch (e) {
+        // ignore
+      }
     } catch (error) {
       console.error('Error fetching system stats:', error)
     } finally {

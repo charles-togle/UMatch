@@ -1,10 +1,11 @@
 import { useEffect, useState, useCallback } from 'react'
 import {
   IonContent,
+  IonRefresher,
+  IonRefresherContent,
   IonCard,
   IonCardContent,
   IonText,
-  IonSpinner,
   IonButton,
   IonIcon,
   IonInfiniteScroll,
@@ -88,6 +89,16 @@ export default function Announcement () {
     void fetchAnnouncements(true)
   }, [])
 
+  const handleRefresh = async (ev: any) => {
+    try {
+      await fetchAnnouncements(true)
+      setExpandedAccordion(undefined)
+    } catch (e) {
+    } finally {
+      ev.detail && ev.detail.complete && ev.detail.complete()
+    }
+  }
+
   useEffect(() => {
     const off = onAppScrollToTop(async route => {
       try {
@@ -112,6 +123,9 @@ export default function Announcement () {
     <>
       <Header logoShown={true} />
       <IonContent className='bg-default-bg'>
+        <IonRefresher slot='fixed' onIonRefresh={handleRefresh}>
+          <IonRefresherContent />
+        </IonRefresher>
         <div>
           <IonCard className='mb-4'>
             <IonCardContent>
@@ -146,8 +160,23 @@ export default function Announcement () {
             </IonCardContent>
           </IonCard>
           {loading ? (
-            <div className='flex justify-center py-6'>
-              <IonSpinner name='crescent' className='text-umak-blue' />
+            <div className='space-y-3 py-4' aria-hidden>
+              {[0, 1, 2].map(i => (
+                <div
+                  key={i}
+                  className={`ion-padding flex items-center w-full border-b-1 border-gray-400 ${
+                    i === 0 ? 'border-t-1 border-gray-400' : ''
+                  } animate-pulse`}
+                >
+                  <div className='flex-1'>
+                    <div className='h-3 w-24 rounded bg-gray-200 mb-2' />
+                    <div className='h-4 w-3/4 rounded bg-gray-200' />
+                  </div>
+                  <div className='ml-2'>
+                    <div className='h-6 w-6 rounded-full bg-gray-200' />
+                  </div>
+                </div>
+              ))}
             </div>
           ) : announcements.length === 0 ? (
             <IonCard>
@@ -220,6 +249,7 @@ export default function Announcement () {
                   </div>
                 )}
               />
+              
               <div className='my-3 pb-8'>
                 <IonInfiniteScroll
                   onIonInfinite={loadMore}

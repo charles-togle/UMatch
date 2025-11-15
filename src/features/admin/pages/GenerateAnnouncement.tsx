@@ -13,6 +13,9 @@ import { uploadAndGetPublicUrl } from '@/shared/utils/supabaseStorageUtils'
 import { supabase } from '@/shared/lib/supabase'
 import TextArea from '@/shared/components/TextArea'
 import { useNavigation } from '@/shared/hooks/useNavigation'
+import FormSectionHeader from '@/shared/components/FormSectionHeader'
+import CardHeader from '@/shared/components/CardHeader'
+import { megaphone } from 'ionicons/icons'
 
 export default function GenerateAnnouncement () {
   const [title, setTitle] = useState('')
@@ -77,46 +80,80 @@ export default function GenerateAnnouncement () {
 
   return (
     <>
-      <Header logoShown={true} />
+      <Header logoShown={false} isProfileAndNotificationShown={false}>
+        <div className='flex justify-between items-center bg-[#1e2b87] ion-padding-start ion-padding-end'>
+          <IonButton
+            style={
+              {
+                '--background': 'var(--color-umak-red)',
+                '--box-shadow': 'none'
+              } as any
+            }
+            onClick={() => navigate('/admin/announcement')}
+          >
+            Cancel
+          </IonButton>
+          <div className='flex items-center space-x-2 w-fit h-fit border-1 border-white rounded-md'>
+            <IonButton
+              style={
+                {
+                  '--background': 'transparent',
+                  '--box-shadow': 'none'
+                } as any
+              }
+              onClick={handlePost}
+              disabled={loading}
+            >
+              {loading ? <IonSpinner name='crescent' /> : 'Post'}
+            </IonButton>
+          </div>
+        </div>
+      </Header>
       <IonContent className='bg-default-bg'>
-        <div className='p-4'>
-          <h2 className='text-lg font-semibold mb-4'>Create Announcement</h2>
-          <IonCard className='mb-4'>
-            <IonCardContent>
-              <label className='text-sm font-semibold mb-2 block'>
-                Message
-              </label>
+        <IonCard className='mb-4'>
+          <IonCardContent>
+            <div className='p-4'>
+              <CardHeader icon={megaphone} title='Create Announcements' />
+              <FormSectionHeader header='Message' isRequired />
               <TextArea
                 value={title}
                 setValue={setTitle}
                 maxLength={100}
                 placeholder='Enter additional details (optional). Max 100 characters'
+                className='min-h-35! max-h-35!'
               />
 
-              <label className='text-sm font-semibold mb-2 block mt-4'>
-                Description
-              </label>
+              <FormSectionHeader header='Description' isRequired />
               <TextArea
                 value={description}
                 setValue={setDescription}
                 maxLength={500}
                 placeholder='Enter additional details (optional). Max 500 characters'
+                className='min-h-35! max-h-35!'
               />
 
               <ImageUpload
-                label='Announcement Image'
+                label='Preview Image'
                 image={image}
                 onImageChange={setImage}
               />
 
               <div className='mt-4'>
-                <IonButton onClick={handlePost} disabled={loading}>
+                <IonButton
+                  onClick={handlePost}
+                  disabled={loading}
+                  expand='full'
+                  style={{
+                    '--background': 'var(--color-umak-blue)'
+                  }}
+                >
                   {loading ? <IonSpinner name='crescent' /> : 'Post'}
                 </IonButton>
               </div>
-            </IonCardContent>
-          </IonCard>
-        </div>
+              {/* Post button moved to header */}
+            </div>
+          </IonCardContent>
+        </IonCard>
       </IonContent>
 
       <IonToast

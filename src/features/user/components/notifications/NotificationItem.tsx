@@ -1,6 +1,7 @@
 // components/user/notifications/NotificationItem.tsx
 import React, { useMemo, useState, useRef, useEffect } from 'react'
 import { IonIcon, IonActionSheet, IonButton } from '@ionic/react'
+import ExpandableImage from '@/shared/components/ExpandableImage'
 import {
   shieldOutline,
   checkmarkCircleOutline,
@@ -16,7 +17,7 @@ export type NotificationType =
   | 'found'
   | 'resolved'
   | 'progress'
-  | 'announcement'
+  | 'global_announcement'
 
 export type ActionItem = {
   color: 'danger' | 'primary' // danger => umak-blue, primary => slate-900
@@ -35,13 +36,14 @@ interface NotificationItemProps {
   notificationId?: string
   handleMarkAsRead?: (notificationId: string) => void
   href?: string
+  imageUrl?: string
 }
 
 const iconForType = (type: NotificationType) => {
   switch (type) {
     case 'info':
       return { icon: shieldOutline, colorClass: 'text-slate-700' }
-    case 'announcement':
+    case 'global_announcement':
       return { icon: megaphone, colorClass: 'text-umak-blue' }
     case 'found':
       return { icon: checkmarkCircleOutline, colorClass: 'text-green-600' }
@@ -63,7 +65,8 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
   actionSheetHeader = 'Actions',
   notificationId,
   handleMarkAsRead,
-  href
+  href,
+  imageUrl
 }) => {
   const [open, setOpen] = useState(false)
   const { icon, colorClass } = iconForType(type)
@@ -157,8 +160,15 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
           handleClick()
           handleMarkAsRead && handleMarkAsRead(notificationId!)
         }}
+        // Use background opacity so children (like the image) aren't made translucent
+        // When read && not expanded -> translucent background
+        // When read && expanded -> fully opaque background
         className={`flex items-start gap-3 px-3 py-3 border-b border-slate-200 ${
-          read ? 'bg-slate-50 opacity-70' : ''
+          read
+            ? expanded
+              ? 'bg-slate-50 opacity-100'
+              : 'bg-slate-50 opacity-70'
+            : ''
         } ${holding ? 'bg-black/10' : ''}`}
       >
         {/* left icon */}
@@ -180,6 +190,16 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
           >
             {description}
           </div>
+          {/* Expanded image (if provided) */}
+          {expanded && imageUrl && (
+            <div className='mt-3'>
+              <ExpandableImage
+                src={imageUrl}
+                alt='notification-image'
+                className='w-full h-60! object-cover rounded'
+              />
+            </div>
+          )}
         </div>
 
         {/* actions (three dots) */}

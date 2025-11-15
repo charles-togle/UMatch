@@ -13,6 +13,7 @@ interface DonutChartProps {
     lost: number
     returned: number
   }
+  onLoad?: () => void
 }
 
 // Skeleton loader component for DonutChart
@@ -56,7 +57,7 @@ function DonutChartSkeleton () {
   )
 }
 
-export default function DonutChart ({ data }: DonutChartProps) {
+export default function DonutChart ({ data, onLoad }: DonutChartProps) {
   const chartRef = useRef<HTMLDivElement>(null)
   const chartInstance = useRef<ApexCharts | null>(null)
   const [range, setRange] = useState<
@@ -240,6 +241,12 @@ export default function DonutChart ({ data }: DonutChartProps) {
         if (!mounted) return
         setFetched({ claimed, unclaimed, toReview, lost, returned })
         setLoading(false)
+        // notify parent that donut finished loading data
+        try {
+          onLoad && onLoad()
+        } catch (e) {
+          // ignore
+        }
       } catch (err) {
         console.error(err)
         setLoading(false)

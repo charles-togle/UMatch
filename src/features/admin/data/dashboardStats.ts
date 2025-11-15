@@ -16,14 +16,15 @@ export async function getDashboardStats (): Promise<DashboardStats> {
   const { data, error } = await supabase.rpc('get_dashboard_stats')
   if (error) throw error
 
+  console.log('Dashboard stats data:', data)
   return {
-    pendingVerifications: data[0].pendingCount || 0,
-    pendingFraudReports: data[0].fraudCount || 0,
-    claimedCount: data[0].claimedCount || 0,
-    unclaimedCount: data[0].unclaimedCount || 0,
-    toReviewCount: data[0].toReviewCount || 0,
-    lostCount: data[0].lostCount || 0,
-    returnedCount: data[0].returnedCount || 0,
-    reportedCount: data[0].fraudCount || 0
+    pendingVerifications: data[0].pending_verifications || 0,
+    pendingFraudReports: data[0].pending_fraud_reports || 0,
+    claimedCount: data[0].claimed_count || 0,
+    unclaimedCount: data[0].unclaimed_count || 0,
+    toReviewCount: data[0].to_review_count || 0,
+    lostCount: data[0].lost_count || 0,
+    returnedCount: data[0].returned_count || 0,
+    reportedCount: data[0].reported_count || 0
   }
 }

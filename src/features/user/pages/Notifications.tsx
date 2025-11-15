@@ -211,6 +211,7 @@ export default function Notifications () {
                 actions={actions}
                 notificationId={n.notification_id}
                 handleMarkAsRead={handleMarkAsRead}
+                imageUrl={n.image_url ?? undefined}
               />
             )
           })
