@@ -51,7 +51,7 @@ export default function Announcement () {
       try {
         const currentOffset = isInitial ? 0 : offset
         const { data, error, count } = await supabase
-          .from('global_announcements_table')
+          .from('global_announcement_view')
           .select('id, created_at, message, description, image_url', {
             count: 'exact'
           })
@@ -249,7 +249,7 @@ export default function Announcement () {
                   </div>
                 )}
               />
-              
+
               <div className='my-3 pb-8'>
                 <IonInfiniteScroll
                   onIonInfinite={loadMore}

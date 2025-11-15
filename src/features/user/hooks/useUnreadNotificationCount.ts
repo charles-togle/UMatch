@@ -96,9 +96,8 @@ export function useUnreadNotificationCount (
           const cachedData = cached[0]
 
           // Use cache if it's fresh
-            setUnreadCount(cachedData.count)
-            return true
-          
+          setUnreadCount(cachedData.count)
+          return true
         }
       } catch (err) {
         console.log('No cached count available')
@@ -112,7 +111,7 @@ export function useUnreadNotificationCount (
 
       try {
         const { count, error: fetchError } = await supabase
-          .from('notification_table')
+          .from('notification_view')
           .select('notification_id', { count: 'exact', head: true })
           .eq('sent_to', userId)
           .eq('is_read', false)
