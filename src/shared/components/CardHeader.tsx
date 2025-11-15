@@ -23,7 +23,7 @@ export default function CardHeader ({
           {title}
         </div>
       </div>
-      {hasLineBelow && <div className='h-px w-full bg-black my-3 mx-3'> </div>}
+      {hasLineBelow && <div className='h-px w-full bg-black my-3'> </div>}
     </>
   )
 }

@@ -14,6 +14,47 @@ interface DonutChartProps {
   }
 }
 
+// Skeleton loader component for DonutChart
+function DonutChartSkeleton () {
+  return (
+    <div className='rounded-3xl w-full font-default-font! animate-pulse'>
+      {/* Header */}
+      <div className='mb-3 flex items-center justify-between'>
+        <div className='h-4 w-28 bg-gray-300 rounded' />
+        <div className='h-8 w-32 bg-gray-200 rounded border border-gray-300' />
+      </div>
+
+      {/* Chart + Legend */}
+      <div className='flex flex-row items-center justify-evenly gap-3'>
+        <div className='w-[160px] h-[180px] flex items-center justify-center'>
+          {/* Donut ring */}
+          <div className='relative w-40 h-40'>
+            <div className='absolute inset-0 rounded-full border-[28px] border-gray-200' />
+            <div
+              className='absolute inset-0 rounded-full border-[28px] border-transparent border-t-gray-300 animate-spin'
+              style={{ animationDuration: '3s' }}
+            />
+          </div>
+        </div>
+
+        <div className='flex flex-col gap-2'>
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className='flex items-center gap-1.5'>
+              <span className='inline-block h-2.5 w-2.5 rounded-full bg-gray-300' />
+              <div className='h-3 w-16 bg-gray-200 rounded' />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Bottom-right icon */}
+      <div className='flex justify-end mt-4'>
+        <div className='h-9 w-20 bg-gray-200 rounded' />
+      </div>
+    </div>
+  )
+}
+
 export default function DonutChart ({ data }: DonutChartProps) {
   const chartRef = useRef<HTMLDivElement>(null)
   const chartInstance = useRef<ApexCharts | null>(null)
@@ -21,6 +62,7 @@ export default function DonutChart ({ data }: DonutChartProps) {
     'this_week' | 'this_month' | 'last_5_months' | 'last_year'
   >('this_week')
   const [fetched, setFetched] = useState<DonutChartProps['data'] | null>(null)
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     if (!chartRef.current) return
@@ -49,18 +91,9 @@ export default function DonutChart ({ data }: DonutChartProps) {
       colors: ['#16a34a', '#ef4444', '#f59e0b'],
       dataLabels: {
         enabled: true,
-        formatter: function (opts?: any) {
-          const series = opts?.w?.globals?.series ?? []
-          const total = series.reduce(
-            (s: number, v: any) => s + Number(v || 0),
-            0
-          )
-          const idx = opts?.seriesIndex ?? 0
-          const pct =
-            total > 0
-              ? ((Number(series[idx] || 0) / total) * 100).toFixed(1)
-              : '0.0'
-          return `${pct}%`
+        formatter: function (val: number) {
+          // val is already a percentage from ApexCharts
+          return `${val.toFixed(1)}%`
         },
         style: {
           fontSize: '11px',
@@ -156,6 +189,7 @@ export default function DonutChart ({ data }: DonutChartProps) {
     }
 
     const fetchCounts = async () => {
+      setLoading(true)
       const { start, end } = getStartForRange(range)
 
       try {
@@ -167,6 +201,7 @@ export default function DonutChart ({ data }: DonutChartProps) {
 
         if (error) {
           console.error('Failed to fetch donut data', error)
+          setLoading(false)
           return
         }
 
@@ -195,8 +230,10 @@ export default function DonutChart ({ data }: DonutChartProps) {
 
         if (!mounted) return
         setFetched({ claimed, unclaimed, toReview, reported })
+        setLoading(false)
       } catch (err) {
         console.error(err)
+        setLoading(false)
       }
     }
 
@@ -310,6 +347,10 @@ export default function DonutChart ({ data }: DonutChartProps) {
         console.error('Error generating donut detailed CSV', e)
       }
     })()
+  }
+
+  if (loading) {
+    return <DonutChartSkeleton />
   }
 
   return (

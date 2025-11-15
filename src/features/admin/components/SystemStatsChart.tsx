@@ -10,40 +10,76 @@ interface ChartData {
   series: number[][] // [missing, found, claimed]
 }
 
-// Skeleton loader component
+// Skeleton loader component with line graph
 function ChartSkeleton () {
   return (
-    <div className='w-full rounded-3xl p-4 animate-pulse'>
+    <div className='w-full rounded-3xl animate-pulse'>
       <div className='mb-2 flex items-center justify-between'>
-        <div className='h-4 w-24 bg-gray-300 rounded' />
+        <div className='h-4 w-32 bg-gray-300 rounded' />
       </div>
 
-      <div className='w-full bg-white rounded-xl p-4 border border-gray-200'>
-        {/* Y-axis labels */}
-        <div className='flex gap-4'>
-          <div className='flex flex-col justify-between py-4'>
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className='h-3 w-8 bg-gray-200 rounded' />
+      <div className='w-full rounded-xl p-4'>
+        {/* Chart area */}
+        <div className='relative h-[260px] flex items-end'>
+          {/* Y-axis simulation */}
+          <div className='absolute left-0 top-0 bottom-8 flex flex-col justify-between'>
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className='h-3 w-6 bg-gray-200 rounded' />
             ))}
           </div>
 
-          {/* Chart area */}
-          <div className='flex-1 flex flex-col'>
-            {/* Grid lines with fake data points */}
-            <div className='flex-1 flex items-end gap-2 pb-8'>
-              {[...Array(8)].map((_, i) => (
-                <div key={i} className='flex-1 flex flex-col justify-end gap-2'>
-                  <div
-                    className='w-full bg-gray-200 rounded-t'
-                    style={{ height: `${Math.random() * 100 + 20}px` }}
-                  />
-                </div>
+          {/* Graph area with simulated line paths */}
+          <div className='flex-1 ml-10 relative h-full'>
+            {/* Horizontal grid lines */}
+            <div className='absolute inset-0 flex flex-col justify-between pb-8'>
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className='w-full h-px bg-gray-200' />
               ))}
             </div>
 
+            {/* Simulated line graphs */}
+            <svg
+              className='absolute inset-0 w-full h-full'
+              style={{ paddingBottom: '32px' }}
+            >
+              {/* Line 1 - wavy path */}
+              <path
+                d='M 10,180 Q 50,160 90,170 T 170,150 T 250,160 T 330,140 T 410,150'
+                fill='none'
+                stroke='#e5e7eb'
+                strokeWidth='3'
+                opacity='0.6'
+              />
+              {/* Line 2 - different wave */}
+              <path
+                d='M 10,200 Q 50,185 90,190 T 170,175 T 250,180 T 330,165 T 410,170'
+                fill='none'
+                stroke='#d1d5db'
+                strokeWidth='3'
+                opacity='0.6'
+              />
+              {/* Line 3 - another wave */}
+              <path
+                d='M 10,190 Q 50,175 90,180 T 170,165 T 250,170 T 330,155 T 410,160'
+                fill='none'
+                stroke='#9ca3af'
+                strokeWidth='3'
+                opacity='0.6'
+              />
+
+              {/* Animated moving dots */}
+              <circle r='4' fill='#9ca3af' opacity='0.8'>
+                <animateMotion
+                  dur='3s'
+                  repeatCount='indefinite'
+                  path='M 10,180 Q 50,160 90,170 T 170,150 T 250,160 T 330,140 T 410,150'
+                />
+              </circle>
+            </svg>
+
             {/* X-axis labels */}
-            <div className='flex justify-between px-2 mt-2'>
-              {[...Array(4)].map((_, i) => (
+            <div className='absolute bottom-0 left-0 right-0 flex justify-between px-2'>
+              {[...Array(5)].map((_, i) => (
                 <div key={i} className='h-3 w-12 bg-gray-200 rounded' />
               ))}
             </div>
@@ -51,7 +87,7 @@ function ChartSkeleton () {
         </div>
 
         {/* Legend */}
-        <div className='flex justify-center gap-4 mt-4'>
+        <div className='mt-3 flex justify-start gap-4'>
           {[...Array(3)].map((_, i) => (
             <div key={i} className='flex items-center gap-2'>
               <div className='h-3 w-3 bg-gray-300 rounded-full' />
@@ -61,8 +97,8 @@ function ChartSkeleton () {
         </div>
       </div>
 
-      <div className='mt-3 flex justify-end'>
-        <div className='h-9 w-9 bg-gray-200 rounded-full' />
+      <div className='flex justify-end mt-4'>
+        <div className='h-9 w-20 bg-gray-200 rounded' />
       </div>
     </div>
   )

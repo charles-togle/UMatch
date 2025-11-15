@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react'
 import { IonContent, IonCard, IonCardContent, IonSpinner } from '@ionic/react'
-import { barChartOutline } from 'ionicons/icons'
+import { barChart } from 'ionicons/icons'
 import Header from '@/shared/components/Header'
-import CardHeader from '@/shared/components/CardHeader'
 import { supabase } from '@/shared/lib/supabase'
 import AnalyticsCard from '../components/AnalyticsCard'
 import DonutChart from '../components/DonutChart'
 import SystemStatsChart from '../components/SystemStatsChart'
+import CardHeader from '@/shared/components/CardHeader'
 
 interface DashboardStats {
   pendingVerifications: number
@@ -92,13 +92,15 @@ export default function Dashboard () {
         </div>
       ) : stats ? (
         <div className='pb-16'>
-          {/* Page Header */}
-          <IonCard className='shadow-none! rounded-none!'>
-            <IonCardContent className='pt-0!'>
-              <CardHeader title='Graphical Reports' icon={barChartOutline} />
+          <IonCard className='mt-3'>
+            <IonCardContent>
+              <CardHeader
+                title='Graphical Reports'
+                icon={barChart}
+                hasLineBelow={false}
+              />
             </IonCardContent>
           </IonCard>
-
           {/* Analytics Cards Row */}
           <div className='px-4 py-4 grid grid-cols-2 gap-4'>
             <AnalyticsCard
