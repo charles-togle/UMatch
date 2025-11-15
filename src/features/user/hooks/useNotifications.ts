@@ -37,7 +37,6 @@ export default function useNotifications (): UseNotificationsReturn {
   const [notifications, setNotifications] = useState<NotificationData[]>([])
   const [loading, setLoading] = useState<boolean>(false)
 
-
   const sendNotification = useCallback(
     async ({
       message,
@@ -57,27 +56,11 @@ export default function useNotifications (): UseNotificationsReturn {
           console.warn('No user ID available to fetch device token')
           return
         }
-        const { data: userData, error } = await supabase
-          .from('user_table')
-          .select('notification_token')
-          .eq('user_id', userId)
-          .single()
-
-        if (error) {
-          console.error('Error fetching device token for user:', error)
-          return
-        }
-
-        const token = userData?.notification_token
-        if (!token) {
-          console.warn('No valid device token available for user:', userId)
-          return
-        }
 
         // Send notification using the edge function
         await supabase.functions.invoke('send-notification', {
           body: {
-            token: token,
+            user_id: userId,
             title: title,
             body: message,
             type: type,
@@ -104,7 +87,7 @@ export default function useNotifications (): UseNotificationsReturn {
     async (userId: string): Promise<number> => {
       try {
         const { count, error } = await supabase
-          .from('notification_table')
+          .from('notification_view')
           .select('notification_id', { count: 'exact', head: true })
           .eq('sent_to', userId)
           .eq('is_read', false)
